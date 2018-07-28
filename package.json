@@ -51,7 +51,8 @@
   "scripts": {
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
-    "test": "node scripts/test.js --env=jsdom"
+    "test": "node scripts/test.js --env=jsdom",
+    "pm2-start": "pm2 node scripts/start.js"
   },
   "jest": {
     "collectCoverageFrom": [
