@@ -110,11 +110,10 @@ render() {
         />
         <CardContent>
           <Typography gutterBottom variant="headline" component="h2">
-            Lizard
+            Coincidentia Oppositorum
           </Typography>
           <Typography component="p">
-            Lizards are a widespread group of squamate reptiles, with over 6,000 species, ranging
-            across all continents except Antarctica
+            The term is used in describing a revelation of the oneness of things previously believed to be different. Such insight into the unity of things is a kind of transcendence, and is found in various mystical traditions.
           </Typography>
         </CardContent>
         <CardActions>
