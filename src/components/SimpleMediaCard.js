@@ -57,11 +57,8 @@ handleChangeIndex = index => {
   this.setState({ value: index });
 };
 
-render() {
-  //TODO Props
-  const { classes, theme } = this.props;
-
-  function getImageName() {
+componentDidMount() {
+  function getRandomImageName() {
     let number = Math.floor(Math.random() * 14) + 1;
     if (number == 1) {
       return placeholder1
@@ -92,15 +89,23 @@ render() {
     } else if (number == 14) {
       return placeholder14
     }
-    
   }
+  this.setState({
+    imgSrc: getRandomImageName()
+  });
+}
+
+render() {
+  //TODO Props
+  const { classes, theme } = this.props;
+  const { imgSrc } = this.state;
 
   return (
     <div className={classes.cardPositioning}>
       <Card className={classes.card}>
         <CardMedia
           className={classes.media}
-          image={getImageName()}
+          image={imgSrc}
           title="Life or dream?"
         />
         <CardContent>

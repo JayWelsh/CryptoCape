@@ -190,7 +190,9 @@ class App extends React.Component {
               >
                 <MenuIcon />
               </IconButton>
-              <img className={classes.headerLogo} src={CryptocapeLogo} />
+              <a href="./">
+                <img className={classes.headerLogo} src={CryptocapeLogo} />
+              </a>
             </Toolbar>
           </AppBar>
           {before}
