@@ -20,7 +20,7 @@ import PageContainer from './PageContainer';
 import { mailFolderListItems, otherMailFolderListItems } from './NavigationItems';
 // import { SimpleMediaCard } from './SimpleMediaCard';
 
-const drawerWidth = 240;
+const drawerWidth = 210;
 
 const styles = theme => ({
   root: {
@@ -35,7 +35,7 @@ const styles = theme => ({
     width: '100%',
   },
   appBar: {
-    position: 'absolute',
+    position: 'fixed',
     transition: theme.transitions.create(['margin', 'width'], {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen,
@@ -67,6 +67,11 @@ const styles = theme => ({
     display: 'none',
   },
   drawerPaper: {
+    position: 'fixed',
+    width: drawerWidth,
+    zIndex: 1080,
+  },
+  drawerPaperPlaceholder: {
     position: 'relative',
     width: drawerWidth,
     zIndex: 1080,
@@ -132,21 +137,26 @@ class App extends React.Component {
     const { anchor, open } = this.state;
 
     const drawer = (
-      <Drawer
-        variant="persistent"
-        anchor={anchor}
-        open={open}
-        classes={{
-          paper: classes.drawerPaper,
-        }}
-      >
-        <div className={classes.drawerHeader}>
+      <div>
+        <div
+          className={classes.drawerPaperPlaceholder}>
         </div>
-        <Divider />
-        <List>{mailFolderListItems}</List>
-        <Divider />
-        <List>{otherMailFolderListItems}</List>
-      </Drawer>
+        <Drawer
+          variant="persistent"
+          anchor={anchor}
+          open={open}
+          classes={{
+            paper: classes.drawerPaper,
+          }}
+        >
+          <div className={classes.drawerHeader}>
+          </div>
+          <Divider />
+          <List>{mailFolderListItems}</List>
+          <Divider />
+          <List>{otherMailFolderListItems}</List>
+        </Drawer>
+      </div>
     );
 
     let before = null;
