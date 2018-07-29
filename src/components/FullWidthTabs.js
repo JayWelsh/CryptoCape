@@ -62,6 +62,7 @@ class FullWidthTabs extends React.Component {
         <SwipeableViews
           axis={theme.direction === 'rtl' ? 'x-reverse' : 'x'}
           index={this.state.value}
+          disabled={true}
         >
           <TabContainer dir={theme.direction} className={classes.tabContainer}>
             <Grid container spacing={24}>
