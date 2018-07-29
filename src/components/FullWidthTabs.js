@@ -62,50 +62,9 @@ class FullWidthTabs extends React.Component {
         <SwipeableViews
           axis={theme.direction === 'rtl' ? 'x-reverse' : 'x'}
           index={this.state.value}
-          onChangeIndex={this.handleChangeIndex}
         >
           <TabContainer dir={theme.direction} className={classes.tabContainer}>
             <Grid container spacing={24}>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-            </Grid>
-          </TabContainer>
-          <TabContainer dir={theme.direction}>
-          <Grid container spacing={24}>
               <Grid item xs={12} sm={6} md={4} lg={3}>
                 <SimpleMediaCard />
               </Grid>

@@ -78,9 +78,6 @@ const styles = theme => ({
     padding: '0 8px',
     ...theme.mixins.toolbar,
   },
-  headerLogo: {
-    height:'45px',
-  },
   content: {
     flexGrow: 1,
     backgroundColor: theme.palette.background.default,
@@ -186,12 +183,12 @@ class App extends React.Component {
                 color="inherit"
                 aria-label="Open drawer"
                 onClick={this.handleDrawerToggle}
-                className={classNames(classes.menuButton)}
+                className={classNames(classes.menuButton) + " menu-button"}
               >
                 <MenuIcon />
               </IconButton>
-              <a href="./">
-                <img className={classes.headerLogo} src={CryptocapeLogo} />
+              <a className={"header-logo"} href="./">
+                <img className={"header-logo"} src={CryptocapeLogo} />
               </a>
             </Toolbar>
           </AppBar>
