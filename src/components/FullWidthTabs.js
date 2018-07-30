@@ -7,11 +7,12 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
 import SimpleMediaCard from './SimpleMediaCard';
+import OurChart from './OurChart';
 import Grid from '@material-ui/core/Grid';
 
 function TabContainer({ children, dir }) {
   return (
-    <Typography component="div" dir={dir} style={{ padding: 8 * 3, justifyContent:'space-between', height:'calc(100%)' }}>
+    <Typography component="div" dir={dir} className="mobile-friendly-padding" style={{ justifyContent:'space-between', height:'calc(100%)' }}>
       {children}
     </Typography>
   );
@@ -56,7 +57,7 @@ class FullWidthTabs extends React.Component {
             fullWidth
           >
             <Tab label="Posts" />
-            <Tab label="Favourites" />
+            <Tab label="Chart Test" />
           </Tabs>
         </AppBar>
         <SwipeableViews
@@ -100,49 +101,12 @@ class FullWidthTabs extends React.Component {
                 <SimpleMediaCard />
               </Grid>
               <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
+              <SimpleMediaCard />
               </Grid>
             </Grid>
           </TabContainer>
           <TabContainer dir={theme.direction}>
-          <Grid container spacing={24}>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-            </Grid>
+            <OurChart />
           </TabContainer>
         </SwipeableViews>
       </div>

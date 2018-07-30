@@ -104,6 +104,12 @@ const styles = theme => ({
       duration: theme.transitions.duration.enteringScreen,
     }),
   },
+  transitionWidth: {
+    transition: theme.transitions.create('width', {
+      easing: theme.transitions.easing.easeOut,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+  },
   'contentShift-left': {
     marginLeft: 0,
   },
@@ -119,7 +125,11 @@ class App extends React.Component {
   };
 
   handleDrawerToggle = () => {
-    this.setState({ open: !this.state.open });
+    this.setState({ open: !this.state.open }, function(){
+      setTimeout(function(){
+        window.dispatchEvent(new Event('resize'))
+      }, 100)
+    });
   };
 
   handleDrawerClose = () => {
@@ -135,6 +145,15 @@ class App extends React.Component {
   render() {
     const { classes, theme } = this.props;
     const { anchor, open } = this.state;
+
+    let widthOverride = {
+      width: window.innerWidth + "px"
+    }
+    if (open && drawerWidth) {
+      widthOverride = {
+        width: "calc(100% - " + drawerWidth + "px)"
+      }
+    }
 
     const drawer = (
       <div>
@@ -208,10 +227,12 @@ class App extends React.Component {
               [classes.contentShift]: open,
               [classes[`contentShift-${anchor}`]]: open,
             })}
-            style={{maxWidth: '100%'}}
+            style={{ maxWidth: '100%' }}
           >
             <div className={classes.drawerHeader} />
-            <PageContainer/>
+            <div className={classNames({[classes.pageWidth]: open}) + " " + classes.transitionWidth} style={widthOverride}>
+              <PageContainer/>
+            </div>
           </main>
           {after}
         </div>
