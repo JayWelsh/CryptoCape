@@ -56,7 +56,7 @@
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
     "test": "node scripts/test.js --env=jsdom",
-    "pm2-start": "pm2 start scripts/start.js"
+    "pm2-start": "sh scripts/pm2-start.sh"
   },
   "jest": {
     "collectCoverageFrom": [
