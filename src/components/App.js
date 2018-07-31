@@ -118,6 +118,8 @@ const styles = theme => ({
   },
 });
 
+let pageResizePreventDoubleFire;
+
 class App extends React.Component {
   state = {
     open: false,
@@ -126,11 +128,30 @@ class App extends React.Component {
 
   handleDrawerToggle = () => {
     this.setState({ open: !this.state.open }, function(){
-      setTimeout(function(){
-        window.dispatchEvent(new Event('resize'))
-      }, 100)
     });
   };
+
+  componentDidMount() {
+    this.pageContainer.addEventListener("transitionend", this.handlePageResize);
+    window.addEventListener("resize", this.handlePageResize);
+  }
+
+  componentWillUnmount() {
+    this.pageContainer.removeEventListener("transitionend", this.handlePageResize);
+  }
+
+  handlePageResize = (event) => {
+    let thisPersist = this;
+    if (event.propertyName === "width" || event.type === "resize") {
+      if (pageResizePreventDoubleFire) {
+        clearTimeout(pageResizePreventDoubleFire);
+      }
+      pageResizePreventDoubleFire = setTimeout(function () {
+        window.dispatchEvent(new Event('reRenderCharts'))
+        thisPersist.setState({ open: thisPersist.state.open });
+      }, 100);
+    }
+  }
 
   handleDrawerClose = () => {
     this.setState({ open: false });
@@ -147,11 +168,11 @@ class App extends React.Component {
     const { anchor, open } = this.state;
 
     let widthOverride = {
-      width: window.innerWidth + "px"
+      width: "calc(100%)"
     }
-    if (open && drawerWidth) {
+    if (open && drawerWidth && (document.body.clientWidth >= 600)) {
       widthOverride = {
-        width: "calc(100% - " + drawerWidth + "px)"
+        width: "calc(" + (document.body.clientWidth - drawerWidth) + "px)"
       }
     }
 
@@ -189,17 +210,6 @@ class App extends React.Component {
 
     return (
       <div className={classes.root}>
-        {/* <TextField
-          id="persistent-anchor"
-          select
-          label="Anchor"
-          value={anchor}
-          onChange={this.handleChangeAnchor}
-          margin="normal"
-        >
-          <MenuItem value="left">left</MenuItem>
-          <MenuItem value="right">right</MenuItem>
-        </TextField> */}
         <div className={classes.appFrame}>
           <AppBar
             className={classNames(classes.appBar, {
@@ -230,8 +240,8 @@ class App extends React.Component {
             style={{ maxWidth: '100%' }}
           >
             <div className={classes.drawerHeader} />
-            <div className={classNames({[classes.pageWidth]: open}) + " " + classes.transitionWidth} style={widthOverride}>
-              <PageContainer/>
+            <div ref={elem => this.pageContainer = elem} className={classNames({ [classes.pageWidth]: open }) + " " + classes.transitionWidth} style={widthOverride}>
+              <PageContainer />
             </div>
           </main>
           {after}

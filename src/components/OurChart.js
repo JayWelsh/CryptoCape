@@ -44,8 +44,21 @@ const options = {
   },
   xAxis: {
     type: 'datetime'
+  },
+  plotOptions: {
+    series: {
+      animation: 500,
+      events: {
+        afterAnimate: function(e){
+          isAnimating = false;
+        }
+      }
+    }
   }
 }
+
+let pageRerenderPreventDoubleFire;
+let isAnimating = false;
 
 class OurChart extends React.Component {
   state = {
@@ -53,14 +66,35 @@ class OurChart extends React.Component {
   };
 
   componentDidMount() {
+    window.addEventListener("reRenderCharts", this.reRenderCharts);
+  }
 
+  componentWillUnmount() {
+    window.removeEventListener("reRenderCharts", this.reRenderCharts);
+  }
+
+
+  reRenderCharts = (event) => {
+    if (isAnimating == false) {
+      let thisPersist = this;
+      if (pageRerenderPreventDoubleFire) {
+        clearTimeout(pageRerenderPreventDoubleFire);
+      }
+
+      pageRerenderPreventDoubleFire = setTimeout(function () {
+        isAnimating = true;
+        thisPersist.setState({ key: Math.random() });
+      }, 250);
+    }else{
+      this.reRenderCharts
+    }
   }
 
   render() {
     //TODO Props
     const { classes, theme } = this.props;
     return (
-      <div className={classes.cardPositioning}>
+      <div key={this.state.key} className={classes.cardPositioning}>
         <HighchartsReact
           highcharts={Highcharts}
           options={options}
