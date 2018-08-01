@@ -147,7 +147,7 @@ class App extends React.Component {
         clearTimeout(pageResizePreventDoubleFire);
       }
       pageResizePreventDoubleFire = setTimeout(function () {
-        window.dispatchEvent(new Event('reRenderCharts'))
+        window.dispatchEvent(new Event('reRenderCharts'));
         thisPersist.setState({ open: thisPersist.state.open });
       }, 100);
     }

@@ -8,8 +8,16 @@ import CardMedia from '@material-ui/core/CardMedia';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
-import Highcharts from 'highcharts';
+import Highcharts from 'highcharts/highstock'; //Actually highstock but following standards from their demo
 import HighchartsReact from 'highcharts-react-official';
+
+// Load Highcharts modules
+require('highcharts/indicators/indicators')(Highcharts)
+require('highcharts/indicators/pivot-points')(Highcharts)
+require('highcharts/indicators/macd')(Highcharts)
+require('highcharts/modules/exporting')(Highcharts)
+require('highcharts/modules/map')(Highcharts)
+
 const testData = require("../demo-data/ethereumHistoryHighcharts.json");
 
 const styles = {
@@ -23,41 +31,43 @@ const styles = {
   }
 };
 
-const options = {
-  chart: {
-    events: {
-
+const stockOptions = {
+    chart: {
+      type: 'area'
     },
-    type: 'area'
-  },
-  title: {
-    text: 'Ethereum Portfolio Performance'
-  },
-  series: [{
-    data: testData
-  }],
-  colors: [
-    '#3f51b5'
-  ],
-  tooltip: {
-    animation: false
-  },
-  xAxis: {
-    type: 'datetime'
-  },
-  plotOptions: {
-    series: {
-      animation: 500,
-      events: {
-        afterAnimate: function(e){
-          isAnimating = false;
-        }
+    legend: {
+      enabled: true
+    },
+    title: {
+      text: 'Ethereum Performance'
+    },
+    series: [{
+      data: testData,
+      name: "Ethereum / USD"
+    }],
+    colors: [
+      '#3f51b5'
+    ],
+    tooltip: {
+      animation: false
+    },
+    title: {
+      text: 'Ethereum Portfolio Performance'
+    },
+    plotOptions: {
+      series: {
+        animation: 500,
+        events: {
+          afterAnimate: function(e){
+            isAnimating = false;
+          }
+        },
       }
     }
-  }
 }
 
 let pageRerenderPreventDoubleFire;
+let chartRedispatchEventRerenderDelay;
 let isAnimating = false;
 
 class OurChart extends React.Component {
@@ -75,29 +85,18 @@ class OurChart extends React.Component {
 
 
   reRenderCharts = (event) => {
-    if (isAnimating == false) {
-      let thisPersist = this;
-      if (pageRerenderPreventDoubleFire) {
-        clearTimeout(pageRerenderPreventDoubleFire);
-      }
-
-      pageRerenderPreventDoubleFire = setTimeout(function () {
-        isAnimating = true;
-        thisPersist.setState({ key: Math.random() });
-      }, 250);
-    }else{
-      this.reRenderCharts
-    }
+    let thisPersist = this;
+    thisPersist.setState({ key: Math.random() });
   }
 
   render() {
-    //TODO Props
     const { classes, theme } = this.props;
     return (
       <div key={this.state.key} className={classes.cardPositioning}>
         <HighchartsReact
           highcharts={Highcharts}
-          options={options}
+          constructorType={'stockChart'}
+          options={stockOptions}
         />
       </div>
     );
