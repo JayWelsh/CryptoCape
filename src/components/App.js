@@ -15,10 +15,9 @@ import MenuIcon from '@material-ui/icons/Menu';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import CryptocapeLogo from '../img/Cryptocape9.png';
-import FullWidthTabs from './FullWidthTabs';
 import PageContainer from './PageContainer';
 import { mailFolderListItems, otherMailFolderListItems } from './NavigationItems';
-// import { SimpleMediaCard } from './SimpleMediaCard';
+import { BrowserRouter as Router, Link } from 'react-router-dom';
 
 const drawerWidth = 210;
 
@@ -121,10 +120,19 @@ const styles = theme => ({
 let pageResizePreventDoubleFire;
 
 class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.pageContainer = React.createRef();
+  }
+
   state = {
     open: false,
     anchor: 'left',
+    lastPageWidth: 0,
+    lastDocumentWidth: 0
   };
+
+  
 
   handleDrawerToggle = () => {
     this.setState({ open: !this.state.open }, function(){
@@ -132,24 +140,28 @@ class App extends React.Component {
   };
 
   componentDidMount() {
-    this.pageContainer.addEventListener("transitionend", this.handlePageResize);
+    this.pageContainer.current.addEventListener("transitionend", this.handlePageResize);
     window.addEventListener("resize", this.handlePageResize);
   }
 
   componentWillUnmount() {
-    this.pageContainer.removeEventListener("transitionend", this.handlePageResize);
+    this.pageContainer.current.removeEventListener("transitionend", this.handlePageResize);
   }
 
   handlePageResize = (event) => {
     let thisPersist = this;
-    if (event.propertyName === "width" || event.type === "resize") {
-      if (pageResizePreventDoubleFire) {
-        clearTimeout(pageResizePreventDoubleFire);
+    let pageWidth = thisPersist.pageContainer.current.offsetWidth;
+    let documentWidth = window.width;
+    if ((pageWidth !== this.state.lastPageWidth) || documentWidth !== thisPersist.state.lastDocumentWidth) {
+      if (event.propertyName === "width" || event.type === "resize") {
+        if (pageResizePreventDoubleFire) {
+          clearTimeout(pageResizePreventDoubleFire);
+        }
+        pageResizePreventDoubleFire = setTimeout(function () {
+          window.dispatchEvent(new Event('reRenderCharts'));
+          thisPersist.setState({ open: thisPersist.state.open, lastPageWidth: pageWidth, lastDocumentWidth: documentWidth});
+        }, 100);
       }
-      pageResizePreventDoubleFire = setTimeout(function () {
-        window.dispatchEvent(new Event('reRenderCharts'));
-        thisPersist.setState({ open: thisPersist.state.open });
-      }, 100);
     }
   }
 
@@ -209,44 +221,48 @@ class App extends React.Component {
     }
 
     return (
-      <div className={classes.root}>
-        <div className={classes.appFrame}>
-          <AppBar
-            className={classNames(classes.appBar, {
-              [classes.appBarShift]: open,
-              [classes[`appBarShift-${anchor}`]]: open,
-            })}
-          >
-            <Toolbar disableGutters={true}>
-              <IconButton
-                color="inherit"
-                aria-label="Open drawer"
-                onClick={this.handleDrawerToggle}
-                className={classNames(classes.menuButton) + " menu-button"}
-              >
-                <MenuIcon />
-              </IconButton>
-              <a className={"header-logo"} href="./">
-                <img className={"header-logo"} src={CryptocapeLogo} />
-              </a>
-            </Toolbar>
-          </AppBar>
-          {before}
-          <main
-            className={classNames(classes.content, classes[`content-${anchor}`], {
-              [classes.contentShift]: open,
-              [classes[`contentShift-${anchor}`]]: open,
-            })}
-            style={{ maxWidth: '100%' }}
-          >
-            <div className={classes.drawerHeader} />
-            <div ref={elem => this.pageContainer = elem} className={classNames({ [classes.pageWidth]: open }) + " " + classes.transitionWidth} style={widthOverride}>
-              <PageContainer />
-            </div>
-          </main>
-          {after}
+      <Router>
+        <div className={classes.root}>
+          <div className={classes.appFrame}>
+            <AppBar
+              className={classNames(classes.appBar, {
+                [classes.appBarShift]: open,
+                [classes[`appBarShift-${anchor}`]]: open,
+              })}
+            >
+              <Toolbar disableGutters={true}>
+                <IconButton
+                  color="inherit"
+                  aria-label="Open drawer"
+                  onClick={this.handleDrawerToggle}
+                  className={classNames(classes.menuButton) + " menu-button"}
+                >
+                  <MenuIcon />
+                </IconButton>
+                <a className={"header-logo"} href="javascript:;">
+                  <Link to={'/'} style={{ textDecoration: 'none' }}>
+                    <img className={"header-logo"} src={CryptocapeLogo} />
+                  </Link>
+                </a>
+              </Toolbar>
+            </AppBar>
+            {before}
+            <main
+              className={classNames(classes.content, classes[`content-${anchor}`], {
+                [classes.contentShift]: open,
+                [classes[`contentShift-${anchor}`]]: open,
+              })}
+              style={{ maxWidth: '100%' }}
+            >
+              <div className={classes.drawerHeader} />
+              <div ref={this.pageContainer} className={classNames({ [classes.pageWidth]: open }) + " " + classes.transitionWidth} style={widthOverride}>
+                <PageContainer />
+              </div>
+            </main>
+            {after}
+          </div>
         </div>
-      </div>
+      </Router>
     );
   }
 }

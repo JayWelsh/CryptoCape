@@ -43,14 +43,14 @@ class FullWidthTabsSimple extends React.Component {
       <div className={classes.root}>
         <AppBar position="static">
           <Tabs value={value} onChange={this.handleChange}>
-            <Tab label="Item One" />
-            <Tab label="Item Two" />
-            <Tab label="Item Three" href="#basic-tabs" />
+            <Tab label="Chart Test One" />
+            <Tab label="Chart Test Two" />
+            <Tab label="Chart Test Three" />
           </Tabs>
         </AppBar>
-        {value === 0 && <TabContainer>Item One</TabContainer>}
+        {value === 0 && <TabContainer><OurChart /></TabContainer>}
         {value === 1 && <TabContainer><OurChart /></TabContainer>}
-        {value === 2 && <TabContainer>Item Three</TabContainer>}
+        {value === 2 && <TabContainer><OurChart /></TabContainer>}
       </div>
     );
   }

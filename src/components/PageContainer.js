@@ -6,7 +6,9 @@ import AppBar from '@material-ui/core/AppBar';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
-import FullWidthTabs from './FullWidthTabs';
+import HomePage from './HomePage';
+import ChartsPage from './ChartsPage';
+import {Route} from 'react-router-dom';
 
 //TODO Functions
 
@@ -19,6 +21,9 @@ const styles = theme => ({
 });
 
 class PageContainer extends React.Component {
+  constructor(props) {
+    super(props);
+  }
   state = {
     //TODO
   };
@@ -37,10 +42,19 @@ class PageContainer extends React.Component {
 
     return (
       <div className={classes.pageContainer}>
-        <FullWidthTabs/>
+        <Route exact={true} path="/" component={HomePageRoute}/>
+        <Route exact={true} path="/charts" component={ChartsPageRoute}/>
       </div>
     );
   }
+}
+
+const HomePageRoute = ({ match }) => {
+  return <HomePage/>
+}
+
+const ChartsPageRoute = ({ match }) => {
+  return <ChartsPage/>
 }
 
 PageContainer.propTypes = {

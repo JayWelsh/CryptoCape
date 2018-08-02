@@ -32,38 +32,40 @@ const styles = {
 };
 
 const stockOptions = {
-    chart: {
-      type: 'area'
-    },
-    legend: {
-      enabled: true
-    },
-    title: {
-      text: 'Ethereum Performance'
-    },
-    series: [{
-      data: testData,
-      name: "Ethereum / USD"
-    }],
-    colors: [
-      '#3f51b5'
-    ],
-    tooltip: {
-      animation: false
-    },
-    title: {
-      text: 'Ethereum Portfolio Performance'
-    },
-    plotOptions: {
-      series: {
-        animation: 500,
-        events: {
-          afterAnimate: function(e){
-            isAnimating = false;
-          }
-        },
-      }
+  chart: {
+    type: 'area',
+    height: '500px'
+  },
+  legend: {
+    enabled: true
+  },
+  title: {
+    text: 'Ethereum Performance'
+  },
+  series: [{
+    data: testData,
+    name: "Ethereum / USD"
+  }],
+  colors: [
+    '#3f51b5'
+  ],
+  tooltip: {
+    animation: false,
+    pointFormat: '{series.name}: <b>{point.y:.2f} USD</b>',
+  },
+  title: {
+    text: 'Ethereum Portfolio Performance'
+  },
+  plotOptions: {
+    series: {
+      animation: 500,
+      events: {
+        afterAnimate: function (e) {
+          isAnimating = false;
+        }
+      },
     }
+  }
 }
 
 let pageRerenderPreventDoubleFire;

@@ -7,43 +7,54 @@ import Home from '@material-ui/icons/Home';
 import Settings from '@material-ui/icons/Settings';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import NotificationsActive from '@material-ui/icons/NotificationsActive';
+import {Link} from 'react-router-dom';
 
 export const mailFolderListItems = (
   <div>
-    <ListItem button>
-      <ListItemIcon>
-        <Home />
-      </ListItemIcon>
-      <ListItemText primary="Home" />
-    </ListItem>
-    <ListItem button>
-      <ListItemIcon>
-        <Timeline />
-      </ListItemIcon>
-      <ListItemText primary="Charts" />
-    </ListItem>
-    <ListItem button>
-      <ListItemIcon>
-        <NotificationsActive />
-      </ListItemIcon>
-      <ListItemText primary="Alerts" />
-    </ListItem>
-    <ListItem button>
-      <ListItemIcon>
-        <AccountCircle />
-      </ListItemIcon>
-      <ListItemText primary="Account" />
-    </ListItem>
+    <Link to={'/'} style={{ textDecoration: 'none' }}>
+      <ListItem button>
+        <ListItemIcon>
+          <Home />
+        </ListItemIcon>
+        <ListItemText primary="Home" />
+      </ListItem>
+    </Link>
+    <Link to={'/charts'} style={{ textDecoration: 'none' }}>
+      <ListItem button>
+        <ListItemIcon>
+          <Timeline />
+        </ListItemIcon>
+        <ListItemText primary="Charts" />
+      </ListItem>
+    </Link>
+    <Link to={'/alerts'} style={{ textDecoration: 'none' }}>
+      <ListItem button>
+        <ListItemIcon>
+          <NotificationsActive />
+        </ListItemIcon>
+        <ListItemText primary="Alerts" />
+      </ListItem>
+    </Link>
+    <Link to={'/account'} style={{ textDecoration: 'none' }}>
+      <ListItem button>
+        <ListItemIcon>
+          <AccountCircle />
+        </ListItemIcon>
+        <ListItemText primary="Account" />
+      </ListItem>
+    </Link>
   </div>
 );
 
 export const otherMailFolderListItems = (
   <div>
-    <ListItem button>
-      <ListItemIcon>
-        <Settings />
-      </ListItemIcon>
-      <ListItemText primary="Settings" />
-    </ListItem>
+    <Link to={'/settings'} style={{ textDecoration: 'none' }}>
+      <ListItem button>
+        <ListItemIcon>
+          <Settings />
+        </ListItemIcon>
+        <ListItemText primary="Settings" />
+      </ListItem>
+    </Link>
   </div>
 );

@@ -30,7 +30,7 @@ const styles = theme => ({
   }
 });
 
-class FullWidthTabs extends React.Component {
+class HomePage extends React.Component {
   state = {
     value: 0,
   };
@@ -56,8 +56,8 @@ class FullWidthTabs extends React.Component {
             textColor="primary"
             fullWidth
           >
-            <Tab label="Posts" />
-            <Tab label="Chart Test" />
+            <Tab label="News" />
+            <Tab label="Overview" />
           </Tabs>
         </AppBar>
         <SwipeableViews
@@ -65,7 +65,7 @@ class FullWidthTabs extends React.Component {
           index={this.state.value}
           disabled={true}
         >
-          <TabContainer dir={theme.direction} className={classes.tabContainer}>
+          <TabContainer dir={theme.direction}>
             <Grid container spacing={24}>
               <Grid item xs={12} sm={6} md={4} lg={3}>
                 <SimpleMediaCard />
@@ -106,7 +106,44 @@ class FullWidthTabs extends React.Component {
             </Grid>
           </TabContainer>
           <TabContainer dir={theme.direction}>
-            <OurChart />
+          <Grid container spacing={24}>
+              <Grid item xs={12} sm={6} md={4} lg={3}>
+                <SimpleMediaCard />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4} lg={3}>
+                <SimpleMediaCard />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4} lg={3}>
+                <SimpleMediaCard />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4} lg={3}>
+                <SimpleMediaCard />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4} lg={3}>
+                <SimpleMediaCard />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4} lg={3}>
+                <SimpleMediaCard />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4} lg={3}>
+                <SimpleMediaCard />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4} lg={3}>
+                <SimpleMediaCard />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4} lg={3}>
+                <SimpleMediaCard />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4} lg={3}>
+                <SimpleMediaCard />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4} lg={3}>
+                <SimpleMediaCard />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4} lg={3}>
+              <SimpleMediaCard />
+              </Grid>
+            </Grid>
           </TabContainer>
         </SwipeableViews>
       </div>
@@ -114,9 +151,9 @@ class FullWidthTabs extends React.Component {
   }
 }
 
-FullWidthTabs.propTypes = {
+HomePage.propTypes = {
   classes: PropTypes.object.isRequired,
   theme: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles, { withTheme: true })(FullWidthTabs);
+export default withStyles(styles, { withTheme: true })(HomePage);
