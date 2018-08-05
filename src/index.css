@@ -20,9 +20,11 @@ body {
   .header-logo {
     height: 35px;
   }
+  .header-logo-mobile {
+    padding-left: 10px;
+  }
   .menu-button {
-    margin-left: 10px!important;
-    margin-right: 10px!important;
+    margin-right: 5px!important;
   }
   .mobile-friendly-padding {
     padding-left: 0px;
@@ -35,7 +37,7 @@ body {
     height: 45px;
   }
   .menu-button {
-    margin-left: 12px;
-    margin-right: 20px;
+    margin-left: 10px!important;
+    margin-right: 10px!important;
   }
 }

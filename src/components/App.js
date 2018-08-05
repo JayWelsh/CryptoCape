@@ -16,10 +16,11 @@ import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import CryptocapeLogo from '../img/Cryptocape9.png';
 import PageContainer from './PageContainer';
-import { mailFolderListItems, otherMailFolderListItems } from './NavigationItems';
+import NavigationItemsMain from './NavigationItems';
 import { BrowserRouter as Router, Link } from 'react-router-dom';
 
 const drawerWidth = 210;
+const sizeConsiderMobile = 600;
 
 const styles = theme => ({
   root: {
@@ -53,10 +54,10 @@ const styles = theme => ({
     // }),
   },
   'appBarShift-left': {
-    marginLeft: drawerWidth,
+    
   },
   'appBarShift-right': {
-    marginRight: drawerWidth,
+    
   },
   menuButton: {
     marginLeft: 12,
@@ -142,6 +143,7 @@ class App extends React.Component {
   componentDidMount() {
     this.pageContainer.current.addEventListener("transitionend", this.handlePageResize);
     window.addEventListener("resize", this.handlePageResize);
+    window.addEventListener("menuToggle", this.handleDrawerToggle);
   }
 
   componentWillUnmount() {
@@ -171,20 +173,29 @@ class App extends React.Component {
 
   handleChangeAnchor = event => {
     this.setState({
-      anchor: event.target.value,
+      anchor: !this.state.anchor,
     });
   };
 
   render() {
     const { classes, theme } = this.props;
     const { anchor, open } = this.state;
+    let isConsideredMobile = false;
+    const documentBodyClientWidth = document.body.clientWidth;
+
+    if ((documentBodyClientWidth <= sizeConsiderMobile)) {
+      isConsideredMobile = true;
+      if (anchor === "left") {
+        this.setState({ anchor: "right" });
+      }
+    }
 
     let widthOverride = {
       width: "calc(100%)"
     }
-    if (open && drawerWidth && (document.body.clientWidth >= 600)) {
+    if (open && drawerWidth && (documentBodyClientWidth >= sizeConsiderMobile)) {
       widthOverride = {
-        width: "calc(" + (document.body.clientWidth - drawerWidth) + "px)"
+        width: "calc(" + (documentBodyClientWidth - drawerWidth) + "px)"
       }
     }
 
@@ -204,9 +215,7 @@ class App extends React.Component {
           <div className={classes.drawerHeader}>
           </div>
           <Divider />
-          <List>{mailFolderListItems}</List>
-          <Divider />
-          <List>{otherMailFolderListItems}</List>
+          <NavigationItemsMain isConsideredMobile={isConsideredMobile}/>
         </Drawer>
       </div>
     );
@@ -220,6 +229,45 @@ class App extends React.Component {
       after = drawer;
     }
 
+    const desktopToolbar = (
+      <Toolbar disableGutters={true}>
+        <IconButton
+          color="inherit"
+          aria-label="Open drawer"
+          onClick={this.handleDrawerToggle}
+          className={classNames(classes.menuButton) + " menu-button"}
+        >
+          <MenuIcon />
+        </IconButton>
+        <a className={"header-logo"} href="javascript:;">
+          <Link to={'/'} style={{ textDecoration: 'none' }}>
+            <img className={"header-logo"} src={CryptocapeLogo} />
+          </Link>
+        </a>
+      </Toolbar>
+    );
+
+    const mobileToolbar = (
+      <Toolbar disableGutters={true}>
+        <a className={"header-logo header-logo-mobile"} href="javascript:;">
+          <Link to={'/'} style={{ textDecoration: 'none' }}>
+            <img className={"header-logo"} src={CryptocapeLogo} />
+          </Link>
+        </a>
+        <IconButton
+          color="inherit"
+          aria-label="Open drawer"
+          onClick={this.handleDrawerToggle}
+          className={classNames(classes.menuButton) + " menu-button"}
+          style={{marginLeft: 'auto'}}
+        >
+          <MenuIcon />
+        </IconButton>
+      </Toolbar>
+    )
+
+    const toolbar = isConsideredMobile ? mobileToolbar : desktopToolbar
+
     return (
       <Router>
         <div className={classes.root}>
@@ -230,21 +278,7 @@ class App extends React.Component {
                 [classes[`appBarShift-${anchor}`]]: open,
               })}
             >
-              <Toolbar disableGutters={true}>
-                <IconButton
-                  color="inherit"
-                  aria-label="Open drawer"
-                  onClick={this.handleDrawerToggle}
-                  className={classNames(classes.menuButton) + " menu-button"}
-                >
-                  <MenuIcon />
-                </IconButton>
-                <a className={"header-logo"} href="javascript:;">
-                  <Link to={'/'} style={{ textDecoration: 'none' }}>
-                    <img className={"header-logo"} src={CryptocapeLogo} />
-                  </Link>
-                </a>
-              </Toolbar>
+              {toolbar}
             </AppBar>
             {before}
             <main

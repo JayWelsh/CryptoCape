@@ -58,7 +58,6 @@ const stockOptions = {
   },
   plotOptions: {
     series: {
-      animation: 500,
       events: {
         afterAnimate: function (e) {
           isAnimating = false;
