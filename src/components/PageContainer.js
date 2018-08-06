@@ -42,8 +42,9 @@ class PageContainer extends React.Component {
 
     return (
       <div className={classes.pageContainer}>
-        <Route exact={true} path="/" component={HomePageRoute}/>
-        <Route exact={true} path="/charts" component={ChartsPageRoute}/>
+          <Route exact={true} path="/" component={HomePageRoute}/>
+          <Route exact={true} path="/charts/:chartLink" component={ChartsPageRoute}/>
+          <Route exact={true} path="/charts" component={ChartsPageRoute}/>
       </div>
     );
   }
@@ -54,7 +55,11 @@ const HomePageRoute = ({ match }) => {
 }
 
 const ChartsPageRoute = ({ match }) => {
-  return <ChartsPage/>
+  if(match.params && match.params.chartLink){
+    return <ChartsPage renderChart={match.params.chartLink}/>
+  }else{
+    return <ChartsPage/>
+  }
 }
 
 PageContainer.propTypes = {

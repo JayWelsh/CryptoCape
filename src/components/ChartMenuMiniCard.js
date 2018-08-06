@@ -11,6 +11,7 @@ import AlertIcon from '@material-ui/icons/NotificationsActive';
 import LaunchIcon from '@material-ui/icons/Launch';
 import PerformanceIcon from '@material-ui/icons/Timeline';
 import FavouriteBorderIcon from '@material-ui/icons/FavoriteBorder';
+import {Link} from 'react-router-dom';
 
 const styles = theme => ({
     cardPositioning: {
@@ -48,36 +49,46 @@ const styles = theme => ({
   },
 });
 
-function MiniMediaCard(props) {
-  const { classes, theme, headline, subHeadline, image } = props;
+function ChartMenuMiniCard(props) {
+  const { classes, theme, headline, subHeadline, image, externalLink, chartLink } = props;
 
   return (
     <div className={classes.cardPositioning}>
       <Card className={classes.card}>
+      <Link to={`/charts/${chartLink}`}>
       <CardMedia
           className={classes.cover}
           image={image}
           title={subHeadline}
           style={{backgroundSize:"contain", backgroundOrigin: "content-box", padding: '5px'}}
         />
+        </Link>
         <div className={classes.details}>
           <CardContent className={classes.content}>
+          <Link to={`/charts/${chartLink}`} style={{ textDecoration: 'none' }}>
             <Typography variant="headline">{headline}</Typography>
             <Typography variant="subheading" color="textSecondary">
                 {subHeadline}
             </Typography>
+            </Link>
           </CardContent>
           <div className={classes.controls}>
-            <IconButton aria-label="Official Site">
+            <a href={externalLink} target="_blank" rel="noopener noreferrer">
+            <IconButton title="Official Site">
               <LaunchIcon />
             </IconButton>
-            <IconButton aria-label="Performance">
+            </a>
+            <Link to={`/charts/${chartLink}`}>
+            <IconButton title="Performance">
               <PerformanceIcon />
             </IconButton>
-            <IconButton aria-label="Alerts">
+            </Link>
+            <Link to={`/alerts/${chartLink}`}>
+            <IconButton title="Alerts">
               <AlertIcon />
             </IconButton>
-            <IconButton aria-label="Favourite">
+            </Link>
+            <IconButton title="Favourite">
               <FavouriteBorderIcon />
             </IconButton>
           </div>
@@ -88,9 +99,9 @@ function MiniMediaCard(props) {
   );
 }
 
-MiniMediaCard.propTypes = {
+ChartMenuMiniCard.propTypes = {
   classes: PropTypes.object.isRequired,
   theme: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles, { withTheme: true })(MiniMediaCard);
+export default withStyles(styles, { withTheme: true })(ChartMenuMiniCard);
