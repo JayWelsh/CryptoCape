@@ -8,7 +8,7 @@ import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
 import HomePage from './HomePage';
 import ChartsPage from './ChartsPage';
-import {Route} from 'react-router-dom';
+import {Route, withRouter} from 'react-router-dom';
 
 //TODO Functions
 
@@ -21,11 +21,18 @@ const styles = theme => ({
 });
 
 class PageContainer extends React.Component {
-  constructor(props) {
+  constructor(props){
     super(props);
   }
+
+  static propTypes = {
+    match: PropTypes.object.isRequired,
+    location: PropTypes.object.isRequired,
+    history: PropTypes.object.isRequired
+  }
+
   state = {
-    //TODO
+    history:  this.props.history
   };
 
   handleChange = (event, value) => {
@@ -36,9 +43,13 @@ class PageContainer extends React.Component {
     this.setState({ value: index });
   };
 
+  componentDidUpdate(prevProps){
+    window.dispatchEvent(new Event('resize'));
+  }
+
   render() {
     //TODO Props
-    const { classes, theme } = this.props;
+    const { classes, theme, history } = this.props;
 
     return (
       <div className={classes.pageContainer}>
@@ -67,4 +78,4 @@ PageContainer.propTypes = {
   theme: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles, { withTheme: true })(PageContainer);
+export default withRouter(withStyles(styles, { withTheme: true })(PageContainer));

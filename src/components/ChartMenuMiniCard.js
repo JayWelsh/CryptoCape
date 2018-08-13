@@ -23,7 +23,9 @@ const styles = theme => ({
     },
   card: {
     display: 'flex',
-    width: '345px'
+    width: '345px',
+    paddingLeft: '10px',
+    paddingRight: '10px'
   },
   details: {
     display: 'flex',
@@ -41,12 +43,15 @@ const styles = theme => ({
   controls: {
     display: 'flex',
     alignItems: 'center',
-    paddingLeft: theme.spacing.unit,
+    paddingLeft: '10px',
     paddingBottom: theme.spacing.unit,
   },
   alertIcon: {
 
   },
+  iconMargin: {
+    marginRight: '10px'
+  }
 });
 
 function ChartMenuMiniCard(props) {
@@ -64,7 +69,7 @@ function ChartMenuMiniCard(props) {
         />
         </Link>
         <div className={classes.details}>
-          <CardContent className={classes.content}>
+          <CardContent className={classes.content} style={{paddingLeft:'24px'}}>
           <Link to={`/charts/${chartLink}`} style={{ textDecoration: 'none' }}>
             <Typography variant="headline">{headline}</Typography>
             <Typography variant="subheading" color="textSecondary">
@@ -73,12 +78,12 @@ function ChartMenuMiniCard(props) {
             </Link>
           </CardContent>
           <div className={classes.controls}>
-            <a href={externalLink} target="_blank" rel="noopener noreferrer">
+            <a href={externalLink} target="_blank" rel="noopener noreferrer" className={classes.iconMargin}>
             <IconButton title="Official Site">
               <LaunchIcon />
             </IconButton>
             </a>
-            <Link to={`/charts/${chartLink}`}>
+            <Link to={`/charts/${chartLink}`} className={classes.iconMargin}>
             <IconButton title="Performance">
               <PerformanceIcon />
             </IconButton>
@@ -88,9 +93,9 @@ function ChartMenuMiniCard(props) {
               <AlertIcon />
             </IconButton>
             </Link>
-            <IconButton title="Favourite">
+            {/* <IconButton title="Favourite">
               <FavouriteBorderIcon />
-            </IconButton>
+            </IconButton> */}
           </div>
         </div>
         

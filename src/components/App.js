@@ -124,6 +124,7 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.pageContainer = React.createRef();
+    this.main = React.createRef();
   }
 
   state = {
@@ -152,7 +153,7 @@ class App extends React.Component {
 
   handlePageResize = (event) => {
     let thisPersist = this;
-    let pageWidth = thisPersist.pageContainer.current.offsetWidth;
+    let pageWidth = thisPersist.main.current.offsetWidth;
     let documentWidth = window.width;
     if ((pageWidth !== this.state.lastPageWidth) || documentWidth !== thisPersist.state.lastDocumentWidth) {
       if (event.propertyName === "width" || event.type === "resize") {
@@ -287,6 +288,7 @@ class App extends React.Component {
                 [classes[`contentShift-${anchor}`]]: open,
               })}
               style={{ maxWidth: '100%' }}
+              ref={this.main}
             >
               <div className={classes.drawerHeader} />
               <div ref={this.pageContainer} className={classNames({ [classes.pageWidth]: open }) + " " + classes.transitionWidth} style={widthOverride}>
