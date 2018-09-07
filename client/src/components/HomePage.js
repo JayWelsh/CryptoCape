@@ -45,7 +45,6 @@ class HomePage extends React.Component {
 
   render() {
     const { classes, theme } = this.props;
-
     return (
       <div className={classes.root}>
         <AppBar position="static" color="default">

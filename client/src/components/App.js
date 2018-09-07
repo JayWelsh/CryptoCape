@@ -18,6 +18,11 @@ import CryptocapeLogo from '../img/Cryptocape9.png';
 import PageContainer from './PageContainer';
 import NavigationItemsMain from './NavigationItems';
 import { BrowserRouter as Router, Link } from 'react-router-dom';
+import ApolloClient from 'apollo-boost';
+
+const client = new ApolloClient({
+  uri:''
+});
 
 const drawerWidth = 210;
 const sizeConsiderMobile = 600;
