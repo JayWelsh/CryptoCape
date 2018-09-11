@@ -10,6 +10,8 @@ import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import Highcharts from 'highcharts/highstock'; //Actually highstock but following standards from their demo
 import HighchartsReact from 'highcharts-react-official';
+import { Query } from "react-apollo";
+import gql from "graphql-tag";
 
 // Load Highcharts modules
 require('highcharts/indicators/indicators')(Highcharts)
@@ -30,42 +32,6 @@ const styles = {
     maxWidth: '1500px'
   }
 };
-
-const stockOptions = {
-  chart: {
-    type: 'area',
-    height: '500px'
-  },
-  legend: {
-    enabled: true
-  },
-  title: {
-    text: 'Ethereum Performance'
-  },
-  series: [{
-    data: testData,
-    name: "Ethereum / USD"
-  }],
-  colors: [
-    '#3f51b5'
-  ],
-  tooltip: {
-    animation: false,
-    pointFormat: '{series.name}: <b>{point.y:.2f} USD</b>',
-  },
-  title: {
-    text: 'Ethereum Portfolio Performance'
-  },
-  plotOptions: {
-    series: {
-      events: {
-        afterAnimate: function (e) {
-          isAnimating = false;
-        }
-      },
-    }
-  }
-}
 
 let pageRerenderPreventDoubleFire;
 let chartRedispatchEventRerenderDelay;
@@ -90,15 +56,83 @@ class OurChart extends React.Component {
     thisPersist.setState({ key: Math.random() });
   }
 
+  refactorTimeseriesData = (cryptocurreny) => {
+    let returnPricingData = [];
+    let cryptocurrenyName = cryptocurreny.name;
+    cryptocurreny.historicalDaily.forEach(({time, close}) => {
+      returnPricingData.push([time * 1000, close]);
+    });
+    return {name: cryptocurrenyName + " / USD", data: returnPricingData};
+  }
+
   render() {
-    const { classes, theme } = this.props;
+    const { classes, theme, chartLink } = this.props;
+    console.log("chartLink",chartLink);
+    const GET_CHART_DATA = gql`
+    query 
+      Dog($chartLink: String!) {
+        cryptocurrencies(name: $chartLink) {
+          id
+          abbreviation
+          name
+          externalLink
+          historicalDaily {
+            close
+            time
+          }
+        }
+      }
+    `
     return (
       <div key={this.state.key} className={classes.cardPositioning}>
-        <HighchartsReact
-          highcharts={Highcharts}
-          constructorType={'stockChart'}
-          options={stockOptions}
-        />
+        <Query
+                variables={{chartLink}}
+                query={GET_CHART_DATA}
+              >
+                {({ loading, error, data }) => {
+                  console.log("data", data);
+                  if (loading) return <p>Loading...</p>;
+                  if (error) return <p>Error :(</p>;
+                  let seriesData = data.cryptocurrencies.map(this.refactorTimeseriesData);
+                  let stockOptions = {
+                    chart: {
+                      type: 'area',
+                      height: '500px'
+                    },
+                    legend: {
+                      enabled: true
+                    },
+                    title: {
+                      text: 'Ethereum Performance'
+                    },
+                    series: seriesData,
+                    colors: [
+                      '#3f51b5'
+                    ],
+                    tooltip: {
+                      animation: false,
+                      pointFormat: '{series.name}: <b>{point.y:.2f} USD</b>',
+                    },
+                    title: {
+                      text: 'Ethereum Portfolio Performance'
+                    },
+                    plotOptions: {
+                      series: {
+                        events: {
+                          afterAnimate: function (e) {
+                            isAnimating = false;
+                          }
+                        },
+                      }
+                    }
+                  }
+                  return <HighchartsReact
+                            highcharts={Highcharts}
+                            constructorType={'stockChart'}
+                            options={stockOptions}
+                          />
+                }}
+              </Query>
       </div>
     );
   }

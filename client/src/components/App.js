@@ -19,9 +19,11 @@ import PageContainer from './PageContainer';
 import NavigationItemsMain from './NavigationItems';
 import { BrowserRouter as Router, Link } from 'react-router-dom';
 import ApolloClient from 'apollo-boost';
+import gql from "graphql-tag";
+import { ApolloProvider } from "react-apollo";
 
 const client = new ApolloClient({
-  uri:''
+  uri:'http://localhost:3000/graphql'
 });
 
 const drawerWidth = 210;
@@ -276,33 +278,35 @@ class App extends React.Component {
 
     return (
       <Router>
-        <div className={classes.root}>
-          <div className={classes.appFrame}>
-            <AppBar
-              className={classNames(classes.appBar, {
-                [classes.appBarShift]: open,
-                [classes[`appBarShift-${anchor}`]]: open,
-              })}
-            >
-              {toolbar}
-            </AppBar>
-            {before}
-            <main
-              className={classNames(classes.content, classes[`content-${anchor}`], {
-                [classes.contentShift]: open,
-                [classes[`contentShift-${anchor}`]]: open,
-              })}
-              style={{ maxWidth: '100%' }}
-              ref={this.main}
-            >
-              <div className={classes.drawerHeader} />
-              <div ref={this.pageContainer} className={classNames({ [classes.pageWidth]: open }) + " " + classes.transitionWidth} style={widthOverride}>
-                <PageContainer />
-              </div>
-            </main>
-            {after}
+        <ApolloProvider client={client}>
+          <div className={classes.root}>
+            <div className={classes.appFrame}>
+              <AppBar
+                className={classNames(classes.appBar, {
+                  [classes.appBarShift]: open,
+                  [classes[`appBarShift-${anchor}`]]: open,
+                })}
+              >
+                {toolbar}
+              </AppBar>
+              {before}
+              <main
+                className={classNames(classes.content, classes[`content-${anchor}`], {
+                  [classes.contentShift]: open,
+                  [classes[`contentShift-${anchor}`]]: open,
+                })}
+                style={{ maxWidth: '100%' }}
+                ref={this.main}
+              >
+                <div className={classes.drawerHeader} />
+                <div ref={this.pageContainer} className={classNames({ [classes.pageWidth]: open }) + " " + classes.transitionWidth} style={widthOverride}>
+                  <PageContainer />
+                </div>
+              </main>
+              {after}
+            </div>
           </div>
-        </div>
+        </ApolloProvider>
       </Router>
     );
   }
