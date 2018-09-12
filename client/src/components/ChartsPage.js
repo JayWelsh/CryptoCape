@@ -84,6 +84,23 @@ class ChartsPage extends React.Component {
     this.setState({ value: index });
   };
 
+  getPlaceholders = () => {
+    let placeholderComponents = [];
+    let placeholderComponentCount = 9;
+    for(let i = 0;i<placeholderComponentCount;i++ ){
+      placeholderComponents.push(<Grid item xs={12} sm={6} md={4} lg={3}>
+        <ChartMenuMiniCard
+          externalLink={"Loading..."}
+          headline={"Loading..."}
+          subHeadline={"Loading..."}
+          chartLink={"Loading..."}
+          isPlaceholding={true}
+          image={null} />
+      </Grid>)
+    }
+    return placeholderComponents;
+  }
+
   render() {
     const { classes, theme, match, location, history } = this.props;
     const { value, chartLink, disableChart } = this.state;
@@ -125,16 +142,8 @@ class ChartsPage extends React.Component {
               `}
               >
                 {({ loading, error, data }) => {
-                  console.log("data", data);
-                  if (loading) return <Grid item xs={12} sm={6} md={4} lg={3}>
-                    <ChartMenuMiniCard
-                      externalLink={"Loading..."}
-                      headline={"Loading..."}
-                      subHeadline={"Loading..."}
-                      chartLink={"Loading..."}
-                      image={null} />
-                  </Grid>;
-                  if (error) return <p>Error :(</p>;
+                  if (loading) return this.getPlaceholders();
+                  if (error) return <Grid item xs={12} sm={6} md={4} lg={3}><p>Error :(</p></Grid>;
                   return data.cryptocurrencies.map(({ id, abbreviation, name, externalLink }) => (
                     <Grid item xs={12} sm={6} md={4} lg={3}>
                       <ChartMenuMiniCard
@@ -144,9 +153,6 @@ class ChartsPage extends React.Component {
                         chartLink={name.toLowerCase().replace(/" "/g, "-")}
                         image={cryptocurrencyImages[abbreviation]} />
                     </Grid>
-                    // <div key={id}>
-                    //   <p>{`${id}: ${abbreviation}`}</p>
-                    // </div>
                   ));
                 }}
               </Query>

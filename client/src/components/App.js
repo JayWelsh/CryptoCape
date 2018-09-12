@@ -22,8 +22,13 @@ import ApolloClient from 'apollo-boost';
 import gql from "graphql-tag";
 import { ApolloProvider } from "react-apollo";
 
+let endpointGraphQL = "https://cryptocape.com/graphql"
+if (process.env.NODE_ENV !== 'production') {
+  endpointGraphQL = "http://localhost:5000/graphql"
+}
+
 const client = new ApolloClient({
-  uri:'http://localhost:3000/graphql'
+  uri: endpointGraphQL
 });
 
 const drawerWidth = 210;

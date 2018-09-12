@@ -55,50 +55,52 @@ const styles = theme => ({
 });
 
 function ChartMenuMiniCard(props) {
-  const { classes, theme, headline, subHeadline, image, externalLink, chartLink } = props;
-
+  const { classes, theme, headline, subHeadline, image, externalLink, chartLink, isPlaceholding } = props;
+  let disablePointerEventsIfPlaceholding;
+  if(isPlaceholding){
+    disablePointerEventsIfPlaceholding = 'disable-pointer-events';
+  }
   return (
     <div className={classes.cardPositioning}>
       <Card className={classes.card}>
-      <Link to={`/charts/${chartLink}`}>
-      <CardMedia
-          className={classes.cover}
-          image={image}
-          title={subHeadline}
-          style={{backgroundSize:"contain", backgroundOrigin: "content-box", padding: '5px'}}
-        />
+        <Link to={`/charts/${chartLink}`} className={disablePointerEventsIfPlaceholding}>
+          <CardMedia
+            className={classes.cover}
+            image={image}
+            title={subHeadline}
+            style={{backgroundSize:"contain", backgroundOrigin: "content-box", padding: '5px'}}
+          />
         </Link>
         <div className={classes.details}>
           <CardContent className={classes.content} style={{paddingLeft:'24px'}}>
-          <Link to={`/charts/${chartLink}`} style={{ textDecoration: 'none' }}>
-            <Typography variant="headline">{headline}</Typography>
-            <Typography variant="subheading" color="textSecondary">
+            <Link to={`/charts/${chartLink}`} style={{ textDecoration: 'none' }} className={disablePointerEventsIfPlaceholding}>
+              <Typography variant="headline">{headline}</Typography>
+              <Typography variant="subheading" color="textSecondary">
                 {subHeadline}
-            </Typography>
+              </Typography>
             </Link>
           </CardContent>
           <div className={classes.controls}>
-            <a href={externalLink} target="_blank" rel="noopener noreferrer" className={classes.iconMargin}>
-            <IconButton title="Official Site">
-              <LaunchIcon />
-            </IconButton>
+            <a href={externalLink} target="_blank" rel="noopener noreferrer" className={classes.iconMargin + " " + disablePointerEventsIfPlaceholding}>
+              <IconButton title="Official Site">
+                <LaunchIcon />
+              </IconButton>
             </a>
-            <Link to={`/charts/${chartLink}`} className={classes.iconMargin}>
-            <IconButton title="Performance">
-              <PerformanceIcon />
-            </IconButton>
+            <Link to={`/charts/${chartLink}`} className={classes.iconMargin + " " + disablePointerEventsIfPlaceholding}>
+              <IconButton title="Performance">
+                <PerformanceIcon />
+              </IconButton>
             </Link>
-            <Link to={`/alerts/${chartLink}`}>
-            <IconButton title="Alerts">
-              <AlertIcon />
-            </IconButton>
+            <Link to={`/alerts/${chartLink}`} className={disablePointerEventsIfPlaceholding}>
+              <IconButton title="Alerts">
+                <AlertIcon />
+              </IconButton>
             </Link>
             {/* <IconButton title="Favourite">
               <FavouriteBorderIcon />
             </IconButton> */}
           </div>
         </div>
-        
       </Card>
     </div>
   );
