@@ -71,9 +71,25 @@ coinList.forEach((item, index) => {
     coinListURLs.push(url);
 })
 
-const promises = coinListURLs.map(url => { return promiseLimit(() => request(url)) });
+let data = [];
 
-Promise.all(promises).then((data) => {
+const DELAY_MS = 1000;
+
+async function wait(ms) {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function doRequests(URLs) {
+  for(const URL of URLs) {
+    data.push(await request(URL));
+    await wait(DELAY_MS);
+    console.log("Requesting URL: " + URL);
+  }
+}
+
+doRequests(coinListURLs).then(() => {
     Conn.sync({ force: true }).then(() => {
         Cryptocurrency.create({
             abbreviation: "ETH",
