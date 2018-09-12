@@ -1,15 +1,28 @@
 import * as express from 'express';
 import * as GraphHTTP from 'express-graphql'
 import {CryptocurrencySchema} from './schema';
+import * as cors from 'cors';
 import * as path from 'path';
 
 const app = express();
 
-app.use('/graphql', GraphHTTP({
-    schema: CryptocurrencySchema,
-    pretty: true,
-    graphiql: true
-}));
+if (process.env.REACT_APP_FORCE_LOCALHOST) {
+    //Enable CORS for dev env
+    //(GraphQL endpoint on different port to client dev server)
+    app.use('/graphql', cors(), GraphHTTP({
+        schema: CryptocurrencySchema,
+        pretty: true,
+        graphiql: true
+    }));
+}else{
+    //GraphQL routing handled by nginx
+    //No CORS needed
+    app.use('/graphql', GraphHTTP({
+        schema: CryptocurrencySchema,
+        pretty: true,
+        graphiql: true
+    }));
+}
 
 app.use(express.static(path.join(__dirname, '../../client/build')));
 

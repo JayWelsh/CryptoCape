@@ -2,6 +2,8 @@ body {
   margin: 0;
   padding: 0;
   font-family: sans-serif;
+  overflow-y: scroll;
+  overflow: -moz-scrollbars-vertical; 
 }
 
 .react-swipeable-view-container > div {
@@ -27,8 +29,8 @@ body {
     margin-right: 5px!important;
   }
   .mobile-friendly-padding {
-    padding-left: 0px;
-    padding-right: 0px;
+    padding-left: 15px;
+    padding-right: 15px;
   }
 }
 

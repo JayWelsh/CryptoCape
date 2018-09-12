@@ -23,7 +23,7 @@ import gql from "graphql-tag";
 import { ApolloProvider } from "react-apollo";
 
 let endpointGraphQL = "https://cryptocape.com/graphql"
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production' || process.env.REACT_APP_FORCE_LOCALHOST) {
   endpointGraphQL = "http://localhost:5000/graphql"
 }
 
