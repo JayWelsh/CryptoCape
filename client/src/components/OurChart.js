@@ -93,6 +93,10 @@ class OurChart extends React.Component {
                   console.log("data", data);
                   if (loading) return <p>Loading...</p>;
                   if (error) return <p>Error :(</p>;
+                  let cryptocurrenyName = 'Currency ';
+                  if(data.cryptocurrencies && data.cryptocurrencies.length == 1){
+                    cryptocurrenyName = data.cryptocurrencies[0].name;
+                  }
                   let seriesData = data.cryptocurrencies.map(this.refactorTimeseriesData);
                   let stockOptions = {
                     chart: {
@@ -101,9 +105,6 @@ class OurChart extends React.Component {
                     },
                     legend: {
                       enabled: true
-                    },
-                    title: {
-                      text: 'Ethereum Performance'
                     },
                     series: seriesData,
                     colors: [
@@ -114,7 +115,7 @@ class OurChart extends React.Component {
                       pointFormat: '{series.name}: <b>{point.y:.2f} USD</b>',
                     },
                     title: {
-                      text: 'Ethereum Portfolio Performance'
+                      text: cryptocurrenyName + ' Performance'
                     },
                     plotOptions: {
                       series: {

@@ -134,8 +134,10 @@ class ChartsPage extends React.Component {
   }
 
   componentDidMount() {
-    this.intervalFetchPrices = setInterval(() => this.fetchPriceValues(), 10000);
-    this.fetchPriceValues(); // also load one immediately
+    if (!this.state.chartLink) {
+      this.intervalFetchPrices = setInterval(() => this.fetchPriceValues(), 10000);
+      this.fetchPriceValues(); // also load one immediately
+    }
   }
 
   componentWillUnmount() {
