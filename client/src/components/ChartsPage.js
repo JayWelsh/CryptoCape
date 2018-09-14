@@ -24,19 +24,53 @@ import RaidenLogo from '../img/coins/raiden.svg';
 import { Link, withRouter } from 'react-router-dom';
 import { Query } from "react-apollo";
 import gql from "graphql-tag";
+import axios from 'axios';
 
-const cryptocurrencyImages = {
-  'ETH': EthereumLogo,
-  'ANT': AragonLogo,
-  'DNT': District0x,
-  'ZRX': svg0x,
-  'BAT': BATsvg,
-  'GNT': GolemLogo,
-  'REP': AugurLogo,
-  'SNT': StatusLogo,
-  'OMG': OmisegoLogo,
-  'BLT': BloomLogo,
-  'RDN': RaidenLogo
+const coinList = {
+  'ETH': {
+    'image': EthereumLogo,
+    'symbol': 'ETH'
+  },
+  'ANT': {
+    'image': AragonLogo,
+    'symbol': 'ANT'
+  },
+  'DNT': {
+    'image': District0x,
+    'symbol': 'DNT'
+  },
+  'ZRX': {
+    'image': svg0x,
+    'symbol': 'ZRX'
+  },
+  'BAT': {
+    'image': BATsvg,
+    'symbol': 'BAT'
+  },
+  'GNT': {
+    'image': GolemLogo,
+    'symbol': 'GNT'
+  },
+  'REP': {
+    'image': AugurLogo,
+    'symbol': 'REP'
+  },
+  'SNT': {
+    'image': StatusLogo,
+    'symbol': 'SNT'
+  },
+  'OMG': {
+    'image': OmisegoLogo,
+    'symbol': 'OMG'
+  },
+  'BLT': {
+    'image': BloomLogo,
+    'symbol': 'BLT'
+  },
+  'RDN': {
+    'image': RaidenLogo,
+    'symbol': 'RDN'
+  }
 }
 
 function TabContainer({ children, dir }) {
@@ -73,7 +107,8 @@ class ChartsPage extends React.Component {
   state = {
     value: this.props.renderChart ? 1 : 0,
     chartLink: this.props.renderChart ? this.props.renderChart : false,
-    disableChart: this.props.renderChart ? false : true
+    disableChart: this.props.renderChart ? false : true,
+    coins: coinList
   };
 
   handleChange = (event, value) => {
@@ -84,11 +119,34 @@ class ChartsPage extends React.Component {
     this.setState({ value: index });
   };
 
+  fetchPriceValues() {
+    let thisPersist = this;
+    let coinListKeys = Object.keys(coinList);
+    let currency = "$";
+    let requestURL = 'https://min-api.cryptocompare.com/data/pricemulti?fsyms=' + coinListKeys.join(',') + '&tsyms=USD';
+    axios.get(requestURL).then(res => {
+      coinListKeys.forEach((item, index) => {
+        let coinPrice = res.data[item].USD;
+        coinList[item].price = (currency + coinPrice);
+      });
+      thisPersist.setState({coins: coinList});
+    })
+  }
+
+  componentDidMount() {
+    this.intervalFetchPrices = setInterval(() => this.fetchPriceValues(), 10000);
+    this.fetchPriceValues(); // also load one immediately
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.intervalFetchPrices);
+  }
+
   getPlaceholders = () => {
     let placeholderComponents = [];
     let placeholderComponentCount = 9;
     for(let i = 0;i<placeholderComponentCount;i++ ){
-      placeholderComponents.push(<Grid item xs={12} sm={6} md={4} lg={3}>
+      placeholderComponents.push(<Grid item key={i} xs={12} sm={6} md={4} lg={3}>
         <ChartMenuMiniCard
           externalLink={"Loading..."}
           headline={"Loading..."}
@@ -103,7 +161,7 @@ class ChartsPage extends React.Component {
 
   render() {
     const { classes, theme, match, location, history } = this.props;
-    const { value, chartLink, disableChart } = this.state;
+    const { value, chartLink, disableChart, coins } = this.state;
 
     let disableChartStyle = {};
     if (disableChart) {
@@ -145,13 +203,14 @@ class ChartsPage extends React.Component {
                   if (loading) return this.getPlaceholders();
                   if (error) return <Grid item xs={12} sm={6} md={4} lg={3}><p>Error :(</p></Grid>;
                   return data.cryptocurrencies.map(({ id, abbreviation, name, externalLink }) => (
-                    <Grid item xs={12} sm={6} md={4} lg={3}>
+                    <Grid item key={id} xs={12} sm={6} md={4} lg={3}>
                       <ChartMenuMiniCard
                         externalLink={externalLink}
                         headline={abbreviation}
                         subHeadline={name}
                         chartLink={name.toLowerCase().replace(/" "/g, "-")}
-                        image={cryptocurrencyImages[abbreviation]} />
+                        realtimeValue={coins[abbreviation] ? coins[abbreviation].price : ''}
+                        image={coinList[abbreviation].image} />
                     </Grid>
                   ));
                 }}

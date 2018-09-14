@@ -21,6 +21,16 @@ const styles = theme => ({
         position: 'relative',
         transform: 'translateX(-50%)'
     },
+    realtimeValue: {
+      display: 'inline-block',
+      right: '-10px',
+      top: '4px',
+      position: 'relative',
+      float: 'right'
+    },
+    headline: {
+      display: 'inline-block'
+    },
   card: {
     display: 'flex',
     width: '345px',
@@ -55,7 +65,7 @@ const styles = theme => ({
 });
 
 function ChartMenuMiniCard(props) {
-  const { classes, theme, headline, subHeadline, image, externalLink, chartLink, isPlaceholding } = props;
+  const { classes, theme, headline, subHeadline, image, externalLink, chartLink, isPlaceholding, realtimeValue } = props;
   let disablePointerEventsIfPlaceholding;
   if(isPlaceholding){
     disablePointerEventsIfPlaceholding = 'disable-pointer-events';
@@ -74,7 +84,10 @@ function ChartMenuMiniCard(props) {
         <div className={classes.details}>
           <CardContent className={classes.content} style={{paddingLeft:'24px'}}>
             <Link to={`/charts/${chartLink}`} style={{ textDecoration: 'none' }} className={disablePointerEventsIfPlaceholding}>
-              <Typography variant="headline">{headline}</Typography>
+              <Typography variant="headline" className={classes.headline}>
+                {headline}
+              </Typography>
+              <Typography variant="subheading" className={classes.realtimeValue}>{realtimeValue}</Typography>
               <Typography variant="subheading" color="textSecondary">
                 {subHeadline}
               </Typography>
