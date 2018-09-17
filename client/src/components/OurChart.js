@@ -124,6 +124,7 @@ class OurChart extends React.Component {
                             isAnimating = false;
                           }
                         },
+                        animation: false
                       }
                     }
                   }

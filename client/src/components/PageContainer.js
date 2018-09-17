@@ -56,6 +56,8 @@ class PageContainer extends React.Component {
           <Route exact={true} path="/" component={HomePageRoute}/>
           <Route exact={true} path="/charts/:chartLink" component={ChartsPageRoute}/>
           <Route exact={true} path="/charts" component={ChartsPageRoute}/>
+          <Route exact={true} path="/portfolio" component={PortfolioPageRoute}/>
+          <Route exact={true} path="/portfolio/:publicKey" component={PortfolioPageRoute}/>
       </div>
     );
   }
@@ -70,6 +72,14 @@ const ChartsPageRoute = ({ match }) => {
     return <ChartsPage renderChart={match.params.chartLink}/>
   }else{
     return <ChartsPage/>
+  }
+}
+
+const PortfolioPageRoute = ({ match }) => {
+  if(match.params && match.params.publicKey){
+    return null
+  }else{
+    return null
   }
 }
 

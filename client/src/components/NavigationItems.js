@@ -11,6 +11,7 @@ import Home from '@material-ui/icons/Home';
 import Settings from '@material-ui/icons/Settings';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import NotificationsActive from '@material-ui/icons/NotificationsActive';
+import PortfolioDonut from '@material-ui/icons/DonutSmall';
 import {Link} from 'react-router-dom';
 
 const styles = theme => ({
@@ -39,6 +40,14 @@ function NavigationItemsMain(props) {
               <Home />
             </ListItemIcon>
             <ListItemText primary="Home" />
+          </ListItem>
+        </Link>
+        <Link to={'/portfolio'} style={{ textDecoration: 'none' }}>
+          <ListItem onClick={emitMenuToggleFunction} button>
+            <ListItemIcon>
+              <PortfolioDonut />
+            </ListItemIcon>
+            <ListItemText primary="Portfolio" />
           </ListItem>
         </Link>
         <Link to={'/charts'} style={{ textDecoration: 'none' }}>
