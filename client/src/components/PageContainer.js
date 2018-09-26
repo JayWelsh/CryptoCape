@@ -56,8 +56,8 @@ class PageContainer extends React.Component {
     return (
       <div className={classes.pageContainer}>
           <Route exact={true} path="/" component={HomePageRoute} isConsideredMobile={isConsideredMobile}/>
-          <Route exact={true} path="/charts/:chartLink" component={ChartsPageRoute} isConsideredMobile={isConsideredMobile}/>
-          <Route exact={true} path="/charts" component={ChartsPageRoute} isConsideredMobile={isConsideredMobile}/>
+          <Route exact={true} path="/charts/:chartLink" render={(props) => ChartsPageRoute(props, isConsideredMobile)} isConsideredMobile={isConsideredMobile}/>
+          <Route exact={true} path="/charts" render={(props) => ChartsPageRoute(props, isConsideredMobile)} isConsideredMobile={isConsideredMobile}/>
           <Route exact={true} path="/portfolio" render={(props) => PortfolioPageRoute(props, isConsideredMobile)} isConsideredMobile={isConsideredMobile}/>
           <Route exact={true} path="/portfolio/:publicKey" render={(props) => PortfolioPageRoute(props, isConsideredMobile)} isConsideredMobile={isConsideredMobile}/>
       </div>
@@ -69,7 +69,7 @@ const HomePageRoute = ({ match }) => {
   return <HomePage/>
 }
 
-const ChartsPageRoute = ({ match, isConsideredMobile }) => {
+const ChartsPageRoute = ({ match }, isConsideredMobile) => {
   if(match.params && match.params.chartLink){
     return <ChartsPage isConsideredMobile={isConsideredMobile} renderChart={match.params.chartLink}/>
   }else{

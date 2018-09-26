@@ -72,7 +72,7 @@ class OurChart extends React.Component {
   }
 
   render() {
-    const { classes, theme, chartLink } = this.props;
+    const { classes, theme, chartLink, isConsideredMobile } = this.props;
     console.log("chartLink",chartLink);
     let chartData = [];
     let margin = {
@@ -112,8 +112,8 @@ class OurChart extends React.Component {
                   }
                   let seriesData = data.cryptocurrencies.map(this.refactorTimeseriesData);
 
-                  return <OurChartVXContainer margin={margin} chartData={seriesData[0].data} chartTitle={seriesData[0].name} chartSubtitle={seriesData[0].abbreviation}/>
-                  
+                  return <OurChartVXContainer isConsideredMobile={isConsideredMobile} margin={margin} chartData={seriesData[0].data} chartTitle={seriesData[0].name} chartSubtitle={seriesData[0].abbreviation}/>
+
                 }}
               </Query>
       </div>

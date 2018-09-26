@@ -291,7 +291,7 @@ class PortfolioPage extends React.Component {
                 <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
                 </Grid>
                 <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
-                  <OurChart chartLink={chartLink} />
+                  <OurChart isConsideredMobile={isConsideredMobile} chartLink={chartLink} />
                 </Grid>
                 <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
                 </Grid>

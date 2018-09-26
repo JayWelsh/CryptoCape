@@ -100,7 +100,7 @@ class OurChartVXContainer extends React.Component {
     };
 
     render() {
-        const { classes, theme, margin, chartTitle, chartSubtitle } = this.props;
+        const { classes, theme, margin, chartTitle, chartSubtitle, isConsideredMobile } = this.props;
         const { chartData } = this.state;
         let currentPrice = 0;
         let diffPrice = 0;
@@ -151,7 +151,7 @@ class OurChartVXContainer extends React.Component {
                             </div>
                         </div>
                         <div className={classes.innerContainer}>
-                            <OurChartVX margin={margin} data={prices} />
+                            <OurChartVX isConsideredMobile={isConsideredMobile} margin={margin} data={prices} />
                         </div>
                     </div>
                 </div>

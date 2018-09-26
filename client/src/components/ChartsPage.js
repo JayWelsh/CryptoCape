@@ -162,7 +162,7 @@ class ChartsPage extends React.Component {
   }
 
   render() {
-    const { classes, theme, match, location, history } = this.props;
+    const { classes, theme, match, location, history, isConsideredMobile } = this.props;
     const { value, chartLink, disableChart, coins } = this.state;
 
     let disableChartStyle = {};
@@ -223,7 +223,7 @@ class ChartsPage extends React.Component {
         {value === 1 &&
           <TabContainer dir={theme.direction}>
             <div style={{ maxHeight: '500px' }}>
-              <OurChart chartLink={chartLink} />
+              <OurChart isConsideredMobile={isConsideredMobile} chartLink={chartLink} />
             </div>
           </TabContainer>
         }

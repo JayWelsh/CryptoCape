@@ -34,7 +34,7 @@ class OurChartVX extends React.Component {
         });
       }
     render() {
-        const { data, parentWidth, parentHeight, margin, tooltipLeft, tooltipTop, tooltipData, showTooltip, hideTooltip} = this.props;
+        const { data, parentWidth, parentHeight, margin, tooltipLeft, tooltipTop, tooltipData, showTooltip, hideTooltip, isConsideredMobile} = this.props;
         if (data.length > 0) {
             const width = parentWidth - margin.left - margin.right;
             const height = parentHeight - margin.top - margin.bottom;
@@ -55,6 +55,8 @@ class OurChartVX extends React.Component {
             let formatDateTimeTooltip = timeFormat("%d %b %Y")
             
             let formatDateTimeTicker = timeFormat("%b %Y")
+
+            const numTicks = isConsideredMobile ? 3 : null
 
             const maxPricesData = [
                 {
@@ -98,7 +100,7 @@ class OurChartVX extends React.Component {
                             x={x}
                             hideAxisLine
                             hideTicks
-                            numTicks={null}
+                            numTicks={numTicks}
                         />
                         <LinearGradient id='area-fill' from="#3f51b5" to="#3f51b5" fromOpacity={1} toOpacity={0} />
                         <PatternLines
