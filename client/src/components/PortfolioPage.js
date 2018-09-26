@@ -93,7 +93,7 @@ class PortfolioPage extends React.Component {
         let etherToUSD = res.data.RAW.ETH.USD.PRICE;
         let etherMarketCap = res.data.RAW.ETH.USD.MKTCAP;
         this.setState({ethPriceUSD: etherToUSD, etherMarketCap: etherMarketCap});
-        let getTokenBalances = 'http://api.ethplorer.io/getAddressInfo/' + thisPersist.state.publicKey + '?apiKey=freekey';
+        let getTokenBalances = 'https://api.ethplorer.io/getAddressInfo/' + thisPersist.state.publicKey + '?apiKey=freekey';
         axios.get(getTokenBalances).then(res => {
           let balanceOfETH = res.data.ETH.balance;
           if (balanceOfETH > 0) {
