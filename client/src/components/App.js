@@ -305,7 +305,7 @@ class App extends React.Component {
               >
                 <div className={classes.drawerHeader} />
                 <div ref={this.pageContainer} className={classNames({ [classes.pageWidth]: open }) + " " + classes.transitionWidth} style={widthOverride}>
-                  <PageContainer />
+                  <PageContainer isConsideredMobile={isConsideredMobile} />
                 </div>
               </main>
               {after}

@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
 import CardActions from '@material-ui/core/CardActions';
+import CardActionArea from '@material-ui/core/CardActionArea';
 import CardContent from '@material-ui/core/CardContent';
 import CardMedia from '@material-ui/core/CardMedia';
 import Button from '@material-ui/core/Button';
@@ -103,6 +104,7 @@ render() {
   return (
     <div className={classes.cardPositioning}>
       <Card className={classes.card}>
+      <CardActionArea>
         <CardMedia
           className={classes.media}
           image={imgSrc}
@@ -116,6 +118,7 @@ render() {
             The term is used in describing a revelation of the oneness of things previously believed to be different. Such insight into the unity of things is a kind of transcendence, and is found in various mystical traditions.
           </Typography>
         </CardContent>
+        </CardActionArea>
         <CardActions>
           <Button size="small" color="primary">
             Share

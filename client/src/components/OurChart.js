@@ -11,6 +11,8 @@ import Grid from '@material-ui/core/Grid';
 import Highcharts from 'highcharts/highstock'; //Actually highstock but following standards from their demo
 import HighchartsReact from 'highcharts-react-official';
 import { Query } from "react-apollo";
+import moment from 'moment';
+import OurChartVXContainer from './OurChartVXContainer';
 import gql from "graphql-tag";
 
 // Load Highcharts modules
@@ -29,7 +31,7 @@ const styles = {
     position: 'relative',
     transform: 'translateX(-50%)',
     width: '100%',
-    maxWidth: '1500px'
+    maxWidth: '1920px'
   }
 };
 
@@ -57,17 +59,28 @@ class OurChart extends React.Component {
   }
 
   refactorTimeseriesData = (cryptocurreny) => {
-    let returnPricingData = [];
+    let returnPricingData = {};
     let cryptocurrenyName = cryptocurreny.name;
-    cryptocurreny.historicalDaily.forEach(({time, close}) => {
-      returnPricingData.push([time * 1000, close]);
+    let cryptocurrenyAbbreviation = cryptocurreny.abbreviation;
+    returnPricingData = Object.keys(cryptocurreny.historicalDaily).map(key => {
+      return {
+          date: moment.unix(cryptocurreny.historicalDaily[key].time).format("YYYY-MM-DD"),
+          price: cryptocurreny.historicalDaily[key].close
+      };
     });
-    return {name: cryptocurrenyName + " / USD", data: returnPricingData};
+    return {name: cryptocurrenyName, abbreviation: cryptocurrenyAbbreviation, data: returnPricingData};
   }
 
   render() {
     const { classes, theme, chartLink } = this.props;
     console.log("chartLink",chartLink);
+    let chartData = [];
+    let margin = {
+      top: 15,
+      bottom: 40,
+      left: 0,
+      right: 0
+    }
     const GET_CHART_DATA = gql`
     query 
       Dog($chartLink: String!) {
@@ -98,41 +111,9 @@ class OurChart extends React.Component {
                     cryptocurrenyName = data.cryptocurrencies[0].name;
                   }
                   let seriesData = data.cryptocurrencies.map(this.refactorTimeseriesData);
-                  let stockOptions = {
-                    chart: {
-                      type: 'area',
-                      height: '500px'
-                    },
-                    legend: {
-                      enabled: true
-                    },
-                    series: seriesData,
-                    colors: [
-                      '#3f51b5'
-                    ],
-                    tooltip: {
-                      animation: false,
-                      pointFormat: '{series.name}: <b>{point.y:.2f} USD</b>',
-                    },
-                    title: {
-                      text: cryptocurrenyName + ' Performance'
-                    },
-                    plotOptions: {
-                      series: {
-                        events: {
-                          afterAnimate: function (e) {
-                            isAnimating = false;
-                          }
-                        },
-                        animation: false
-                      }
-                    }
-                  }
-                  return <HighchartsReact
-                            highcharts={Highcharts}
-                            constructorType={'stockChart'}
-                            options={stockOptions}
-                          />
+
+                  return <OurChartVXContainer margin={margin} chartData={seriesData[0].data} chartTitle={seriesData[0].name} chartSubtitle={seriesData[0].abbreviation}/>
+                  
                 }}
               </Query>
       </div>

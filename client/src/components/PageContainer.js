@@ -7,6 +7,7 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
 import HomePage from './HomePage';
+import PortfolioPage from './PortfolioPage';
 import ChartsPage from './ChartsPage';
 import {Route, withRouter} from 'react-router-dom';
 
@@ -28,7 +29,8 @@ class PageContainer extends React.Component {
   static propTypes = {
     match: PropTypes.object.isRequired,
     location: PropTypes.object.isRequired,
-    history: PropTypes.object.isRequired
+    history: PropTypes.object.isRequired,
+    isConsideredMobile: PropTypes.bool.isRequired
   }
 
   state = {
@@ -49,15 +51,15 @@ class PageContainer extends React.Component {
 
   render() {
     //TODO Props
-    const { classes, theme, history } = this.props;
-
+    const { classes, theme, history, isConsideredMobile } = this.props;
+    console.log("isConsideredMobile in page container",isConsideredMobile);
     return (
       <div className={classes.pageContainer}>
-          <Route exact={true} path="/" component={HomePageRoute}/>
-          <Route exact={true} path="/charts/:chartLink" component={ChartsPageRoute}/>
-          <Route exact={true} path="/charts" component={ChartsPageRoute}/>
-          <Route exact={true} path="/portfolio" component={PortfolioPageRoute}/>
-          <Route exact={true} path="/portfolio/:publicKey" component={PortfolioPageRoute}/>
+          <Route exact={true} path="/" component={HomePageRoute} isConsideredMobile={isConsideredMobile}/>
+          <Route exact={true} path="/charts/:chartLink" component={ChartsPageRoute} isConsideredMobile={isConsideredMobile}/>
+          <Route exact={true} path="/charts" component={ChartsPageRoute} isConsideredMobile={isConsideredMobile}/>
+          <Route exact={true} path="/portfolio" render={(props) => PortfolioPageRoute(props, isConsideredMobile)} isConsideredMobile={isConsideredMobile}/>
+          <Route exact={true} path="/portfolio/:publicKey" render={(props) => PortfolioPageRoute(props, isConsideredMobile)} isConsideredMobile={isConsideredMobile}/>
       </div>
     );
   }
@@ -67,19 +69,19 @@ const HomePageRoute = ({ match }) => {
   return <HomePage/>
 }
 
-const ChartsPageRoute = ({ match }) => {
+const ChartsPageRoute = ({ match, isConsideredMobile }) => {
   if(match.params && match.params.chartLink){
-    return <ChartsPage renderChart={match.params.chartLink}/>
+    return <ChartsPage isConsideredMobile={isConsideredMobile} renderChart={match.params.chartLink}/>
   }else{
-    return <ChartsPage/>
+    return <ChartsPage isConsideredMobile={isConsideredMobile}/>
   }
 }
 
-const PortfolioPageRoute = ({ match }) => {
+const PortfolioPageRoute = ({ match }, isConsideredMobile) => {
   if(match.params && match.params.publicKey){
-    return null
+    return <PortfolioPage isConsideredMobile={isConsideredMobile} publicKey={match.params.publicKey}/>
   }else{
-    return null
+    return <PortfolioPage isConsideredMobile={isConsideredMobile}/>
   }
 }
 
