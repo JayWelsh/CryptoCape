@@ -29,6 +29,7 @@ import { Link, withRouter } from 'react-router-dom';
 import { Query } from "react-apollo";
 import gql from "graphql-tag";
 import axios from 'axios';
+import {priceFormat, numberFormat} from '../utils';
 
 const coinList = {}
 
@@ -172,8 +173,8 @@ class PortfolioPage extends React.Component {
     const { classes, theme, match, location, history, isConsideredMobile } = this.props;
     const { value, publicKey, disableChart, coins, totalPortfolioValueUSD, totalPortfolioValueETH } = this.state;
 
-    let displayTotalUSD = "$" + totalPortfolioValueUSD.toFixed(2);
-    let displayTotalETH = "~ " + totalPortfolioValueETH.toFixed(2) +  " ETH"
+    let displayTotalUSD = priceFormat(totalPortfolioValueUSD);
+    let displayTotalETH = "~ " + numberFormat(totalPortfolioValueETH) +  " ETH"
 
     let pieChartDataUSD = [];
     let pieChartDataMarketCaps = [];

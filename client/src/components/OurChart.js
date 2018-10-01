@@ -10,7 +10,6 @@ import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import Highcharts from 'highcharts/highstock'; //Actually highstock but following standards from their demo
 import HighchartsReact from 'highcharts-react-official';
-import { Query } from "react-apollo";
 import moment from 'moment';
 import OurChartVXContainer from './OurChartVXContainer';
 import gql from "graphql-tag";
@@ -40,23 +39,6 @@ let chartRedispatchEventRerenderDelay;
 let isAnimating = false;
 
 class OurChart extends React.Component {
-  state = {
-
-  };
-
-  componentDidMount() {
-    window.addEventListener("reRenderCharts", this.reRenderCharts);
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener("reRenderCharts", this.reRenderCharts);
-  }
-
-
-  reRenderCharts = (event) => {
-    let thisPersist = this;
-    thisPersist.setState({ key: Math.random() });
-  }
 
   refactorTimeseriesData = (cryptocurreny) => {
     let returnPricingData = {};
@@ -72,52 +54,26 @@ class OurChart extends React.Component {
   }
 
   render() {
-    const { classes, theme, chartLink, isConsideredMobile } = this.props;
-    console.log("chartLink",chartLink);
-    let chartData = [];
+    const { classes, theme, chartLink, isConsideredMobile, chartTitle, chartSubtitle, chartData } = this.props;
+
     let margin = {
       top: 15,
       bottom: 40,
       left: 0,
       right: 0
     }
-    const GET_CHART_DATA = gql`
-    query 
-      Dog($chartLink: String!) {
-        cryptocurrencies(name: $chartLink) {
-          id
-          abbreviation
-          name
-          externalLink
-          historicalDaily {
-            close
-            time
-          }
-        }
-      }
-    `
-    return (
-      <div key={this.state.key} className={classes.cardPositioning}>
-        <Query
-                variables={{chartLink}}
-                query={GET_CHART_DATA}
-              >
-                {({ loading, error, data }) => {
-                  console.log("data", data);
-                  if (loading) return <p>Loading...</p>;
-                  if (error) return <p>Error :(</p>;
-                  let cryptocurrenyName = 'Currency ';
-                  if(data.cryptocurrencies && data.cryptocurrencies.length == 1){
-                    cryptocurrenyName = data.cryptocurrencies[0].name;
-                  }
-                  let seriesData = data.cryptocurrencies.map(this.refactorTimeseriesData);
 
-                  return <OurChartVXContainer isConsideredMobile={isConsideredMobile} margin={margin} chartData={seriesData[0].data} chartTitle={seriesData[0].name} chartSubtitle={seriesData[0].abbreviation}/>
-
-                }}
-              </Query>
+    if (chartData) {
+      return (
+        <div className={classes.cardPositioning}>
+          <OurChartVXContainer isConsideredMobile={isConsideredMobile} margin={margin} chartData={chartData} chartTitle={chartTitle} chartSubtitle={chartSubtitle} />
+        </div>
+      );
+    }else{
+      return <div>
+        <OurChartVXContainer isConsideredMobile={isConsideredMobile} margin={margin}/>
       </div>
-    );
+    }
   }
 }
 

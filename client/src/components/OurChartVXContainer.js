@@ -5,6 +5,7 @@ import { withStyles } from '@material-ui/core/styles';
 import { ParentSize } from "@vx/responsive";
 import { LinearGradient } from '@vx/gradient';
 import OurChartVX from './OurChartVX';
+import { priceFormat } from '../utils';
 
 const styles = theme => ({
     outerContainer: {
@@ -90,9 +91,6 @@ function Background({width, height}) {
 class OurChartVXContainer extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
-            chartData: this.props.chartData
-        }
     }
 
     state = {
@@ -100,13 +98,12 @@ class OurChartVXContainer extends React.Component {
     };
 
     render() {
-        const { classes, theme, margin, chartTitle, chartSubtitle, isConsideredMobile } = this.props;
-        const { chartData } = this.state;
+        const { classes, theme, margin, chartTitle, chartSubtitle, isConsideredMobile, chartData } = this.props;
         let currentPrice = 0;
         let diffPrice = 0;
         let hasIncreased = true;
         let prices = [];
-
+        
         if (chartData && chartData.length  > 0) {
             prices = Object.keys(chartData).map(key => {
                 return {
@@ -115,8 +112,8 @@ class OurChartVXContainer extends React.Component {
                 };
             })
             let firstPrice = prices[0].price;
-            currentPrice = prices[prices.length - 1].price.toFixed(2);
-            diffPrice = (currentPrice - firstPrice).toFixed(2);
+            currentPrice = prices[prices.length - 1].price;
+            diffPrice = currentPrice - firstPrice;S
             hasIncreased = diffPrice > 0;
         }
         return (
@@ -140,12 +137,12 @@ class OurChartVXContainer extends React.Component {
                             <div className={classes.rightTitles}>
                                 <div>
                                     <Typography className={classes.vxChartTitle + " no-padding-bottom"} variant="headline" component="h2">
-                                        $ {currentPrice}
+                                        {priceFormat(currentPrice)}
                                     </Typography>
                                 </div>
                                 <div>
                                     <Typography className={classes.vxChartTitle + " no-padding-top " + (hasIncreased ? classes.vxPriceIncrease : classes.vxPriceDecrease)} component="p">
-                                        {hasIncreased ? ("+ $ " + diffPrice) : ("- $ " + (diffPrice * -1))}
+                                        {hasIncreased ? ("+ " + priceFormat(diffPrice)) : ("- " + priceFormat((diffPrice * -1)))}
                                     </Typography>
                                 </div>
                             </div>

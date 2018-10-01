@@ -11,9 +11,11 @@ import OurMinPriceVX from './OurMinPriceVX';
 import { AxisBottom } from '@vx/axis';
 import { bisector } from 'd3-array';
 import { timeFormat } from 'd3-time-format';
+import { priceFormat } from '../utils';
+
 const bisectDate = bisector(d => x(d)).left
 const x = dataObject => new Date(dataObject.date);
-            const y = dataObject => dataObject.price;
+const y = dataObject => dataObject.price;
 class OurChartVX extends React.Component {
     constructor(props) {
         super(props);
@@ -88,6 +90,9 @@ class OurChartVX extends React.Component {
                 domain: [minPrice, maxPrice]
             });
 
+            const maxTooltipTop = yScale(minPrice)
+            const setTooltipLabelTop = ((maxTooltipTop - tooltipTop) > 20) ? tooltipTop - 12 : maxTooltipTop - 32;
+
             return (
                 <div>
                     <svg ref={s => (this.svg = s)} width={width} height={parentHeight}>
@@ -131,13 +136,14 @@ class OurChartVX extends React.Component {
                             y={y}
                             fill="url(#dLines)"
                         />
+                        <LinePath data={data} yScale={yScale} xScale={xScale} x={x} y={y} />
                         <OurMaxPriceVX
                             data={maxPricesData}
                             yScale={yScale}
                             xScale={xScale}
                             x={x}
                             y={y}
-                            label={maxPrice}
+                            label={priceFormat(maxPrice)}
                             yText={yScale(maxPrice)}
                         />
                         <OurMinPriceVX
@@ -146,10 +152,9 @@ class OurChartVX extends React.Component {
                             xScale={xScale}
                             x={x}
                             y={y}
-                            label={minPrice}
+                            label={priceFormat(minPrice)}
                             yText={yScale(minPrice)}
                         />
-                        <LinePath data={data} yScale={yScale} xScale={xScale} x={x} y={y} />
                         <Bar
                             data={data}
                             width={width}
@@ -209,8 +214,8 @@ class OurChartVX extends React.Component {
                     </svg>
                     {tooltipData &&
                             <div>
-                            <Tooltip top={tooltipTop - 12} left={tooltipLeft + 12} style={{backgroundColor: '#2d0056', color: '#FFFFFF', pointerEvents: 'none'}}>
-                                <b>$ {y(tooltipData).toFixed(2)}</b>
+                            <Tooltip top={setTooltipLabelTop} left={tooltipLeft + 12} style={{backgroundColor: '#2d0056', color: '#FFFFFF', pointerEvents: 'none'}}>
+                                <b>{priceFormat(y(tooltipData))}</b>
                             </Tooltip>
                             <Tooltip top={yScale(minPrice)} left={tooltipLeft} style={{backgroundColor: '#2d0056', color: '#FFFFFF', transform: 'translateX(-50%)', pointerEvents: 'none'}}>
                                 <b>{formatDateTimeTooltip(x(tooltipData))}</b>

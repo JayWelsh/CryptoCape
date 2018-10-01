@@ -9,6 +9,7 @@ import Typography from '@material-ui/core/Typography';
 import SimpleMediaCard from './SimpleMediaCard';
 import OurChart from './OurChart';
 import Grid from '@material-ui/core/Grid';
+import Paper from '@material-ui/core/Paper';
 import ChartMenuMiniCard from './ChartMenuMiniCard';
 import EthereumLogo from '../img/coins/ethereum.svg';
 import AragonLogo from '../img/coins/aragon.svg';
@@ -22,9 +23,11 @@ import OmisegoLogo from '../img/coins/omisego.svg';
 import BloomLogo from '../img/coins/bloom.svg';
 import RaidenLogo from '../img/coins/raiden.svg';
 import { Link, withRouter } from 'react-router-dom';
-import { Query } from "react-apollo";
 import gql from "graphql-tag";
 import axios from 'axios';
+import { Query, withApollo } from "react-apollo";
+import moment from 'moment';
+import { priceFormat } from '../utils';
 
 const coinList = {
   'ETH': {
@@ -73,6 +76,23 @@ const coinList = {
   }
 }
 
+const GET_CHART_DATA = gql`
+    query 
+      Cryptocurrency($chartLink: String!) {
+        cryptocurrencies(name: $chartLink) {
+          id
+          abbreviation
+          name
+          externalLink
+          historicalDaily {
+            close
+            time
+          }
+        }
+      }
+    `
+
+
 function TabContainer({ children, dir }) {
   return (
     <Typography component="div" dir={dir} className="mobile-friendly-padding" style={{ justifyContent: 'space-between', height: 'calc(100%)' }}>
@@ -108,7 +128,12 @@ class ChartsPage extends React.Component {
     value: this.props.renderChart ? 1 : 0,
     chartLink: this.props.renderChart ? this.props.renderChart : false,
     disableChart: this.props.renderChart ? false : true,
-    coins: coinList
+    coins: coinList,
+    chartData: {
+      timeseries: null,
+      name: null,
+      abbreviation: null
+    }
   };
 
   handleChange = (event, value) => {
@@ -119,7 +144,37 @@ class ChartsPage extends React.Component {
     this.setState({ value: index });
   };
 
-  fetchPriceValues() {
+  fetchPriceDataSpecific(chartLink) {
+    let client = this.props.client;
+    client.query({
+      query: GET_CHART_DATA,
+      variables: { chartLink }
+    }).then((res) => {
+      let cryptoSymbol = res.data.cryptocurrencies[0].abbreviation;
+      let cryptoName = res.data.cryptocurrencies[0].name;
+      let getETHUSD = "https://min-api.cryptocompare.com/data/histoday?fsym=" + cryptoSymbol + "&tsym=USD&allData=true&aggregate=1&e=CCCAGG";
+      axios.get(getETHUSD).then(res => {
+        let timeSeries = res.data.Data
+        let returnPricingData = {};
+        returnPricingData = res.data.Data.map(item => {
+          return {
+            date: moment.unix(item.time).format("YYYY-MM-DD"),
+            price: item.close
+          };
+        });
+        if (returnPricingData.length > 0) {
+          let chartData = {
+            timeseries: returnPricingData,
+            name: cryptoName,
+            abbreviation: cryptoSymbol
+          }
+          this.setState({ chartData: chartData });
+        }
+      })
+    });
+  }
+
+  fetchPriceValuesAll() {
     let thisPersist = this;
     let coinListKeys = Object.keys(coinList);
     let currency = "$";
@@ -135,8 +190,10 @@ class ChartsPage extends React.Component {
 
   componentDidMount() {
     if (!this.state.chartLink) {
-      this.intervalFetchPrices = setInterval(() => this.fetchPriceValues(), 10000);
-      this.fetchPriceValues(); // also load one immediately
+      this.intervalFetchPrices = setInterval(() => this.fetchPriceValuesAll(), 10000);
+      this.fetchPriceValuesAll(); // also load one immediately
+    } else {
+      this.fetchPriceDataSpecific(this.state.chartLink);
     }
   }
 
@@ -163,7 +220,26 @@ class ChartsPage extends React.Component {
 
   render() {
     const { classes, theme, match, location, history, isConsideredMobile } = this.props;
-    const { value, chartLink, disableChart, coins } = this.state;
+    const { value, chartLink, disableChart, coins, chartData } = this.state;
+
+    let currentPrice = 0;
+    let diffPrice = 0;
+    let hasIncreased;
+
+    if(chartData.timeseries && chartData.timeseries.length > 0) {
+        let prices = Object.keys(chartData.timeseries).map(key => {
+            return {
+                date: chartData.timeseries[key].date,
+                price: chartData.timeseries[key].price
+            };
+        })
+        let firstPrice = prices[0].price;
+        currentPrice = prices[prices.length - 1].price;
+        diffPrice = priceFormat(currentPrice - firstPrice);
+        //Format now that $ can be attached (run calcs before this)
+        currentPrice = priceFormat(currentPrice);
+        hasIncreased = diffPrice > 0;
+    }
 
     let disableChartStyle = {};
     if (disableChart) {
@@ -222,9 +298,29 @@ class ChartsPage extends React.Component {
         }
         {value === 1 &&
           <TabContainer dir={theme.direction}>
-            <div style={{ maxHeight: '500px' }}>
-              <OurChart isConsideredMobile={isConsideredMobile} chartLink={chartLink} />
-            </div>
+            <Grid container spacing={24}>
+                <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+                </Grid>
+                <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
+                  <OurChart isConsideredMobile={isConsideredMobile} chartTitle={chartData.name} chartSubtitle={chartData.abbreviation} chartData={chartData.timeseries}  />
+                </Grid>
+                <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+                </Grid>
+                <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+                </Grid>
+                <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
+                <Paper className={classes.root} elevation={2}>
+                    <Typography variant={isConsideredMobile ? "display3" : "display4"}>
+                      {currentPrice}
+                    </Typography>
+                    <Typography variant={isConsideredMobile ? "display2" : "display3"} gutterBottom={true}>
+                      {diffPrice}
+                    </Typography>
+                  </Paper>
+                </Grid>
+                <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+                </Grid>
+            </Grid>
           </TabContainer>
         }
       </div>
@@ -237,4 +333,4 @@ ChartsPage.propTypes = {
   theme: PropTypes.object.isRequired,
 };
 
-export default withRouter(withStyles(styles, { withTheme: true })(ChartsPage));
+export default withApollo(withRouter(withStyles(styles, { withTheme: true })(ChartsPage)));
