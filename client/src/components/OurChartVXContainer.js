@@ -113,7 +113,7 @@ class OurChartVXContainer extends React.Component {
             })
             let firstPrice = prices[0].price;
             currentPrice = prices[prices.length - 1].price;
-            diffPrice = currentPrice - firstPrice;S
+            diffPrice = currentPrice - firstPrice;
             hasIncreased = diffPrice > 0;
         }
         return (
