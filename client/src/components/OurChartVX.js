@@ -37,10 +37,11 @@ class OurChartVX extends React.Component {
       }
     render() {
         const { data, parentWidth, parentHeight, margin, tooltipLeft, tooltipTop, tooltipData, showTooltip, hideTooltip, isConsideredMobile} = this.props;
+        const width = parentWidth - margin.left - margin.right;
+        const height = parentHeight - margin.top - margin.bottom;
+        
         if (data.length > 0) {
-            const width = parentWidth - margin.left - margin.right;
-            const height = parentHeight - margin.top - margin.bottom;
-
+        
             const xAxisTickFunction = (val, i) => ({ fontSize: 14, fill: 'white' })
 
             const xAxisTickFormat = (val, i) => formatDateTimeTicker(val);
@@ -226,7 +227,9 @@ class OurChartVX extends React.Component {
             );
         } else {
             return (
-                <div>Loading</div>
+                <div width={width} height={parentHeight}>
+
+                </div>
             )
         }
     }

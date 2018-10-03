@@ -6,6 +6,8 @@ import { ParentSize } from "@vx/responsive";
 import { LinearGradient } from '@vx/gradient';
 import OurChartVX from './OurChartVX';
 import { priceFormat } from '../utils';
+import Loading from './Loading';
+import { withParentSize } from '@vx/responsive';
 
 const styles = theme => ({
     outerContainer: {
@@ -35,7 +37,7 @@ const styles = theme => ({
         display:'flex',
         backgroundColor: '#000628',
         color: 'white',
-        borderRadius: '8px',
+        borderRadius: '4px',
         width: '100%'
     },
     vxChartTitle: {
@@ -98,12 +100,12 @@ class OurChartVXContainer extends React.Component {
     };
 
     render() {
-        const { classes, theme, margin, chartTitle, chartSubtitle, isConsideredMobile, chartData } = this.props;
+        const { classes, theme, margin, chartTitle, chartSubtitle, isConsideredMobile, chartData, parentWidth, parentHeight, isChartLoading } = this.props;
         let currentPrice = 0;
         let diffPrice = 0;
         let hasIncreased = true;
         let prices = [];
-        
+
         if (chartData && chartData.length  > 0) {
             prices = Object.keys(chartData).map(key => {
                 return {
@@ -118,6 +120,7 @@ class OurChartVXContainer extends React.Component {
         }
         return (
             <div className={classes.outerContainer}>
+                <Loading isLoading={isChartLoading} width={parentWidth} height={parentHeight}/>
                 <div className={classes.center}>
                     <div className={classes.chart + " elevation-shadow-two"} style={{ width: '100%', height: '500px' }}>
                         <div className={classes.titleBar}>
@@ -166,4 +169,4 @@ OurChartVXContainer.propTypes = {
     margin: PropTypes.object.isRequired
 };
     
-export default withStyles(styles, { withTheme: true })(OurChartVXContainer);
+export default withParentSize(withStyles(styles, { withTheme: true })(OurChartVXContainer));

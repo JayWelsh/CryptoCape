@@ -6,6 +6,7 @@ import AppBar from '@material-ui/core/AppBar';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
+import Button from '@material-ui/core/Button';
 import SimpleMediaCard from './SimpleMediaCard';
 import OurChart from './OurChart';
 import Grid from '@material-ui/core/Grid';
@@ -110,6 +111,9 @@ const styles = theme => ({
   root: {
     backgroundColor: theme.palette.background.paper,
     width: '100%'
+  },
+  button: {
+    margin: theme.spacing.unit,
   }
 });
 
@@ -117,24 +121,25 @@ class ChartsPage extends React.Component {
   static propTypes = {
     match: PropTypes.object.isRequired,
     location: PropTypes.object.isRequired,
-    history: PropTypes.object.isRequired
+    history: PropTypes.object.isRequired,
   }
 
   constructor(props) {
     super(props);
+    this.state = {
+      value: this.props.renderChart ? 1 : 0,
+      chartLink: this.props.renderChart ? this.props.renderChart : false,
+      disableChart: this.props.renderChart ? false : true,
+      coins: coinList,
+      chartData: {
+        timeseries: null,
+        name: null,
+        abbreviation: null
+      },
+      timeseriesRange: '1M',
+      isChartLoading: true
+    };
   }
-
-  state = {
-    value: this.props.renderChart ? 1 : 0,
-    chartLink: this.props.renderChart ? this.props.renderChart : false,
-    disableChart: this.props.renderChart ? false : true,
-    coins: coinList,
-    chartData: {
-      timeseries: null,
-      name: null,
-      abbreviation: null
-    }
-  };
 
   handleChange = (event, value) => {
     this.setState({ value });
@@ -144,7 +149,49 @@ class ChartsPage extends React.Component {
     this.setState({ value: index });
   };
 
+  getDataURL(fsym, tsym, range) {
+    switch(range){
+      case '1HR': {
+        let limit = moment().diff(moment().subtract(1, 'hours'), 'minutes');
+        return "https://min-api.cryptocompare.com/data/histominute?fsym=" + fsym + "&tsym=USD&limit=" + limit + "&aggregate=1&e=CCCAGG";
+        break;
+      }
+      case '24HR': {
+        let limit = moment().diff(moment().subtract(1, 'days'), 'minutes');
+        return "https://min-api.cryptocompare.com/data/histominute?fsym=" + fsym + "&tsym=USD&limit=" + limit + "&aggregate=1&e=CCCAGG";
+        break;
+      }
+      case '1W': {
+        let limit = moment().diff(moment().subtract(1, 'weeks'), 'hours');
+        return "https://min-api.cryptocompare.com/data/histohour?fsym=" + fsym + "&tsym=USD&limit=" + limit + "&aggregate=1&e=CCCAGG";
+        break;
+      }
+      case '1M': {
+        let limit = moment().diff(moment().subtract(1, 'months'), 'hours');
+        return "https://min-api.cryptocompare.com/data/histohour?fsym=" + fsym + "&tsym=USD&limit=" + limit + "&aggregate=1&e=CCCAGG";
+        break;
+      }
+      case '6M': {
+        let limit = moment().diff(moment().subtract(6, 'months'), 'days');
+        return "https://min-api.cryptocompare.com/data/histoday?fsym=" + fsym + "&tsym=USD&limit=" + limit + "&aggregate=1&e=CCCAGG";
+        break;
+      }
+      case '1Y': {
+        let limit = moment().diff(moment().subtract(1, 'years'), 'days');
+        return "https://min-api.cryptocompare.com/data/histoday?fsym=" + fsym + "&tsym=USD&limit=" + limit + "&aggregate=1&e=CCCAGG";
+        break;
+      }
+      case 'ALL': {
+        return "https://min-api.cryptocompare.com/data/histoday?fsym=" + fsym + "&tsym=USD&allData=true&aggregate=1&e=CCCAGG";
+        break;
+      }
+    }
+  }
+
   fetchPriceDataSpecific(chartLink) {
+    if (this.state.isChartLoading === false) {
+      this.setState({ isChartLoading: true });
+    }
     let client = this.props.client;
     client.query({
       query: GET_CHART_DATA,
@@ -152,13 +199,13 @@ class ChartsPage extends React.Component {
     }).then((res) => {
       let cryptoSymbol = res.data.cryptocurrencies[0].abbreviation;
       let cryptoName = res.data.cryptocurrencies[0].name;
-      let getETHUSD = "https://min-api.cryptocompare.com/data/histoday?fsym=" + cryptoSymbol + "&tsym=USD&allData=true&aggregate=1&e=CCCAGG";
+      let getETHUSD = this.getDataURL(cryptoSymbol, 'USD', this.state.timeseriesRange);
       axios.get(getETHUSD).then(res => {
         let timeSeries = res.data.Data
         let returnPricingData = {};
         returnPricingData = res.data.Data.map(item => {
           return {
-            date: moment.unix(item.time).format("YYYY-MM-DD"),
+            date: moment.unix(item.time),
             price: item.close
           };
         });
@@ -168,10 +215,20 @@ class ChartsPage extends React.Component {
             name: cryptoName,
             abbreviation: cryptoSymbol
           }
-          this.setState({ chartData: chartData });
+          this.setState({ chartData: chartData, isChartLoading: false });
         }
       })
     });
+  }
+
+  getSelectedTimeseriesRange(timeseriesRange) {
+    if(this.state.timeseriesRange === timeseriesRange) {
+      return {
+        "fontWeight": "bold",
+        "color": "white",
+        "background-color": "#000628"
+      }
+    }
   }
 
   fetchPriceValuesAll() {
@@ -186,6 +243,13 @@ class ChartsPage extends React.Component {
       });
       thisPersist.setState({coins: coinList});
     })
+  }
+
+  setTimeseriesRange(range) {
+    if(range !== this.state.timeseriesRange){
+      this.setState({timeseriesRange: range, isChartLoading: true});
+      this.fetchPriceDataSpecific(this.state.chartLink);
+    }
   }
 
   componentDidMount() {
@@ -220,7 +284,7 @@ class ChartsPage extends React.Component {
 
   render() {
     const { classes, theme, match, location, history, isConsideredMobile } = this.props;
-    const { value, chartLink, disableChart, coins, chartData } = this.state;
+    const { value, chartLink, disableChart, coins, chartData, isChartLoading } = this.state;
 
     let currentPrice = 0;
     let diffPrice = 0;
@@ -298,11 +362,32 @@ class ChartsPage extends React.Component {
         }
         {value === 1 &&
           <TabContainer dir={theme.direction}>
-            <Grid container spacing={24}>
+            <Grid container spacing={24} style={{marginTop: "-35px"}}>
                 <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
                 </Grid>
                 <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
-                  <OurChart isConsideredMobile={isConsideredMobile} chartTitle={chartData.name} chartSubtitle={chartData.abbreviation} chartData={chartData.timeseries}  />
+                  <Button className={classes.button} onClick={() => this.setTimeseriesRange("1HR")} style={this.getSelectedTimeseriesRange("1HR")}>
+                    1HR
+                  </Button>
+                  <Button className={classes.button} onClick={() => this.setTimeseriesRange("24HR")} style={this.getSelectedTimeseriesRange("24HR")}>
+                    24HR
+                  </Button>
+                  <Button className={classes.button} onClick={() => this.setTimeseriesRange("1W")} style={this.getSelectedTimeseriesRange("1W")}>
+                    1W
+                  </Button>
+                  <Button className={classes.button} onClick={() => this.setTimeseriesRange("1M")} style={this.getSelectedTimeseriesRange("1M")}>
+                    1M
+                  </Button>
+                  <Button className={classes.button} onClick={() => this.setTimeseriesRange("6M")} style={this.getSelectedTimeseriesRange("6M")}>
+                    6M
+                  </Button>
+                  <Button className={classes.button} onClick={() => this.setTimeseriesRange("1Y")} style={this.getSelectedTimeseriesRange("1Y")}>
+                    1Y
+                  </Button>
+                  <Button className={classes.button} onClick={() => this.setTimeseriesRange("ALL")} style={this.getSelectedTimeseriesRange("ALL")}>
+                    ALL
+                  </Button>
+                  <OurChart isChartLoading={isChartLoading} isConsideredMobile={isConsideredMobile} chartTitle={chartData.name} chartSubtitle={chartData.abbreviation} chartData={chartData.timeseries}  />
                 </Grid>
                 <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
                 </Grid>

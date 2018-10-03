@@ -8,20 +8,9 @@ import CardMedia from '@material-ui/core/CardMedia';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
-import Highcharts from 'highcharts/highstock'; //Actually highstock but following standards from their demo
-import HighchartsReact from 'highcharts-react-official';
 import moment from 'moment';
 import OurChartVXContainer from './OurChartVXContainer';
 import gql from "graphql-tag";
-
-// Load Highcharts modules
-require('highcharts/indicators/indicators')(Highcharts)
-require('highcharts/indicators/pivot-points')(Highcharts)
-require('highcharts/indicators/macd')(Highcharts)
-require('highcharts/modules/exporting')(Highcharts)
-require('highcharts/modules/map')(Highcharts)
-
-const testData = require("../demo-data/ethereumHistoryHighcharts.json");
 
 const styles = {
   cardPositioning: {
@@ -40,6 +29,11 @@ let isAnimating = false;
 
 class OurChart extends React.Component {
 
+  constructor(props) {
+    super(props);
+    this.state = {isChartLoading: this.props.isChartLoading}
+  }
+
   refactorTimeseriesData = (cryptocurreny) => {
     let returnPricingData = {};
     let cryptocurrenyName = cryptocurreny.name;
@@ -54,7 +48,7 @@ class OurChart extends React.Component {
   }
 
   render() {
-    const { classes, theme, chartLink, isConsideredMobile, chartTitle, chartSubtitle, chartData } = this.props;
+    const { classes, theme, chartLink, isConsideredMobile, chartTitle, chartSubtitle, chartData, isChartLoading } = this.props;
 
     let margin = {
       top: 15,
@@ -65,13 +59,13 @@ class OurChart extends React.Component {
 
     if (chartData) {
       return (
-        <div className={classes.cardPositioning}>
-          <OurChartVXContainer isConsideredMobile={isConsideredMobile} margin={margin} chartData={chartData} chartTitle={chartTitle} chartSubtitle={chartSubtitle} />
+        <div>
+          <OurChartVXContainer isChartLoading={isChartLoading} isConsideredMobile={isConsideredMobile} margin={margin} chartData={chartData} chartTitle={chartTitle} chartSubtitle={chartSubtitle} />
         </div>
       );
     }else{
       return <div>
-        <OurChartVXContainer isConsideredMobile={isConsideredMobile} margin={margin}/>
+        <OurChartVXContainer isChartLoading={isChartLoading} isConsideredMobile={isConsideredMobile} margin={margin}/>
       </div>
     }
   }
