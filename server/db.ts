@@ -39,7 +39,7 @@ const Cryptocurrency = Conn.define('cryptocurrency', {
     },
     historicalDaily: {
         type: Sequelize.JSON,
-        allowNull: false
+        allowNull: true
     }
 });
 
@@ -71,6 +71,12 @@ coinList.forEach((item, index) => {
     coinListURLs.push(url);
 })
 
+let walletList = [
+    "0x90dcc3236b990dd5b3df201c354d9bf7a02a3e1b"
+]
+
+//https://api.etherscan.io/api?module=account&action=tokentx&address=0x4e83362442b8d1bec281594cea3050c8eb01311c&startblock=0&endblock=999999999&sort=asc&apikey=YourApiKeyToken
+
 let data = [];
 
 const DELAY_MS = 1000;
@@ -82,11 +88,11 @@ async function wait(ms) {
 }
 
 async function doRequests(URLs) {
-  for(const URL of URLs) {
-    data.push(await request(URL));
-    await wait(DELAY_MS);
-    console.log("Requesting URL: " + URL);
-  }
+//   for(const URL of URLs) {
+//     data.push(await request(URL));
+//     await wait(DELAY_MS);
+//     console.log("Requesting URL: " + URL);
+//   }
 }
 
 doRequests(coinListURLs).then(() => {
@@ -95,67 +101,56 @@ doRequests(coinListURLs).then(() => {
             abbreviation: "ETH",
             name: "Ether",
             externalLink: "https://www.ethereum.org/",
-            historicalDaily: JSON.parse(data[coinList.indexOf("ETH")]).Data
         }).then(() => {
             Cryptocurrency.create({
                 abbreviation: "ZRX",
                 name: "0xProject",
                 externalLink: "https://0xproject.com/",
-                historicalDaily: JSON.parse(data[coinList.indexOf("ZRX")]).Data
             }).then(() => {
                 Cryptocurrency.create({
                     abbreviation: "DNT",
                     name: "District0x",
                     externalLink: "https://district0x.io/",
-                    historicalDaily: JSON.parse(data[coinList.indexOf("DNT")]).Data
                 }).then(() => {
                     Cryptocurrency.create({
                         abbreviation: "ANT",
                         name: "Aragon",
                         externalLink: "https://aragon.org/",
-                        historicalDaily: JSON.parse(data[coinList.indexOf("ANT")]).Data
                     }).then(() => {
                         Cryptocurrency.create({
                             abbreviation: "BAT",
                             name: "Basic Attention Token",
                             externalLink: "https://basicattentiontoken.org/",
-                            historicalDaily: JSON.parse(data[coinList.indexOf("BAT")]).Data
                         }).then(() => {
                             Cryptocurrency.create({
                                 abbreviation: "RDN",
                                 name: "Raiden",
                                 externalLink: "https://raiden.network/",
-                                historicalDaily: JSON.parse(data[coinList.indexOf("RDN")]).Data
                             }).then(() => {
                                 Cryptocurrency.create({
                                     abbreviation: "GNT",
                                     name: "Golem",
                                     externalLink: "https://golem.network/",
-                                    historicalDaily: JSON.parse(data[coinList.indexOf("GNT")]).Data
                                 }).then(() => {
                                     Cryptocurrency.create({
                                         abbreviation: "OMG",
                                         name: "OmiseGO",
                                         externalLink: "https://omisego.network/",
-                                        historicalDaily: JSON.parse(data[coinList.indexOf("OMG")]).Data
                                     }).then(() => {
                                         Cryptocurrency.create({
                                             abbreviation: "BLT",
                                             name: "Bloom",
                                             externalLink: "https://bloom.co/",
-                                            historicalDaily: JSON.parse(data[coinList.indexOf("BLT")]).Data
                                         }).then(() => {
                                             Cryptocurrency.create({
                                                 abbreviation: "REP",
                                                 name: "Augur",
                                                 externalLink: "https://www.augur.net/",
-                                                historicalDaily: JSON.parse(data[coinList.indexOf("REP")]).Data
                                             }).then(() => {
                                                 Cryptocurrency.create({
                                                     abbreviation: "SNT",
                                                     name: "Status",
                                                     externalLink: "https://status.im/",
-                                                    historicalDaily: JSON.parse(data[coinList.indexOf("SNT")]).Data
                                                 })
                                             });
                                         });

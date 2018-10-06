@@ -20,6 +20,10 @@ class OurChartVX extends React.Component {
     constructor(props) {
         super(props);
         this.handleTooltip = this.handleTooltip.bind(this);
+        this.state = {
+            shiftTooltipLeft: false,
+            shiftTooltipRight: false
+        }
     }
     handleTooltip({ event, data, x, xScale, yScale }) {
         const { showTooltip } = this.props;
@@ -29,16 +33,42 @@ class OurChartVX extends React.Component {
         const d0 = data[index - 1];
         const d1 = data[index];
         const d = x0 - xScale(x(d0)) > xScale(x(d1)) - x0 ? d1 : d0;
+        const totalGraphWidth = xScale(x(data[data.length - 1]));
+        let tooltipLeft = xScale(x(d));
+        if((totalGraphWidth - tooltipLeft) < 100){
+            this.setState({shiftTooltipLeft: true});
+        }else{
+            this.setState({shiftTooltipLeft: false});
+        }
+        if(tooltipLeft < 100){
+            this.setState({shiftTooltipRight: true});
+        }else{
+            this.setState({shiftTooltipRight: false});
+        }
         showTooltip({
-            tooltipLeft: xScale(x(d)),
+            tooltipLeft: tooltipLeft,
             tooltipTop: yScale(y(d)),
             tooltipData: d
         });
       }
     render() {
         const { data, parentWidth, parentHeight, margin, tooltipLeft, tooltipTop, tooltipData, showTooltip, hideTooltip, isConsideredMobile} = this.props;
+        const {shiftTooltipLeft, shiftTooltipRight} = this.state;
+        
         const width = parentWidth - margin.left - margin.right;
         const height = parentHeight - margin.top - margin.bottom;
+        const tooltipAnimation = 'transform 0.4s ease';
+
+        let tooltipPriceTranslate = 'translateX(0%)';
+        let tooltipDateTranslate = 'translateX(-50%)';
+        
+        if(shiftTooltipLeft) {
+            tooltipPriceTranslate = 'translateX(calc(-100% - 25px))';
+            tooltipDateTranslate = 'translateX(-100%)';
+        } else if (shiftTooltipRight) {
+            tooltipDateTranslate = 'translateX(0%)';
+        }
+        
         
         if (data.length > 0) {
         
@@ -192,7 +222,7 @@ class OurChartVX extends React.Component {
                             <Line
                                 from={{x: tooltipLeft, y: yScale(y(maxPricesData[0]))}}
                                 to={{x: tooltipLeft, y: yScale(y(minPricesData[0]))}}
-                                stroke="#ffffff"
+                                stroke="steelblue"
                                 strokeDasharray="3,3"
                                 style={{pointerEvents: 'none'}}
                             />
@@ -215,10 +245,10 @@ class OurChartVX extends React.Component {
                     </svg>
                     {tooltipData &&
                             <div>
-                            <Tooltip top={setTooltipLabelTop} left={tooltipLeft + 12} style={{backgroundColor: '#2d0056', color: '#FFFFFF', pointerEvents: 'none'}}>
-                                <b>{priceFormat(y(tooltipData))}</b>
+                            <Tooltip top={setTooltipLabelTop} left={tooltipLeft + 12} style={{backgroundColor: '#2d0056', color: '#FFFFFF', pointerEvents: 'none', transform: tooltipPriceTranslate, transition: tooltipAnimation}}>
+                                <b>{priceFormat(y(tooltipData), 3)}</b>
                             </Tooltip>
-                            <Tooltip top={yScale(minPrice)} left={tooltipLeft} style={{backgroundColor: '#2d0056', color: '#FFFFFF', transform: 'translateX(-50%)', pointerEvents: 'none'}}>
+                            <Tooltip top={yScale(minPrice)} left={tooltipLeft} style={{backgroundColor: '#2d0056', color: '#FFFFFF', transform: tooltipDateTranslate, pointerEvents: 'none', display: 'table', transition: tooltipAnimation}}>
                                 <b>{formatDateTimeTooltip(x(tooltipData))}</b>
                             </Tooltip>
                             </div>

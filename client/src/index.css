@@ -68,6 +68,8 @@ body {
   }
 }
 
+/* Loading Icon From https://github.com/tobiasahlin/SpinKit */
+
 .sk-folding-cube {
   margin: 20px auto;
   width: 40px;
@@ -155,3 +157,5 @@ body {
     opacity: 0; 
   }
 }
+
+/* Loading Icon From https://github.com/tobiasahlin/SpinKit */
