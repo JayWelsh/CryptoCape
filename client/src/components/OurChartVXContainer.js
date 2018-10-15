@@ -17,7 +17,8 @@ const styles = theme => ({
         justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'column',
-        width: '100%'
+        width: '100%',
+        overflow: 'hidden'
     },
     center: {
         flexDirection: 'column',
@@ -100,7 +101,7 @@ class OurChartVXContainer extends React.Component {
     };
 
     render() {
-        const { classes, theme, margin, chartTitle, chartSubtitle, isConsideredMobile, chartData, parentWidth, parentHeight, isChartLoading } = this.props;
+        const { classes, theme, margin, chartTitle, chartSubtitle, isConsideredMobile, chartData, parentWidth, parentHeight, isChartLoading, chartCurrency } = this.props;
         let currentPrice = 0;
         let diffPrice = 0;
         let hasIncreased = true;
@@ -140,18 +141,18 @@ class OurChartVXContainer extends React.Component {
                             <div className={classes.rightTitles}>
                                 <div>
                                     <Typography className={classes.vxChartTitle + " no-padding-bottom"} variant="headline" component="h2">
-                                        {priceFormat(currentPrice)}
+                                        {priceFormat(currentPrice, 2, chartCurrency)}
                                     </Typography>
                                 </div>
                                 <div>
                                     <Typography className={classes.vxChartTitle + " no-padding-top " + (hasIncreased ? classes.vxPriceIncrease : classes.vxPriceDecrease)} component="p">
-                                        {hasIncreased ? ("+ " + priceFormat(diffPrice)) : ("- " + priceFormat((diffPrice * -1)))}
+                                        {hasIncreased ? ("+ " + priceFormat(diffPrice, 2, chartCurrency)) : ("- " + priceFormat((diffPrice * -1, 2, chartCurrency)))}
                                     </Typography>
                                 </div>
                             </div>
                         </div>
                         <div className={classes.innerContainer}>
-                            <OurChartVX isConsideredMobile={isConsideredMobile} margin={margin} data={prices} />
+                            <OurChartVX isConsideredMobile={isConsideredMobile} chartCurrency={chartCurrency} margin={margin} data={prices} />
                         </div>
                     </div>
                 </div>

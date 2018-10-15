@@ -75,7 +75,7 @@ let walletList = [
     "0x90dcc3236b990dd5b3df201c354d9bf7a02a3e1b"
 ]
 
-//https://api.etherscan.io/api?module=account&action=tokentx&address=0x4e83362442b8d1bec281594cea3050c8eb01311c&startblock=0&endblock=999999999&sort=asc&apikey=YourApiKeyToken
+//https://api.etherscan.io/api?module=account&action=tokentx&address=0x90dcc3236b990dd5b3df201c354d9bf7a02a3e1b&startblock=0&endblock=999999999&sort=asc&apikey=YourApiKeyToken
 
 let data = [];
 

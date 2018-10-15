@@ -48,7 +48,7 @@ class OurChart extends React.Component {
   }
 
   render() {
-    const { classes, theme, chartLink, isConsideredMobile, chartTitle, chartSubtitle, chartData, isChartLoading } = this.props;
+    const { classes, theme, chartLink, isConsideredMobile, chartTitle, chartSubtitle, chartData, isChartLoading, chartCurrency } = this.props;
 
     let margin = {
       top: 15,
@@ -60,12 +60,12 @@ class OurChart extends React.Component {
     if (chartData) {
       return (
         <div>
-          <OurChartVXContainer isChartLoading={isChartLoading} isConsideredMobile={isConsideredMobile} margin={margin} chartData={chartData} chartTitle={chartTitle} chartSubtitle={chartSubtitle} />
+          <OurChartVXContainer isChartLoading={isChartLoading} chartCurrency={chartCurrency} isConsideredMobile={isConsideredMobile} margin={margin} chartData={chartData} chartTitle={chartTitle} chartSubtitle={chartSubtitle} />
         </div>
       );
     }else{
       return <div>
-        <OurChartVXContainer isChartLoading={isChartLoading} isConsideredMobile={isConsideredMobile} margin={margin}/>
+        <OurChartVXContainer isChartLoading={isChartLoading} chartCurrency={chartCurrency} isConsideredMobile={isConsideredMobile} margin={margin}/>
       </div>
     }
   }

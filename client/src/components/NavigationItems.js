@@ -33,7 +33,7 @@ function NavigationItemsMain(props) {
   }
   return (
     <div>
-      <List>
+      <List style={{paddingTop: '0px'}}>
         <Link to={'/'} style={{ textDecoration: 'none' }}>
           <ListItem onClick={emitMenuToggleFunction} button>
             <ListItemIcon>
@@ -58,7 +58,7 @@ function NavigationItemsMain(props) {
             <ListItemText primary="Charts" />
           </ListItem>
         </Link>
-        <Link to={'/alerts'} style={{ textDecoration: 'none' }}>
+        {/* <Link to={'/alerts'} style={{ textDecoration: 'none' }}>
           <ListItem onClick={emitMenuToggleFunction} button>
             <ListItemIcon>
               <NotificationsActive />
@@ -73,9 +73,9 @@ function NavigationItemsMain(props) {
             </ListItemIcon>
             <ListItemText primary="Account" />
           </ListItem>
-        </Link>
-      </List>
-      <Divider />
+        </Link> */}
+      </List> 
+      {/* <Divider />
       <List>
           <Link to={'/settings'} style={{ textDecoration: 'none' }}>
             <ListItem onClick={emitMenuToggleFunction} button>
@@ -85,7 +85,7 @@ function NavigationItemsMain(props) {
               <ListItemText primary="Settings" />
             </ListItem>
           </Link>
-      </List>
+      </List> */}
     </div>
   );
 }

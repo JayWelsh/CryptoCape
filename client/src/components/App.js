@@ -252,11 +252,11 @@ class App extends React.Component {
         >
           <MenuIcon />
         </IconButton>
-        <a className={"header-logo"} href="javascript:;">
+        <div className={"header-logo"}>
           <Link to={'/'} style={{ textDecoration: 'none' }}>
             <img className={"header-logo"} src={CryptocapeLogo} />
           </Link>
-        </a>
+        </div>
       </Toolbar>
     );
 

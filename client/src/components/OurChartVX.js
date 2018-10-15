@@ -52,9 +52,9 @@ class OurChartVX extends React.Component {
         });
       }
     render() {
-        const { data, parentWidth, parentHeight, margin, tooltipLeft, tooltipTop, tooltipData, showTooltip, hideTooltip, isConsideredMobile} = this.props;
+        const { data, parentWidth, parentHeight, margin, tooltipLeft, tooltipTop, tooltipData, showTooltip, hideTooltip, isConsideredMobile, chartCurrency} = this.props;
         const {shiftTooltipLeft, shiftTooltipRight} = this.state;
-        
+
         const width = parentWidth - margin.left - margin.right;
         const height = parentHeight - margin.top - margin.bottom;
         const tooltipAnimation = 'transform 0.4s ease';
@@ -126,7 +126,7 @@ class OurChartVX extends React.Component {
 
             return (
                 <div>
-                    <svg ref={s => (this.svg = s)} width={width} height={parentHeight}>
+                    <svg ref={s => (this.svg = s)} width={width} height={height + 30}>
                         <AxisBottom
                             tickLabelProps={xAxisTickFunction}
                             tickFormat={xAxisTickFormat}
@@ -174,7 +174,7 @@ class OurChartVX extends React.Component {
                             xScale={xScale}
                             x={x}
                             y={y}
-                            label={priceFormat(maxPrice)}
+                            label={priceFormat(maxPrice , 2, chartCurrency)}
                             yText={yScale(maxPrice)}
                         />
                         <OurMinPriceVX
@@ -183,7 +183,7 @@ class OurChartVX extends React.Component {
                             xScale={xScale}
                             x={x}
                             y={y}
-                            label={priceFormat(minPrice)}
+                            label={priceFormat(minPrice, 2, chartCurrency)}
                             yText={yScale(minPrice)}
                         />
                         <Bar
@@ -245,10 +245,10 @@ class OurChartVX extends React.Component {
                     </svg>
                     {tooltipData &&
                             <div>
-                            <Tooltip top={setTooltipLabelTop} left={tooltipLeft + 12} style={{backgroundColor: '#2d0056', color: '#FFFFFF', pointerEvents: 'none', transform: tooltipPriceTranslate, transition: tooltipAnimation}}>
-                                <b>{priceFormat(y(tooltipData), 3)}</b>
+                            <Tooltip top={setTooltipLabelTop} left={tooltipLeft + 12} style={{backgroundColor: '#2d0056', color: '#FFFFFF', pointerEvents: 'none', transform: tooltipPriceTranslate, transition: tooltipAnimation, whiteSpace: 'pre'}}>
+                                <b>{priceFormat(y(tooltipData), 2, chartCurrency)}</b>
                             </Tooltip>
-                            <Tooltip top={yScale(minPrice)} left={tooltipLeft} style={{backgroundColor: '#2d0056', color: '#FFFFFF', transform: tooltipDateTranslate, pointerEvents: 'none', display: 'table', transition: tooltipAnimation}}>
+                            <Tooltip top={yScale(minPrice)} left={tooltipLeft} style={{backgroundColor: '#2d0056', color: '#FFFFFF', transform: tooltipDateTranslate, pointerEvents: 'none', display: 'table', transition: tooltipAnimation, whiteSpace: 'pre'}}>
                                 <b>{formatDateTimeTooltip(x(tooltipData))}</b>
                             </Tooltip>
                             </div>

@@ -285,7 +285,6 @@ class ChartsPage extends React.Component {
   render() {
     const { classes, theme, match, location, history, isConsideredMobile } = this.props;
     const { value, chartLink, disableChart, coins, chartData, isChartLoading } = this.state;
-
     let currentPrice = 0;
     let diffPrice = 0;
     let hasIncreased;
@@ -299,9 +298,9 @@ class ChartsPage extends React.Component {
         })
         let firstPrice = prices[0].price;
         currentPrice = prices[prices.length - 1].price;
-        diffPrice = priceFormat(currentPrice - firstPrice);
+        diffPrice = priceFormat(currentPrice - firstPrice, 4);
         //Format now that $ can be attached (run calcs before this)
-        currentPrice = priceFormat(currentPrice);
+        currentPrice = priceFormat(currentPrice, 4);
         hasIncreased = diffPrice > 0;
     }
 
