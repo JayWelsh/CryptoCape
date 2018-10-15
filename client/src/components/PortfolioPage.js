@@ -8,7 +8,6 @@ import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
 import SimpleMediaCard from './SimpleMediaCard';
-import EnhancedTable from './EnhancedTable';
 import TextField from '@material-ui/core/TextField';
 import MenuItem from '@material-ui/core/MenuItem';
 import Switch from '@material-ui/core/Switch';
@@ -271,11 +270,6 @@ class PortfolioPage extends React.Component {
             returnArray.push({ date: currentDate, price: thisPrice });
           }
         });
-
-        
-
-        //console.log('returnArray', returnArray);
-
       }
       return returnArray;
     }
@@ -285,7 +279,6 @@ class PortfolioPage extends React.Component {
     let currency = "$";
     let getAgainstETH = [];
     let coinListLocal = {};
-    console.log("this.state.coins", this.state.coins);
     let getETHUSD = "https://min-api.cryptocompare.com/data/pricemultifull?fsyms=ETH&tsyms=USD";
     axios.get(getETHUSD).then(res => {
       let etherToUSD = res.data.RAW.ETH.USD.PRICE;
@@ -294,10 +287,8 @@ class PortfolioPage extends React.Component {
       let getTokenBalances = 'https://api.ethplorer.io/getAddressInfo/' + thisPersist.state.publicKey + '?apiKey=freekey';
       axios.get(getTokenBalances).then(res => {
         let balanceOfETH = res.data.ETH.balance;
-        //if (balanceOfETH > 0) {
           getAgainstETH.push("ETH");
           coinListLocal["ETH"] = { balance: balanceOfETH }
-        //}
         res.data.tokens.forEach((item, index) => {
           let balance = item.balance / 1000000000000000000;
           let rateUSD = item.tokenInfo.price.rate;
@@ -394,12 +385,10 @@ class PortfolioPage extends React.Component {
   render() {
     const { classes, theme, match, location, history, isConsideredMobile } = this.props;
     const { value, publicKey, disableChart, coins, totalPortfolioValueUSD, totalPortfolioValueETH, isChartLoading, historicalBaseCurrency, baseCurrencyToUSD, enableFiatConversion } = this.state;
-    console.log('this.state', this.state)
     let displayTotalUSD = priceFormat(totalPortfolioValueUSD);
     let displayTotalETH = "~ " + numberFormat(totalPortfolioValueETH) +  " ETH"
 
     let ethAddressError = false;
-    console.log("publicKey",publicKey);
     if((publicKey.length > 0) && !isValidAddress(publicKey)){
       ethAddressError = true;
     }
@@ -429,7 +418,6 @@ class PortfolioPage extends React.Component {
           timeseriesData = this.convertBaseBalances(timeseriesData);
         }        
       }
-      console.log("timeseriesData", timeseriesData);
     // [
     //     ['Ether', 5.004, false],
     //     ['District0x', 0.977, false],

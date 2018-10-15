@@ -2,7 +2,7 @@ import numeral from 'numeral';
 
 export const priceFormat = (number, decimals = 2, currency = "$", prefix = true) => {
     let decimalString = "";
-    for(let i = 0; i < 2; i++){
+    for(let i = 0; i < decimals; i++){
         decimalString += "0";
     }
     if (currency.length > 1) {
