@@ -217,6 +217,7 @@ class OurChartVX extends React.Component {
                                   yScale,
                                 })}
                             onMouseLeave={data => event => hideTooltip()}
+                            onTouchEnd={data => event => hideTooltip()}
                         />
                         {tooltipData && <g>
                             <Line
