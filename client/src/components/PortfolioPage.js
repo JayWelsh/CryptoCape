@@ -144,7 +144,7 @@ class PortfolioPage extends React.Component {
     }
 
     getEtherTransactionHistory(publicKey) {
-      let getEthTransactionHistoryURL = 'http://api.etherscan.io/api?module=account&action=txlist&address=' + publicKey + '&startblock=0&endblock=99999999&sort=asc&apikey=YourApiKeyToken';
+      let getEthTransactionHistoryURL = 'https://api.etherscan.io/api?module=account&action=txlist&address=' + publicKey + '&startblock=0&endblock=99999999&sort=asc&apikey=YourApiKeyToken';
       return axios.get(getEthTransactionHistoryURL);
     }
 
