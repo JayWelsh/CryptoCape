@@ -198,9 +198,11 @@ class App extends React.Component {
 
     if ((documentBodyClientWidth <= sizeConsiderMobile)) {
       isConsideredMobile = true;
-      if (anchor === "left") {
+      if (anchor === "left" && (anchor !== "right")) {
         this.setState({ anchor: "right" });
       }
+    }else if(anchor === "right" && (anchor !== "left")){
+      this.setState({ anchor: "left" });
     }
 
     let widthOverride = {

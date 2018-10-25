@@ -68,8 +68,8 @@ class OurChartVX extends React.Component {
         } else if (shiftTooltipRight) {
             tooltipDateTranslate = 'translateX(0%)';
         }
-        
-        
+
+    
         if (data.length > 0) {
         
             const xAxisTickFunction = (val, i) => ({ fontSize: 14, fill: 'white' })

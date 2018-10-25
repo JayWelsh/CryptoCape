@@ -55,18 +55,21 @@ class PageContainer extends React.Component {
     console.log("isConsideredMobile in page container",isConsideredMobile);
     return (
       <div className={classes.pageContainer}>
-          <Route exact={true} path="/" component={HomePageRoute} isConsideredMobile={isConsideredMobile}/>
-          <Route exact={true} path="/charts/:chartLink" render={(props) => ChartsPageRoute(props, isConsideredMobile)} isConsideredMobile={isConsideredMobile}/>
-          <Route exact={true} path="/charts" render={(props) => ChartsPageRoute(props, isConsideredMobile)} isConsideredMobile={isConsideredMobile}/>
-          <Route exact={true} path="/portfolio" render={(props) => PortfolioPageRoute(props, isConsideredMobile)} isConsideredMobile={isConsideredMobile}/>
-          <Route exact={true} path="/portfolio/:publicKey" render={(props) => PortfolioPageRoute(props, isConsideredMobile)} isConsideredMobile={isConsideredMobile}/>
+          <Route exact={true} path="/" render={(props) => HomePageRoute(props, isConsideredMobile)}/>
+          <Route exact={true} path="/charts/:chartLink" render={(props) => ChartsPageRoute(props, isConsideredMobile)}/>
+          <Route exact={true} path="/charts" render={(props) => ChartsPageRoute(props, isConsideredMobile)}/>
+          <Route exact={true} path="/portfolio" render={(props) => PortfolioPageRoute(props, isConsideredMobile)}/>
+          <Route exact={true} path="/portfolio/:publicKey" render={(props) => PortfolioPageRoute(props, isConsideredMobile)}/>
       </div>
     );
   }
 }
 
-const HomePageRoute = ({ match }) => {
-  return <HomePage/>
+const HomePageRoute = ({ match, history }, isConsideredMobile) => {
+  // return <HomePage/>
+  //Redirect to portfolio until home page is ready
+  history.push('/portfolio');
+  return <PortfolioPage isConsideredMobile={isConsideredMobile}/>
 }
 
 const ChartsPageRoute = ({ match }, isConsideredMobile) => {

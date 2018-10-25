@@ -106,6 +106,7 @@ class OurChartVXContainer extends React.Component {
         let diffPrice = 0;
         let hasIncreased = true;
         let prices = [];
+        let percentDiff = 0;
 
         if (chartData && chartData.length  > 0) {
             prices = Object.keys(chartData).map(key => {
@@ -114,10 +115,12 @@ class OurChartVXContainer extends React.Component {
                     price: chartData[key].price
                 };
             })
-            let firstPrice = prices[0].price;
+            let indexOfFirstNonZeroValue = prices.findIndex(priceObj=> priceObj.price > 0);
+            let firstPrice = prices[indexOfFirstNonZeroValue].price;
             currentPrice = prices[prices.length - 1].price;
+            percentDiff = ((currentPrice * 100) / firstPrice) - 100;
             diffPrice = currentPrice - firstPrice;
-            hasIncreased = diffPrice > 0;
+            hasIncreased = diffPrice >= 0;
         }
         return (
             <div className={classes.outerContainer}>
@@ -141,12 +144,12 @@ class OurChartVXContainer extends React.Component {
                             <div className={classes.rightTitles}>
                                 <div>
                                     <Typography className={classes.vxChartTitle + " no-padding-bottom"} variant="headline" component="h2">
-                                        {priceFormat(currentPrice, 2, chartCurrency)}
+                                        {priceFormat(currentPrice, 4, chartCurrency)}
                                     </Typography>
                                 </div>
                                 <div>
                                     <Typography className={classes.vxChartTitle + " no-padding-top " + (hasIncreased ? classes.vxPriceIncrease : classes.vxPriceDecrease)} component="p">
-                                        {hasIncreased ? ("+ " + priceFormat(diffPrice, 2, chartCurrency)) : ("- " + priceFormat((diffPrice * -1, 2, chartCurrency)))}
+                                        {hasIncreased ? ("+ " + priceFormat(percentDiff, 2, "%", false)) : ("- " + priceFormat(percentDiff * -1, 2, "%", false))}
                                     </Typography>
                                 </div>
                             </div>

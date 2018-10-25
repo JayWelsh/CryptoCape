@@ -34,14 +34,14 @@ function NavigationItemsMain(props) {
   return (
     <div>
       <List style={{paddingTop: '0px'}}>
-        <Link to={'/'} style={{ textDecoration: 'none' }}>
+        {/* <Link to={'/'} style={{ textDecoration: 'none' }}>
           <ListItem onClick={emitMenuToggleFunction} button>
             <ListItemIcon>
               <Home />
             </ListItemIcon>
             <ListItemText primary="Home" />
           </ListItem>
-        </Link>
+        </Link> */}
         <Link to={'/portfolio'} style={{ textDecoration: 'none' }}>
           <ListItem onClick={emitMenuToggleFunction} button>
             <ListItemIcon>

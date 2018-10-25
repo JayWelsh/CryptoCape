@@ -12,7 +12,7 @@ import LaunchIcon from '@material-ui/icons/Launch';
 import PerformanceIcon from '@material-ui/icons/Timeline';
 import FavouriteBorderIcon from '@material-ui/icons/FavoriteBorder';
 import CardActionArea from '@material-ui/core/CardActionArea';
-import {Link} from 'react-router-dom';
+import {Link, withRouter} from 'react-router-dom';
 
 const styles = theme => ({
     cardPositioning: {
@@ -71,7 +71,7 @@ const styles = theme => ({
 });
 
 function ChartMenuMiniCard(props) {
-  const { classes, theme, headline, subHeadline, image, externalLink, chartLink, isPlaceholding, realtimeValue } = props;
+  const { classes, theme, headline, subHeadline, image, externalLink, chartLink, isPlaceholding, realtimeValue, history } = props;
   let disablePointerEventsIfPlaceholding;
   if(isPlaceholding){
     disablePointerEventsIfPlaceholding = 'disable-pointer-events';
@@ -98,8 +98,7 @@ function ChartMenuMiniCard(props) {
               <FavouriteBorderIcon />
             </IconButton> */}
       </div>
-      <CardActionArea>
-        <Link to={`/charts/${chartLink}`} style={{ textDecoration: 'none' }} className={disablePointerEventsIfPlaceholding}>
+      <CardActionArea onClick={() => { history.push(`/charts/${chartLink}`) }} className={disablePointerEventsIfPlaceholding}>
           <Card className={classes.card}>
             <CardMedia
               className={classes.cover}
@@ -119,7 +118,6 @@ function ChartMenuMiniCard(props) {
               </CardContent>
             </div>
           </Card>
-        </Link>
       </CardActionArea>
     </div>
   );
@@ -130,4 +128,4 @@ ChartMenuMiniCard.propTypes = {
   theme: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles, { withTheme: true })(ChartMenuMiniCard);
+export default withRouter(withStyles(styles, { withTheme: true })(ChartMenuMiniCard));

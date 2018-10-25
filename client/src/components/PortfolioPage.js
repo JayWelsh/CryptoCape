@@ -57,6 +57,9 @@ const styles = theme => ({
     padding: '10px',
     paddingTop: '20px'
   },
+  pageMinHeight: {
+    minHeight: 'calc(100vh - 64px)'
+  },
   textField: {
     marginLeft: theme.spacing.unit,
     marginRight: theme.spacing.unit,
@@ -166,7 +169,7 @@ class PortfolioPage extends React.Component {
       let historicalBaseCurrency = this.state.historicalBaseCurrency;
       let restrictCoinsKeys = Object.keys(restrictCoins);
       axios.all([this.getEtherTransactionHistory(publicKey), this.getTokenTransactionHistory(publicKey),this.getBaseCurrencyHistoricalUSD(historicalBaseCurrency)]).then(res => {
-        if (res && res[1].data && res[1].data.result) {
+        if (res && res[1].data && res[1].data.result && (res[1].data.result.constructor === Array)) {
           let transactionDataEther = res[0].data.result.map((item) => {
             item.tokenSymbol = "ETH";
             return item;
@@ -345,7 +348,9 @@ class PortfolioPage extends React.Component {
   componentWillReceiveProps(nextProps) {
     if (nextProps.publicKey && this.state.publicKey !== nextProps.publicKey) {
       this.setState({ publicKey: nextProps.publicKey, isChartLoading: true, coins: {}, historicalBaseCurrency: 'ETH' });
-      this.fetchPriceValues();
+      if ((nextProps.publicKey.length > 0) && isValidAddress(nextProps.publicKey)) {
+        this.fetchPriceValues();
+      }
     }
   }
 
@@ -507,132 +512,167 @@ class PortfolioPage extends React.Component {
     if(enableFiatConversion){
       chartCurrency = "$";
     }
+    let validWallet = false;
+    if(!ethAddressError && publicKey){
+      validWallet = true;
+    }
     return (
-      <div className={classes.root}>
-        <Query
-          variables={{ chartLink }}
-          query={GET_CHART_DATA}
-        >
-          {({ loading, error, data }) => {
-            return <div>
-              <Grid container spacing={24}>
-                <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
-                </Grid>
-                <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
-                <div className={classes.addressOptions}>
+      <div className={classes.root + " " + classes.pageMinHeight}>
+        <div>
+        {!validWallet && 
+          <Grid container spacing={24}>
+            <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+            </Grid>
+            <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
+              <div className={classes.addressOptions}>
                 <Grid container spacing={24}>
-                <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
-                </Grid>
-                <Grid item xs={12} sm={6} md={6} lg={6}>
-                <form className={classes.formContainer}>
-                  <TextField
-                    error={ethAddressError}
-                    id="outlined-name"
-                    label="Wallet Address"
-                    className={classes.textField + " " + classes.fullWidth}
-                    value={this.state.publicKey}
-                    onChange={(event) => this.handleSetAddress(event, history)}
-                    onFocus={(event) => this.handleFocus(event)}
-                    margin="normal"
-                    variant="outlined"
-                  />
-                  </form>
+                  <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
                   </Grid>
-                  <Grid item xs={6} sm={2} md={2} lg={2}>
-                  <form className={classes.formContainer}>
-                  <TextField
-                    id="outlined-select-currency"
-                    select
-                    label="Token"
-                    className={classes.textField  + " " + classes.fullWidth}
-                    value={this.state.historicalBaseCurrency}
-                    onChange={this.handleChangeBaseCurrency('historicalBaseCurrency')}
-                    SelectProps={{
-                      MenuProps: {
-                        className: classes.menu,
-                      },
-                    }}
-                    margin="normal"
-                    variant="outlined"
-                  >
-                    {Object.keys(coins).map(key => (
-                      <MenuItem key={key} value={key}>
-                        {key}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                  </form>
-                  </Grid>
-                  <Grid item xs={6} sm={2} md={2} lg={2}>
-                  <FormControlLabel
-                    className={classes.fiatSwitch}
-                    control={
-                      <Switch
-                        checked={this.state.enableFiatConversion}
-                        onChange={this.toggleFiatConversion}
-                        value="checkedB"
-                        color="primary"
+                  <Grid item xs={12} sm={10} md={10} lg={10}>
+                    <form className={classes.formContainer} autoComplete="on">
+                      <TextField
+                        error={ethAddressError}
+                        id="outlined-name"
+                        label="Wallet Address"
+                        name="walletAddress"
+                        helperText={`Any Ethereum Wallet's Public Key`}
+                        className={classes.textField + " " + classes.fullWidth}
+                        value={publicKey}
+                        onChange={(event) => this.handleSetAddress(event, history)}
+                        onFocus={(event) => this.handleFocus(event)}
+                        autoFocus={true}
+                        margin="normal"
+                        variant="outlined"
                       />
-                    }
-                    label="USD Value"
-                  />
+                    </form>
                   </Grid>
                   <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
-                </Grid>
                   </Grid>
-                  </div>
                 </Grid>
-                <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+              </div>
+            </Grid>
+          </Grid>
+          }
+          {validWallet && 
+          <Grid container spacing={24}>
+            <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+            </Grid>
+            <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
+              <div className={classes.addressOptions}>
+                <Grid container spacing={24}>
+                  <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={6} lg={6}>
+                    <form className={classes.formContainer} autoComplete="on">
+                      <TextField
+                        error={ethAddressError}
+                        id="outlined-name"
+                        label="Wallet Address"
+                        name="walletAddress"
+                        className={classes.textField + " " + classes.fullWidth}
+                        value={publicKey}
+                        onChange={(event) => this.handleSetAddress(event, history)}
+                        onFocus={(event) => this.handleFocus(event)}
+                        autoFocus={true}
+                        margin="normal"
+                        variant="outlined"
+                      />
+                    </form>
+                  </Grid>
+                  <Grid item xs={6} sm={2} md={2} lg={2}>
+                    <form className={classes.formContainer}>
+                      <TextField
+                        id="outlined-select-currency"
+                        select
+                        label="Token"
+                        className={classes.textField + " " + classes.fullWidth}
+                        value={this.state.historicalBaseCurrency}
+                        onChange={this.handleChangeBaseCurrency('historicalBaseCurrency')}
+                        SelectProps={{
+                          MenuProps: {
+                            className: classes.menu,
+                          },
+                        }}
+                        margin="normal"
+                        variant="outlined"
+                      >
+                        {Object.keys(coins).map(key => (
+                          <MenuItem key={key} value={key}>
+                            {key}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </form>
+                  </Grid>
+                  <Grid item xs={6} sm={2} md={2} lg={2}>
+                    <FormControlLabel
+                      className={classes.fiatSwitch}
+                      control={
+                        <Switch
+                          checked={this.state.enableFiatConversion}
+                          onChange={this.toggleFiatConversion}
+                          value="checkedB"
+                          color="primary"
+                        />
+                      }
+                      label="USD Value"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+                  </Grid>
                 </Grid>
-                <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
-                </Grid>
-                <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
-                  <OurChart isChartLoading={isChartLoading} isConsideredMobile={isConsideredMobile} chartTitle={chartData.name} chartSubtitle={chartData.abbreviation} chartData={timeseriesData} chartCurrency={chartCurrency}  />
-                </Grid>
-                <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
-                </Grid>
-                <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
-                </Grid>
-                <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
-                  <Paper className={classes.root} elevation={2}>
-                    <Typography variant={isConsideredMobile ? "display3" : "display4"}>
-                      {displayTotalUSD}
-                    </Typography>
-                    <Typography variant={isConsideredMobile ? "display2" : "display3"} gutterBottom={true}>
-                      {displayTotalETH}
-                    </Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
-                </Grid>
-                <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
-                </Grid>
-                <Grid item xs={12} sm={5} md={5} lg={5}>
-                  <Paper className={classes.root} elevation={2}>
-                    <OurPieChart stockOptions={stockOptionsUSD} publicKey={publicKey} />
-                  </Paper>
-                </Grid>
-                <Grid item xs={12} sm={5} md={5} lg={5}>
-                  <Paper className={classes.root} elevation={2}>
-                    <OurPieChart stockOptions={stockOptionsETH} publicKey={publicKey} />
-                  </Paper>
-                </Grid>
-                <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
-                </Grid>
-                <Grid item xs={12} sm={12} md={12} lg={12}>
-                  <div style={{height: '25px'}}/>
-                </Grid>
-                {/* <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+              </div>
+            </Grid>
+            <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+            </Grid>
+            <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+            </Grid>
+            <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
+              <OurChart isChartLoading={isChartLoading} isConsideredMobile={isConsideredMobile} chartTitle={chartData.name} chartSubtitle={chartData.abbreviation} chartData={timeseriesData} chartCurrency={chartCurrency} />
+            </Grid>
+            <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+            </Grid>
+            <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+            </Grid>
+            <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
+              <Paper className={classes.root} elevation={2}>
+                <Typography variant={isConsideredMobile ? "display3" : "display4"}>
+                  {displayTotalUSD}
+                </Typography>
+                <Typography variant={isConsideredMobile ? "display2" : "display3"} gutterBottom={true}>
+                  {displayTotalETH}
+                </Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+            </Grid>
+            <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+            </Grid>
+            <Grid item xs={12} sm={5} md={5} lg={5}>
+              <Paper className={classes.root} elevation={2}>
+                <OurPieChart stockOptions={stockOptionsUSD} publicKey={publicKey} />
+              </Paper>
+            </Grid>
+            <Grid item xs={12} sm={5} md={5} lg={5}>
+              <Paper className={classes.root} elevation={2}>
+                <OurPieChart stockOptions={stockOptionsETH} publicKey={publicKey} />
+              </Paper>
+            </Grid>
+            <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+            </Grid>
+            <Grid item xs={12} sm={12} md={12} lg={12}>
+              <div style={{ height: '25px' }} />
+            </Grid>
+            {/* <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
                 </Grid>
                 <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
                    <EnhancedTable/>
                 </Grid>
                 <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
                 </Grid> */}
-              </Grid>
-            </div>
-          }}
-        </Query>
+          </Grid>
+          }
+        </div>
       </div>
     );
   }

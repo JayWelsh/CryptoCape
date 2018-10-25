@@ -226,7 +226,7 @@ class ChartsPage extends React.Component {
       return {
         "fontWeight": "bold",
         "color": "white",
-        "background-color": "#000628"
+        "backgroundColor": "#000628"
       }
     }
   }
@@ -288,6 +288,7 @@ class ChartsPage extends React.Component {
     let currentPrice = 0;
     let diffPrice = 0;
     let hasIncreased;
+    let percentDiff = 0;
 
     if(chartData.timeseries && chartData.timeseries.length > 0) {
         let prices = Object.keys(chartData.timeseries).map(key => {
@@ -296,8 +297,10 @@ class ChartsPage extends React.Component {
                 price: chartData.timeseries[key].price
             };
         })
-        let firstPrice = prices[0].price;
-        currentPrice = prices[prices.length - 1].price;
+      let indexOfFirstNonZeroValue = prices.findIndex(priceObj => priceObj.price > 0);
+      let firstPrice = prices[indexOfFirstNonZeroValue].price;
+      currentPrice = prices[prices.length - 1].price;
+      percentDiff = priceFormat(((currentPrice * 100) / firstPrice) - 100, 2, "%", false);
         diffPrice = priceFormat(currentPrice - firstPrice, 4);
         //Format now that $ can be attached (run calcs before this)
         currentPrice = priceFormat(currentPrice, 4);
@@ -398,7 +401,7 @@ class ChartsPage extends React.Component {
                       {currentPrice}
                     </Typography>
                     <Typography variant={isConsideredMobile ? "display2" : "display3"} gutterBottom={true}>
-                      {diffPrice}
+                      {percentDiff}
                     </Typography>
                   </Paper>
                 </Grid>
