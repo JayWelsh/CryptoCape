@@ -111,7 +111,11 @@ class PortfolioPage extends React.Component {
           historicalBaseCurrency: 'ETH',
           publicKeyError: false,
           enableFiatConversion: false
-      };
+        };
+        let publicKeyLocalStorage = window.localStorage.getItem("publicKey");
+        if(this.state.publicKey === "" && isValidAddress(publicKeyLocalStorage)) {
+          this.props.history.push("/portfolio/" + publicKeyLocalStorage);
+        }
     }
     
   toggleFiatConversion = () => {
@@ -341,6 +345,9 @@ class PortfolioPage extends React.Component {
   componentDidMount() {
     if (this.state.publicKey) {
       //this.intervalFetchPrices = setInterval(() => this.fetchPriceValues(), 60000);
+      if ((this.state.publicKey.length > 0) && isValidAddress(this.state.publicKey)) {
+        window.localStorage.setItem("publicKey", this.state.publicKey);
+      };
       this.fetchPriceValues(); // also load one immediately
     }
   }
@@ -349,6 +356,7 @@ class PortfolioPage extends React.Component {
     if (nextProps.publicKey && this.state.publicKey !== nextProps.publicKey) {
       this.setState({ publicKey: nextProps.publicKey, isChartLoading: true, coins: {}, historicalBaseCurrency: 'ETH' });
       if ((nextProps.publicKey.length > 0) && isValidAddress(nextProps.publicKey)) {
+        window.localStorage.setItem("publicKey", nextProps.publicKey);
         this.fetchPriceValues();
       }
     }
