@@ -17,10 +17,11 @@ import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import CryptocapeLogo from '../img/Cryptocape9.png';
 import PageContainer from './PageContainer';
 import NavigationItemsMain from './NavigationItems';
-import { BrowserRouter as Router, Link } from 'react-router-dom';
+import { Router, Link } from 'react-router-dom';
 import ApolloClient from 'apollo-boost';
 import gql from "graphql-tag";
 import { ApolloProvider } from "react-apollo";
+import {configureHistory} from '../utils';
 
 let endpointGraphQL = "https://cryptocape.com/graphql"
 if (process.env.NODE_ENV !== 'production' || process.env.REACT_APP_FORCE_LOCALHOST) {
@@ -131,6 +132,8 @@ const styles = theme => ({
 });
 
 let pageResizePreventDoubleFire;
+
+const history = configureHistory()
 
 class App extends React.Component {
   constructor(props) {
@@ -284,7 +287,7 @@ class App extends React.Component {
     const toolbar = isConsideredMobile ? mobileToolbar : desktopToolbar
 
     return (
-      <Router>
+      <Router history={history}>
         <ApolloProvider client={client}>
           <div className={classes.root}>
             <div className={classes.appFrame}>

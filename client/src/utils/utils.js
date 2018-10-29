@@ -1,4 +1,5 @@
 import numeral from 'numeral';
+import { createBrowserHistory, createHashHistory } from 'history';
 
 export const priceFormat = (number, decimals = 2, currency = "$", prefix = true) => {
     let decimalString = "";
@@ -15,6 +16,12 @@ export const priceFormat = (number, decimals = 2, currency = "$", prefix = true)
         return numeral(number).format(format) + " " + currency;
     }
     
+}
+
+export function configureHistory() {
+    return window.matchMedia('(display-mode: standalone)').matches
+        ? createHashHistory()
+        : createBrowserHistory()
 }
 
 export const numberFormat = (number) => {
