@@ -224,9 +224,6 @@ class PortfolioPage extends React.Component {
         let firstDate = timeseries[0].date;
         let lastDate = timeseries[timeseries.length - 1].date;
 
-        let daysToGenerate = lastDate.diff(firstDate, "days");
-
-        let lastConsumedIndex = 0;
         //console.log("timeseries",timeseries);
         timeseries.forEach((item, index) => {
           let thisDate = item.date;
@@ -448,54 +445,31 @@ class PortfolioPage extends React.Component {
 
       let stockOptionsETH = {
         title: {
-            text: 'Market Cap Distribution (USD)'
+          text: 'Market Cap Distribution (USD)'
         },
         lang: {
           thousandsSep: ','
         },
         series: [{
-            type: 'pie',
-            allowPointSelect: false,
-            keys: ['name', 'y', 'selected', 'sliced'],
-            data: pieChartDataMarketCaps,
-            showInLegend: false
+          type: 'pie',
+          allowPointSelect: false,
+          keys: ['name', 'y', 'selected', 'sliced'],
+          data: pieChartDataMarketCaps,
+          showInLegend: false
         }],
         plotOptions: {
-            series: {
-              animation: false
-            }
+          series: {
+            animation: false
+          }
         },
         tooltip: {
           animation: false,
           pointFormat: '<span style="color:{point.color}">\u25CF</span><b> ${point.y:,.2f}</b><br/>',
           shared: true
-      }
+        }
       }
 
     let chartData = [];
-    let margin = {
-      top: 15,
-      bottom: 40,
-      left: 0,
-      right: 0
-    }
-
-    const GET_CHART_DATA = gql`
-    query 
-      Cryptocurrency($chartLink: String!) {
-        cryptocurrencies(name: $chartLink) {
-          id
-          abbreviation
-          name
-          externalLink
-          historicalDaily {
-            close
-            time
-          }
-        }
-      }
-    `
-    let chartLink = "ether";
     let chartCurrency = historicalBaseCurrency;
     if(enableFiatConversion){
       chartCurrency = "$";
