@@ -1,13 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
-import SwipeableViews from 'react-swipeable-views';
-import AppBar from '@material-ui/core/AppBar';
-import Tabs from '@material-ui/core/Tabs';
-import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
-import SimpleMediaCard from './SimpleMediaCard';
 import TextField from '@material-ui/core/TextField';
 import MenuItem from '@material-ui/core/MenuItem';
 import Switch from '@material-ui/core/Switch';
@@ -15,27 +10,12 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import OurChart from './OurChart';
 import OurPieChart from './OurPieChart';
 import Grid from '@material-ui/core/Grid';
-import { ParentSize } from "@vx/responsive";
 import ChartMenuMiniCard from './ChartMenuMiniCard';
-import OurChartVXContainer from './OurChartVXContainer';
-import EthereumLogo from '../img/coins/ethereum.svg';
-import AragonLogo from '../img/coins/aragon.svg';
-import District0x from '../img/coins/district0x.svg'
-import svg0x from '../img/coins/0x.svg';
-import BATsvg from '../img/coins/basic-attention-token.svg';
-import GolemLogo from '../img/coins/golem.svg';
-import AugurLogo from '../img/coins/augur.svg';
-import StatusLogo from '../img/coins/status.svg';
-import OmisegoLogo from '../img/coins/omisego.svg';
-import BloomLogo from '../img/coins/bloom.svg';
-import RaidenLogo from '../img/coins/raiden.svg';
-import { Link, withRouter } from 'react-router-dom';
-import { Query } from "react-apollo";
+import { withRouter } from 'react-router-dom';
 import gql from "graphql-tag";
 import axios from 'axios';
 import {priceFormat, numberFormat, isValidAddress} from '../utils';
 import moment from 'moment';
-import { times } from 'async';
 
 function TabContainer({ children, dir }) {
   return (
