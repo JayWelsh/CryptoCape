@@ -502,7 +502,7 @@ class PortfolioPage extends React.Component {
 
     const GET_CHART_DATA = gql`
     query 
-      Dog($chartLink: String!) {
+      Cryptocurrency($chartLink: String!) {
         cryptocurrencies(name: $chartLink) {
           id
           abbreviation
