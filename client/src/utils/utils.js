@@ -18,6 +18,14 @@ export const priceFormat = (number, decimals = 2, currency = "$", prefix = true)
     
 }
 
+export const isPrefixWWW = () => {
+  if(window.location.href.indexOf("www.") > -1) {
+    return true
+  }else{
+    return false;
+  }
+}
+
 export function configureHistory() {
     return window.matchMedia('(display-mode: standalone)').matches
         ? createHashHistory()

@@ -373,8 +373,8 @@ class PortfolioPage extends React.Component {
   }
 
   render() {
-    const { classes, theme, match, location, history, isConsideredMobile } = this.props;
-    const { value, publicKey, disableChart, coins, totalPortfolioValueUSD, totalPortfolioValueETH, isChartLoading, historicalBaseCurrency, baseCurrencyToUSD, enableFiatConversion } = this.state;
+    const { classes, history, isConsideredMobile } = this.props;
+    const { publicKey, coins, totalPortfolioValueUSD, totalPortfolioValueETH, isChartLoading, historicalBaseCurrency, baseCurrencyToUSD, enableFiatConversion } = this.state;
     let displayTotalUSD = priceFormat(totalPortfolioValueUSD);
     let displayTotalETH = "~ " + numberFormat(totalPortfolioValueETH) +  " ETH"
 
@@ -408,14 +408,6 @@ class PortfolioPage extends React.Component {
           timeseriesData = this.convertBaseBalances(timeseriesData);
         }        
       }
-    // [
-    //     ['Ether', 5.004, false],
-    //     ['District0x', 0.977, false],
-    //     ['0xProject', 0.728, false],
-    //     ['OmiseGO', 0.500, false],
-    //     ['Aragon', 0.430, false],
-    //     ['Basic Attention Token', 0.256, false],
-    // ]
 
     let stockOptionsUSD = {
         title: {
