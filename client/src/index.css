@@ -11,7 +11,7 @@ body {
 }
 
 .hoverOpacity {
-  opacity: 0.45;
+  opacity: 0.5;
   transition: all 0.2s ease-in-out;
 }
 
