@@ -9,25 +9,20 @@ import Typography from '@material-ui/core/Typography';
 import SimpleMediaCard from './SimpleMediaCard';
 import OurChart from './OurChart';
 import Grid from '@material-ui/core/Grid';
-
-function TabContainer({ children, dir }) {
-  return (
-    <Typography component="div" dir={dir} className="mobile-friendly-padding" style={{ justifyContent:'space-between', height:'calc(100%)' }}>
-      {children}
-    </Typography>
-  );
-}
-
-TabContainer.propTypes = {
-  children: PropTypes.node.isRequired,
-  dir: PropTypes.string.isRequired,
-};
+import Card from '@material-ui/core/Card';
+import Timeline from '@material-ui/icons/Timeline';
+import PortfolioDonut from '@material-ui/icons/DonutSmall';
+import CardActionArea from '@material-ui/core/CardActionArea';
+import {Link, withRouter} from 'react-router-dom';
 
 const styles = theme => ({
   root: {
     backgroundColor: theme.palette.background.paper,
     width: '100%'
-  }
+  },
+  pageMinHeight: {
+    minHeight: 'calc(100vh - 64px)'
+  },
 });
 
 class HomePage extends React.Component {
@@ -44,107 +39,48 @@ class HomePage extends React.Component {
   };
 
   render() {
-    const { classes, theme } = this.props;
+    const { classes, theme, history } = this.props;
     return (
-      <div className={classes.root}>
-        <AppBar position="static" color="default">
-          <Tabs
-            value={this.state.value}
-            onChange={this.handleChange}
-            indicatorColor="primary"
-            textColor="primary"
-            fullWidth
-          >
-            <Tab label="News" />
-            <Tab label="Overview" />
-          </Tabs>
-        </AppBar>
-        <SwipeableViews
-          axis={theme.direction === 'rtl' ? 'x-reverse' : 'x'}
-          index={this.state.value}
-          disabled={true}
-        >
-          <TabContainer dir={theme.direction}>
-            <Grid container spacing={24}>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
+      <div className={classes.root + " " + classes.pageMinHeight}>
+        <Grid container spacing={24} style={{paddingTop: '15px'}}>
+          <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+          </Grid>
+          <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
+            <Typography variant={"display3"} component="h1">
+              Dashboard
+            </Typography>
+            <Grid container style={{ "textAlign": "center", 'padding': '15px' }} spacing={24}>
+              <Grid item xs={12} sm={1} md={2} lg={2} className={"disable-padding"}>
               </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
+              <Grid item xs={12} sm={5} md={4} lg={4}>
+                <Card>
+                  <CardActionArea className={'hoverOpacity'} onClick={() => { history.push(`/portfolio`) }} style={{width: '100%'}}>
+                      <PortfolioDonut style={{ fontSize: 150 }} />
+                      <br/>
+                      <Typography variant="headline" component="h2" gutterBottom>
+                      My Portfolio
+                      </Typography>
+                  </CardActionArea>
+                </Card>
               </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
+              <Grid item xs={12} sm={5} md={4} lg={4}>
+                <Card>
+                  <CardActionArea className={'hoverOpacity'} onClick={() => { history.push(`/charts`) }} style={{width: '100%'}}>
+                      <Timeline style={{ fontSize: 150 }} />
+                      <br/>
+                      <Typography variant="headline" component="h2" gutterBottom>
+                      Charts
+                      </Typography>
+                  </CardActionArea>
+                </Card>
               </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-              <SimpleMediaCard />
+              <Grid item xs={12} sm={1} md={2} lg={2} className={"disable-padding"}>
               </Grid>
             </Grid>
-          </TabContainer>
-          <TabContainer dir={theme.direction}>
-          <Grid container spacing={24}>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-                <SimpleMediaCard />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={3}>
-              <SimpleMediaCard />
-              </Grid>
-            </Grid>
-          </TabContainer>
-        </SwipeableViews>
+          </Grid>
+          <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+          </Grid>
+        </Grid>
       </div>
     );
   }
@@ -155,4 +91,4 @@ HomePage.propTypes = {
   theme: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles, { withTheme: true })(HomePage);
+export default withRouter(withStyles(styles, { withTheme: true })(HomePage));

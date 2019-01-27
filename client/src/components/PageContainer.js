@@ -66,10 +66,7 @@ class PageContainer extends React.Component {
 }
 
 const HomePageRoute = ({ match, history }, isConsideredMobile) => {
-  // return <HomePage/>
-  //Redirect to portfolio until home page is ready
-  history.push('/portfolio');
-  return <PortfolioPage isConsideredMobile={isConsideredMobile}/>
+  return <HomePage/>
 }
 
 const ChartsPageRoute = ({ match }, isConsideredMobile) => {
