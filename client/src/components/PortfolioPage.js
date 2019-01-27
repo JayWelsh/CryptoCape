@@ -6,15 +6,15 @@ import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
 import MenuItem from '@material-ui/core/MenuItem';
 import Switch from '@material-ui/core/Switch';
+import Button from '@material-ui/core/Button';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import OurChart from './OurChart';
 import OurPieChart from './OurPieChart';
 import Grid from '@material-ui/core/Grid';
 import ChartMenuMiniCard from './ChartMenuMiniCard';
 import { withRouter } from 'react-router-dom';
-import gql from "graphql-tag";
 import axios from 'axios';
-import {priceFormat, numberFormat, isValidAddress} from '../utils';
+import {priceFormat, numberFormat, isValidAddress, rangeToHours} from '../utils';
 import moment from 'moment';
 
 function TabContainer({ children, dir }) {
@@ -90,12 +90,9 @@ class PortfolioPage extends React.Component {
           baseCurrencyToUSD: [],
           historicalBaseCurrency: 'ETH',
           publicKeyError: false,
-          enableFiatConversion: false
+          enableFiatConversion: false,
+          timeseriesRange: "ALL"
         };
-        let publicKeyLocalStorage = window.localStorage.getItem("publicKey");
-        if(this.state.publicKey === "" && isValidAddress(publicKeyLocalStorage)) {
-          this.props.history.push("/portfolio/" + publicKeyLocalStorage);
-        }
     }
     
   toggleFiatConversion = () => {
@@ -111,6 +108,12 @@ class PortfolioPage extends React.Component {
       }
     }
   };
+
+  setAddressInput(address, history) {
+    if (isValidAddress(address)) {
+      history.push("/portfolio/" + address);
+    }
+  }
 
     handleChangeBaseCurrency = name => event => {
       axios.all([this.getBaseCurrencyHistoricalUSD(event.target.value)]).then((res) => {
@@ -144,6 +147,22 @@ class PortfolioPage extends React.Component {
     var indexArr = arr.map(function (k) { return Math.abs(k[prop] - goal) })
     var min = Math.min.apply(Math, indexArr)
     return arr[indexArr.indexOf(min)]
+  }
+
+  setTimeseriesRange(range) {
+    if(range !== this.state.timeseriesRange){
+      this.setState({timeseriesRange: range});
+    }
+  }
+
+  getSelectedTimeseriesRange(timeseriesRange) {
+    if(this.state.timeseriesRange === timeseriesRange) {
+      return {
+        "fontWeight": "bold",
+        "color": "white",
+        "backgroundColor": "#000628"
+      }
+    }
   }
 
     fetchAddressTransactionHistory() {
@@ -374,7 +393,7 @@ class PortfolioPage extends React.Component {
 
   render() {
     const { classes, history, isConsideredMobile } = this.props;
-    const { publicKey, coins, totalPortfolioValueUSD, totalPortfolioValueETH, isChartLoading, historicalBaseCurrency, baseCurrencyToUSD, enableFiatConversion } = this.state;
+    const { publicKey, coins, totalPortfolioValueUSD, totalPortfolioValueETH, isChartLoading, historicalBaseCurrency, baseCurrencyToUSD, enableFiatConversion, timeseriesRange } = this.state;
     let displayTotalUSD = priceFormat(totalPortfolioValueUSD);
     let displayTotalETH = "~ " + numberFormat(totalPortfolioValueETH) +  " ETH"
 
@@ -406,7 +425,16 @@ class PortfolioPage extends React.Component {
         timeseriesData =  this.bufferTimeseries(coins[historicalBaseCurrency].timeseries, 'daily');
         if(enableFiatConversion){
           timeseriesData = this.convertBaseBalances(timeseriesData);
-        }        
+        }
+        if(timeseriesRange && (timeseriesData.length > 0)) {
+          let rangeInHours = rangeToHours(timeseriesRange);
+          if (rangeInHours) {
+            let startTime = moment().subtract(rangeInHours, 'hours');
+            timeseriesData = timeseriesData.filter((item) => {
+              return moment(item.date).isAfter(startTime);
+            });
+          }
+        }
       }
 
     let stockOptionsUSD = {
@@ -495,10 +523,20 @@ class PortfolioPage extends React.Component {
                         onChange={(event) => this.handleSetAddress(event, history)}
                         onFocus={(event) => this.handleFocus(event)}
                         autoFocus={true}
+                        fullWidth
                         margin="normal"
                         variant="outlined"
                       />
                     </form>
+                    {
+                      isValidAddress(window.localStorage.getItem("publicKey")) &&
+                      <div style={{display:'flex'}}>
+                      
+                      <Button onClick={() => this.setAddressInput(window.localStorage.getItem("publicKey"), history)} color="primary" size="large" variant="outlined" className={classes.textField} style={{textTransform: 'none', width: '100%'}}>
+                        {window.localStorage.getItem("publicKey")}
+                      </Button>
+                      </div>
+                    }
                   </Grid>
                   <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
                   </Grid>
@@ -582,6 +620,21 @@ class PortfolioPage extends React.Component {
             <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
             </Grid>
             <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
+                  {/* <Button className={classes.button} onClick={() => this.setTimeseriesRange("1M")} style={this.getSelectedTimeseriesRange("1M")}>
+                    1M
+                  </Button>
+                  <Button className={classes.button} onClick={() => this.setTimeseriesRange("3M")} style={this.getSelectedTimeseriesRange("3M")}>
+                    3M
+                  </Button>
+                  <Button className={classes.button} onClick={() => this.setTimeseriesRange("6M")} style={this.getSelectedTimeseriesRange("6M")}>
+                    6M
+                  </Button>
+                  <Button className={classes.button} onClick={() => this.setTimeseriesRange("1Y")} style={this.getSelectedTimeseriesRange("1Y")}>
+                    1Y
+                  </Button>
+                  <Button className={classes.button} onClick={() => this.setTimeseriesRange("ALL")} style={this.getSelectedTimeseriesRange("ALL")}>
+                    ALL
+                  </Button> */}
               <OurChart isChartLoading={isChartLoading} isConsideredMobile={isConsideredMobile} chartTitle={chartData.name} chartSubtitle={chartData.abbreviation} chartData={timeseriesData} chartCurrency={chartCurrency} />
             </Grid>
             <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
