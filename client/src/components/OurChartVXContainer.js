@@ -101,7 +101,7 @@ class OurChartVXContainer extends React.Component {
     };
 
     render() {
-        const { classes, theme, margin, chartTitle, chartSubtitle, isConsideredMobile, chartData, parentWidth, parentHeight, isChartLoading, chartCurrency } = this.props;
+        const { classes, theme, margin, chartTitle, chartSubtitle, isConsideredMobile, chartData, parentWidth, parentHeight, isChartLoading, chartCurrency, enableCurveStepAfter = false } = this.props;
         let currentPrice = 0;
         let diffPrice = 0;
         let hasIncreased = true;
@@ -155,7 +155,7 @@ class OurChartVXContainer extends React.Component {
                             </div>
                         </div>
                         <div className={classes.innerContainer}>
-                            <OurChartVX isConsideredMobile={isConsideredMobile} chartCurrency={chartCurrency} margin={margin} data={prices} />
+                            <OurChartVX enableCurveStepAfter={enableCurveStepAfter} isConsideredMobile={isConsideredMobile} chartCurrency={chartCurrency} margin={margin} data={prices} />
                         </div>
                     </div>
                 </div>

@@ -12,6 +12,7 @@ import { AxisBottom } from '@vx/axis';
 import { bisector } from 'd3-array';
 import { timeFormat } from 'd3-time-format';
 import { priceFormat } from '../utils';
+import { curveStepAfter, curveLinear } from '@vx/curve';
 
 const bisectDate = bisector(d => x(d)).left
 const x = dataObject => new Date(dataObject.date);
@@ -32,7 +33,7 @@ class OurChartVX extends React.Component {
         const index = bisectDate(data, x0, 1);
         const d0 = data[index - 1];
         const d1 = data[index];
-        const d = x0 - xScale(x(d0)) > xScale(x(d1)) - x0 ? d1 : d0;
+        const d = xScale(x0) - xScale(x(d0)) > xScale(x(d1)) - xScale(x0) ? d1 : d0;
         const totalGraphWidth = xScale(x(data[data.length - 1]));
         let tooltipLeft = xScale(x(d));
         if((totalGraphWidth - tooltipLeft) < 100){
@@ -52,7 +53,7 @@ class OurChartVX extends React.Component {
         });
       }
     render() {
-        const { data, parentWidth, parentHeight, margin, tooltipLeft, tooltipTop, tooltipData, showTooltip, hideTooltip, isConsideredMobile, chartCurrency} = this.props;
+        const { data, parentWidth, parentHeight, margin, tooltipLeft, tooltipTop, tooltipData, showTooltip, hideTooltip, isConsideredMobile, chartCurrency, enableCurveStepAfter = false} = this.props;
         const {shiftTooltipLeft, shiftTooltipRight} = this.state;
 
         const width = parentWidth - margin.left - margin.right;
@@ -151,6 +152,7 @@ class OurChartVX extends React.Component {
                         />
                         
                         <AreaClosed
+                            curve={enableCurveStepAfter ? curveStepAfter : curveLinear}
                             data={data}
                             yScale={yScale}
                             xScale={xScale}
@@ -159,6 +161,7 @@ class OurChartVX extends React.Component {
                             fill="url(#area-fill)"
                             stroke="transparent" />
                         <AreaClosed
+                            curve={enableCurveStepAfter ? curveStepAfter : curveLinear}
                             stroke="transparent"
                             data={data}
                             yScale={yScale}
@@ -167,7 +170,7 @@ class OurChartVX extends React.Component {
                             y={y}
                             fill="url(#dLines)"
                         />
-                        <LinePath data={data} yScale={yScale} xScale={xScale} x={x} y={y} />
+                        <LinePath curve={enableCurveStepAfter ? curveStepAfter : curveLinear} data={data} yScale={yScale} xScale={xScale} x={x} y={y} />
                         <OurMaxPriceVX
                             data={maxPricesData}
                             yScale={yScale}

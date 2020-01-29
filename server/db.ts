@@ -50,52 +50,7 @@ const User = Conn.define('user', {
     }
 });
 
-let coinList = [
-    "ETH",
-    "ZRX",
-    "DNT",
-    "ANT",
-    "BAT",
-    "RDN",
-    "GNT",
-    "OMG",
-    "BLT",
-    "REP",
-    "SNT"
-];
-
-let coinListURLs = [];
-
-coinList.forEach((item, index) => {
-    let url = "https://min-api.cryptocompare.com/data/histoday?fsym=" + item + "&tsym=USD&allData=true&aggregate=1&e=CCCAGG";
-    coinListURLs.push(url);
-})
-
-let walletList = [
-    "0x90dcc3236b990dd5b3df201c354d9bf7a02a3e1b"
-]
-
-//https://api.etherscan.io/api?module=account&action=tokentx&address=0x90dcc3236b990dd5b3df201c354d9bf7a02a3e1b&startblock=0&endblock=999999999&sort=asc&apikey=YourApiKeyToken
-
-let data = [];
-
-const DELAY_MS = 1000;
-
-async function wait(ms) {
-  return new Promise(resolve => {
-    setTimeout(resolve, ms);
-  });
-}
-
-async function doRequests(URLs) {
-//   for(const URL of URLs) {
-//     data.push(await request(URL));
-//     await wait(DELAY_MS);
-//     console.log("Requesting URL: " + URL);
-//   }
-}
-
-doRequests(coinListURLs).then(() => {
+(() => {
     Conn.sync({ force: true }).then(() => {
         Cryptocurrency.create({
             abbreviation: "ETH",
@@ -151,7 +106,13 @@ doRequests(coinListURLs).then(() => {
                                                     abbreviation: "SNT",
                                                     name: "Status",
                                                     externalLink: "https://status.im/",
-                                                })
+                                                }).then(() => {
+                                                    Cryptocurrency.create({
+                                                        abbreviation: "PNK",
+                                                        name: "Kleros",
+                                                        externalLink: "https://kleros.io/",
+                                                    })
+                                                });
                                             });
                                         });
                                     });
