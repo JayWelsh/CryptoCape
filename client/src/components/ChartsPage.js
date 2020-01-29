@@ -23,6 +23,7 @@ import StatusLogo from '../img/coins/status.svg';
 import OmisegoLogo from '../img/coins/omisego.svg';
 import BloomLogo from '../img/coins/bloom.svg';
 import RaidenLogo from '../img/coins/raiden.svg';
+import KlerosLogo from '../img/coins/kleros.png';
 import { Link, withRouter } from 'react-router-dom';
 import gql from "graphql-tag";
 import axios from 'axios';
@@ -38,6 +39,10 @@ const coinList = {
   'ANT': {
     'image': AragonLogo,
     'symbol': 'ANT'
+  },
+  'PNK': {
+    'image': KlerosLogo,
+    'symbol': 'PNK'
   },
   'DNT': {
     'image': District0x,
