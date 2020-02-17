@@ -1,5 +1,8 @@
 import numeral from 'numeral';
 import { createBrowserHistory, createHashHistory } from 'history';
+import BigNumber from 'bignumber.js';
+
+BigNumber.config({ EXPONENTIAL_AT: 100 });
 
 export const priceFormat = (number, decimals = 2, currency = "$", prefix = true) => {
     let decimalString = "";
@@ -15,8 +18,19 @@ export const priceFormat = (number, decimals = 2, currency = "$", prefix = true)
     } else {
         return numeral(number).format(format) + " " + currency;
     }
-    
 }
+
+export const weiToEther = (wei) => {
+	if(typeof wei === "string"){
+		return BigNumber(wei).dividedBy('1e18').toString();
+	}else{
+		return BigNumber(wei.toString()).dividedBy('1e18').toString();
+	}
+}
+
+export const subtractNumbers = (value1, value2) => BigNumber(value1).minus(BigNumber(value2)).toNumber();
+
+export const addNumbers = (value1, value2) => BigNumber(value1).plus(BigNumber(value2)).toNumber();
 
 export const isPrefixWWW = () => {
   if(window.location.href.indexOf("www.") > -1) {

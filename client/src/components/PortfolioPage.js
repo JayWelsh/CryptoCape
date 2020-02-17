@@ -14,7 +14,7 @@ import Grid from '@material-ui/core/Grid';
 import ChartMenuMiniCard from './ChartMenuMiniCard';
 import { withRouter } from 'react-router-dom';
 import axios from 'axios';
-import {priceFormat, numberFormat, isValidAddress, rangeToHours} from '../utils';
+import {priceFormat, numberFormat, isValidAddress, rangeToHours, weiToEther, subtractNumbers, addNumbers} from '../utils';
 import moment from 'moment';
 
 function TabContainer({ children, dir }) {
@@ -129,12 +129,12 @@ class PortfolioPage extends React.Component {
     };
 
     getTokenTransactionHistory(publicKey) {
-      let getTokenTransactionHistoryURL = 'https://api.etherscan.io/api?module=account&action=tokentx&address=' + publicKey + '&startblock=0&endblock=999999999&sort=asc&apikey=YourApiKeyToken';
+      let getTokenTransactionHistoryURL = 'https://api.etherscan.io/api?module=account&action=tokentx&address=' + publicKey + '&startblock=0&endblock=999999999&sort=asc&apikey=4H7XW7VUYZD2A63GPIJ4YWEMIMTU6M9PGE';
       return axios.get(getTokenTransactionHistoryURL);
     }
 
     getEtherTransactionHistory(publicKey) {
-      let getEthTransactionHistoryURL = 'https://api.etherscan.io/api?module=account&action=txlist&address=' + publicKey + '&startblock=0&endblock=99999999&sort=asc&apikey=YourApiKeyToken';
+      let getEthTransactionHistoryURL = 'https://api.etherscan.io/api?module=account&action=txlist&address=' + publicKey + '&startblock=0&endblock=99999999&sort=asc&apikey=4H7XW7VUYZD2A63GPIJ4YWEMIMTU6M9PGE';
       return axios.get(getEthTransactionHistoryURL);
     }
 
@@ -211,9 +211,10 @@ class PortfolioPage extends React.Component {
 
               let setBalance;
               if (transaction.to.toLowerCase() === publicKey.toLowerCase()) {
-                setBalance = balanceAfterPriorTransactions + ((transaction.value - (transaction.gasUsed * transaction.gasPrice)) / 1000000000000000000);
+                console.log('transaction.value',transaction.value);
+                setBalance = addNumbers(balanceAfterPriorTransactions, weiToEther(subtractNumbers(transaction.value, transaction.gasUsed)));
               } else {
-                setBalance = balanceAfterPriorTransactions - ((transaction.value - (transaction.gasUsed * transaction.gasPrice)) / 1000000000000000000);
+                setBalance = subtractNumbers(balanceAfterPriorTransactions, weiToEther(subtractNumbers(transaction.value, transaction.gasUsed)));
               }
 
               let transactionTimeseriesSingle = {
