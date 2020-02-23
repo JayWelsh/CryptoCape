@@ -261,20 +261,20 @@ class EnhancedTable extends React.Component {
                   let changeToday = (<span>Loading...</span>);
                   if(!isNaN(n.relative_portfolio_impact_today)){
                     if(n.relative_portfolio_impact_today > 0) {
-                        portfolioImpact = (<span style={{color: 'green'}}>+ {tokenValueFormatDisplay(n.relative_portfolio_impact_today, 2, "%")}</span>);
+                        portfolioImpact = (<span style={{color: 'green'}}>+ {tokenValueFormatDisplay(n.relative_portfolio_impact_today, 2, "%", false, true)}</span>);
                     }else if(n.relative_portfolio_impact_today === 0){
-                        portfolioImpact = (<span>- {tokenValueFormatDisplay(n.relative_portfolio_impact_today, 2, "%")}</span>);
+                        portfolioImpact = (<span>- {tokenValueFormatDisplay(n.relative_portfolio_impact_today, 2, "%", false, true)}</span>);
                     } else {
-                        portfolioImpact = (<span style={{color: 'red'}}>- {tokenValueFormatDisplay(n.relative_portfolio_impact_today * -1, 2, "%")}</span>);
+                        portfolioImpact = (<span style={{color: 'red'}}>- {tokenValueFormatDisplay(n.relative_portfolio_impact_today * -1, 2, "%", false, true)}</span>);
                     }
                   }
                   if(!isNaN(n.change_today)) {
                     if(n.relative_portfolio_impact_today > 0) {
-                        changeToday = (<span style={{color: 'green'}}>+ {tokenValueFormatDisplay(n.change_today, 2, "%")}</span>);
+                        changeToday = (<span style={{color: 'green'}}>+ {tokenValueFormatDisplay(n.change_today, 2, "%", false, true)}</span>);
                     }else if (n.relative_portfolio_impact_today === 0){
-                        changeToday = (<span>{tokenValueFormatDisplay(n.change_today, 2, "%")}</span>);
+                        changeToday = (<span>{tokenValueFormatDisplay(n.change_today, 2, "%", false, true)}</span>);
                     } else {
-                        changeToday = (<span style={{color: 'red'}}>- {tokenValueFormatDisplay(n.change_today * -1, 2, "%")}</span>);
+                        changeToday = (<span style={{color: 'red'}}>- {tokenValueFormatDisplay(n.change_today * -1, 2, "%", false, true)}</span>);
                     }
                   }
                   return (

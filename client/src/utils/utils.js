@@ -37,14 +37,20 @@ export const tokenValueFormat = (value, decimals = 2) => {
 	return BigNumber(value).toFixed(decimals, 1).toString();
 }
 
-export const tokenValueFormatDisplay = (value, decimals = 2, currency = false, prepend = false) => {
+export const tokenValueFormatDisplay = (value, decimals = 2, currency = false, prepend = false, adaptiveDecimals = false) => {
+    if(adaptiveDecimals) {
+        let detectAdaptiveValue = value < 0 ? value * -1 : value * 1;
+        if((detectAdaptiveValue < 0.1) && (decimals >= 2)) {
+            decimals = 3;
+        }
+    }
 	if(currency) {
         if(prepend){
-            return `${currency} ` + new BigNumber(tokenValueFormat(value, decimals)).toFormat(2);
+            return `${currency} ` + new BigNumber(tokenValueFormat(value, decimals)).toFormat(decimals);
         }
-		return new BigNumber(tokenValueFormat(value, decimals)).toFormat(2) + ` ${currency}`;
+		return new BigNumber(tokenValueFormat(value, decimals)).toFormat(decimals) + ` ${currency}`;
 	}
-	return new BigNumber(tokenValueFormat(value, decimals)).toFormat(2);
+	return new BigNumber(tokenValueFormat(value, decimals)).toFormat(decimals);
 }
 
 export const isPrefixWWW = () => {
