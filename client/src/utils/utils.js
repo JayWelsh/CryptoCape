@@ -32,6 +32,21 @@ export const subtractNumbers = (value1, value2) => BigNumber(value1).minus(BigNu
 
 export const addNumbers = (value1, value2) => BigNumber(value1).plus(BigNumber(value2)).toNumber();
 
+export const tokenValueFormat = (value, decimals = 2) => {
+	//Rounds down - I think it is better to under represent this value than to over represent it
+	return BigNumber(value).toFixed(decimals, 1).toString();
+}
+
+export const tokenValueFormatDisplay = (value, decimals = 2, currency = false, prepend = false) => {
+	if(currency) {
+        if(prepend){
+            return `${currency} ` + new BigNumber(tokenValueFormat(value, decimals)).toFormat(2);
+        }
+		return new BigNumber(tokenValueFormat(value, decimals)).toFormat(2) + ` ${currency}`;
+	}
+	return new BigNumber(tokenValueFormat(value, decimals)).toFormat(2);
+}
+
 export const isPrefixWWW = () => {
   if(window.location.href.indexOf("www.") > -1) {
     return true

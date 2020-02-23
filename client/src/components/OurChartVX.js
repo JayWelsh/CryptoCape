@@ -86,11 +86,11 @@ class OurChartVX extends React.Component {
             const maxTime = Math.max(...data.map(x));
             const minTime = Math.min(...data.map(x));
 
-            let formatDateTimeTooltip = timeFormat("%d %b %Y")
+            let formatDateTimeTooltip = timeFormat("%d %b %Y  |  %I:%M %p")
             
             let formatDateTimeTicker = timeFormat("%b %Y")
 
-            const numTicks = isConsideredMobile ? 3 : null
+            const numTicks = isConsideredMobile ? 3 : 6
 
             const maxPricesData = [
                 {

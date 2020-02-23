@@ -212,7 +212,6 @@ class PortfolioPage extends React.Component {
 
               let setBalance;
               if (transaction.to.toLowerCase() === publicKey.toLowerCase()) {
-                console.log('transaction.value',transaction.value);
                 setBalance = addNumbers(balanceAfterPriorTransactions, weiToEther(subtractNumbers(transaction.value, transaction.gasUsed)));
               } else {
                 setBalance = subtractNumbers(balanceAfterPriorTransactions, weiToEther(subtractNumbers(transaction.value, transaction.gasUsed)));
@@ -418,23 +417,65 @@ class PortfolioPage extends React.Component {
   buildTableData = (coinData, totalValue) => {
     let sortedByPortfolioPortion = Object.entries(coinData).sort((a, b) => a[1].value_usd - b[1].value_usd).reverse();
     let tableData = [];
+    let tokenBalanceTotal = 0;
+    let usdValueTotal = 0;
+    let usdTokenValueTotal = 0;
+    let changeTodayTotal = 0;
+    let relativePortfolioImpactTotal = 0;
     for(let [key, data] of sortedByPortfolioPortion){
       let portfolioPortion = (data.value_usd * 100 / totalValue).toFixed(2) * 1;
       let changePercent = ((data.close * 100 / data.open) - 100).toFixed(2) * 1;
-      let relativeImpact = (portfolioPortion / 100 * changePercent) > 0.1 ? (portfolioPortion / 100 * changePercent).toFixed(2) * 1 : (portfolioPortion / 100 * changePercent).toFixed(3);
+      let relativeImpact = (portfolioPortion / 100 * changePercent) > 0.1 ? (portfolioPortion / 100 * changePercent).toFixed(2) * 1 : (portfolioPortion / 100 * changePercent).toFixed(3) * 1;
+      let balance = data.balance.toFixed(2) * 1;
+      let close = data.close ? data.close.toFixed(2) * 1 : "Loading...";
+      let usdValue = data.value_usd.toFixed(2) * 1;
       if(isNaN(relativeImpact)){
         relativeImpact = "Loading...";
+        relativePortfolioImpactTotal = "Loading...";
+      }else if(relativePortfolioImpactTotal !== "Loading..."){
+        relativePortfolioImpactTotal += relativeImpact;
+      }
+      if(isNaN(changePercent)){
+        changeTodayTotal = "Loading...";
+      }else if(changePercent !== "Loading..."){
+        changeTodayTotal += changePercent;
+      }
+      if(isNaN(balance)){
+        tokenBalanceTotal = "Loading...";
+      }else if(balance !== "Loading..."){
+        tokenBalanceTotal += balance;
+      }
+      if(isNaN(usdValue)){
+        usdValueTotal = "Loading...";
+      }else if(usdValue !== "Loading..."){
+        usdValueTotal += usdValue;
+      }
+      if(isNaN(close)){
+        usdTokenValueTotal = "Loading...";
+      }else if(close !== "Loading..."){
+        usdTokenValueTotal += close;
       }
       tableData.push({
         id: tableData.length + 1,
         symbol: key,
-        balance: data.balance.toFixed(2) * 1,
-        value_usd: data.value_usd.toFixed(2) * 1,
+        balance: balance,
+        value_usd: usdValue,
         portfolio_portion: portfolioPortion,
         change_today: changePercent,
-        relative_portfolio_impact_today: relativeImpact
+        relative_portfolio_impact_today: relativeImpact,
+        token_value_usd: close,
       })
     }
+    tableData.push({
+      id: tableData.length + 1,
+      symbol: 'Total',
+      balance: isNaN(tokenBalanceTotal) ? tokenBalanceTotal : tokenBalanceTotal.toFixed(2) * 1,
+      token_value_usd: isNaN(usdTokenValueTotal) ? usdTokenValueTotal : usdTokenValueTotal.toFixed(2) * 1,
+      value_usd: isNaN(usdValueTotal) ? usdValueTotal : usdValueTotal.toFixed(2) * 1,
+      portfolio_portion: 100,
+      change_today: isNaN(changeTodayTotal) ? changeTodayTotal : changeTodayTotal.toFixed(2) * 1,
+      relative_portfolio_impact_today: isNaN(relativePortfolioImpactTotal) ? relativePortfolioImpactTotal : relativePortfolioImpactTotal.toFixed(2) * 1,
+    })
     return tableData;
   }
 
@@ -752,7 +793,7 @@ class PortfolioPage extends React.Component {
             <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
             </Grid>
             <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
-                <SortableTable tableData={tableData} />
+                <SortableTable isConsideredMobile={isConsideredMobile} tableData={tableData} />
             </Grid>
             <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
             </Grid>

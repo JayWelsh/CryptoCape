@@ -18,6 +18,7 @@ import Tooltip from '@material-ui/core/Tooltip';
 import DeleteIcon from '@material-ui/icons/Delete';
 import FilterListIcon from '@material-ui/icons/FilterList';
 import { lighten } from '@material-ui/core/styles/colorManipulator';
+import { tokenValueFormatDisplay } from '../utils';
 
 function desc(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -45,11 +46,12 @@ function getSorting(order, orderBy) {
 
 const rows = [
   { id: 'symbol', numeric: false, disablePadding: false, label: 'Symbol' },
-  { id: 'value_usd', numeric: true, disablePadding: false, label: 'Value (USD)' },
-  { id: 'balance', numeric: true, disablePadding: false, label: 'Balance' },
-  { id: 'portfolio_portion', numeric: true, disablePadding: false, label: 'Portion of Portfolio'},
+  { id: 'token_value_usd', numeric: false, disablePadding: false, label: 'Token Value'},
+  { id: 'value_usd', numeric: true, disablePadding: false, label: 'Portfolio Value' },
+  { id: 'balance', numeric: true, disablePadding: false, label: 'Tokens' },
+  { id: 'portfolio_portion', numeric: true, disablePadding: false, label: 'Portfolio Portion'},
   { id: 'change_today', numeric: true, disablePadding: false, label: 'Token Value Change (Today)' },
-  { id: 'relative_portfolio_impact_today', numeric: true, disablePadding: false, label: 'Relative Token Value Impact (Today)'}
+  { id: 'relative_portfolio_impact_today', numeric: true, disablePadding: false, label: 'Relative Portfolio Impact (Today)'}
 ];
 
 class EnhancedTableHead extends React.Component {
@@ -59,7 +61,6 @@ class EnhancedTableHead extends React.Component {
 
   render() {
     const { onSelectAllClick, order, orderBy, numSelected, rowCount } = this.props;
-
     return (
       <TableHead>
         <TableRow>
@@ -125,11 +126,13 @@ const toolbarStyles = theme => ({
   },
   title: {
     flex: '0 0 auto',
+    marginTop: theme.spacing.unit * 3,
+    marginBottom: theme.spacing.unit * 2,
   },
 });
 
 let EnhancedTableToolbar = props => {
-  const { numSelected, classes } = props;
+  const { numSelected, classes, isConsideredMobile } = props;
 
   return (
     <Toolbar
@@ -143,7 +146,7 @@ let EnhancedTableToolbar = props => {
             {numSelected} selected
           </Typography>
         ) : (
-          <Typography variant="h6" id="tableTitle">
+          <Typography variant={isConsideredMobile ? "display1" : "display2"} id="tableTitle">
             Key Figures
           </Typography>
         )}
@@ -165,11 +168,17 @@ const styles = theme => ({
     width: '100%',
   },
   table: {
-    minWidth: 1020,
+    // minWidth: 1020,
   },
   tableWrapper: {
     overflowX: 'auto',
   },
+  totalRow: {
+    backgroundColor: '#3c42a40f',
+  },
+  nowrap: {
+    whiteSpace: 'nowrap'
+  }
 });
 
 class EnhancedTable extends React.Component {
@@ -241,6 +250,7 @@ class EnhancedTable extends React.Component {
               onSelectAllClick={this.handleSelectAllClick}
               onRequestSort={this.handleRequestSort}
               rowCount={data.length}
+              classes={classes}
             />
             <TableBody>
               {stableSort(data, getSorting(order, orderBy))
@@ -251,20 +261,20 @@ class EnhancedTable extends React.Component {
                   let changeToday = (<span>Loading...</span>);
                   if(!isNaN(n.relative_portfolio_impact_today)){
                     if(n.relative_portfolio_impact_today > 0) {
-                        portfolioImpact = (<span style={{color: 'green'}}>+ {n.relative_portfolio_impact_today} %</span>);
+                        portfolioImpact = (<span style={{color: 'green'}}>+ {tokenValueFormatDisplay(n.relative_portfolio_impact_today, 2, "%")}</span>);
                     }else if(n.relative_portfolio_impact_today === 0){
-                        portfolioImpact = (<span>- {n.relative_portfolio_impact_today * -1} %</span>);
+                        portfolioImpact = (<span>- {tokenValueFormatDisplay(n.relative_portfolio_impact_today, 2, "%")}</span>);
                     } else {
-                        portfolioImpact = (<span style={{color: 'red'}}>- {n.relative_portfolio_impact_today * -1} %</span>);
+                        portfolioImpact = (<span style={{color: 'red'}}>- {tokenValueFormatDisplay(n.relative_portfolio_impact_today * -1, 2, "%")}</span>);
                     }
                   }
                   if(!isNaN(n.change_today)) {
                     if(n.relative_portfolio_impact_today > 0) {
-                        changeToday = (<span style={{color: 'green'}}>+ {n.change_today} %</span>);
+                        changeToday = (<span style={{color: 'green'}}>+ {tokenValueFormatDisplay(n.change_today, 2, "%")}</span>);
                     }else if (n.relative_portfolio_impact_today === 0){
-                        changeToday = (<span>- {n.change_today * -1} %</span>);
+                        changeToday = (<span>{tokenValueFormatDisplay(n.change_today, 2, "%")}</span>);
                     } else {
-                        changeToday = (<span style={{color: 'red'}}>- {n.change_today * -1} %</span>);
+                        changeToday = (<span style={{color: 'red'}}>- {tokenValueFormatDisplay(n.change_today * -1, 2, "%")}</span>);
                     }
                   }
                   return (
@@ -275,13 +285,15 @@ class EnhancedTable extends React.Component {
                       tabIndex={-1}
                       key={n.id}
                       selected={isSelected}
+                      className={n.symbol === "Total" ? classes.totalRow : null}
                     >
                         <TableCell component="th" scope="row">
                         {n.symbol}
                         </TableCell>
-                        <TableCell align="right">{n.value_usd}</TableCell>
-                        <TableCell align="right">{n.balance}</TableCell>
-                        <TableCell align="right">{n.portfolio_portion} %</TableCell>
+                        <TableCell align="right">{isNaN(n.token_value_usd) ? n.token_value_usd : tokenValueFormatDisplay(n.token_value_usd, 2, "$", true)}</TableCell>
+                        <TableCell align="right">{isNaN(n.value_usd) ? n.value_usd : tokenValueFormatDisplay(n.value_usd, 2, "$", true)}</TableCell>
+                        <TableCell align="right" className={classes.nowrap}>{isNaN(n.balance) ? n.balance : tokenValueFormatDisplay(n.balance, 2, n.symbol)}</TableCell>
+                        <TableCell align="right">{isNaN(n.portfolio_portion) ? n.portfolio_portion : tokenValueFormatDisplay(n.portfolio_portion, 2, "%")}</TableCell>
                         <TableCell align="right">{changeToday}</TableCell>
                         <TableCell align="right">{portfolioImpact}</TableCell>
                     </TableRow>
