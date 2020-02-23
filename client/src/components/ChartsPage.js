@@ -158,36 +158,36 @@ class ChartsPage extends React.Component {
     switch(range){
       case '1HR': {
         let limit = moment().diff(moment().subtract(1, 'hours'), 'minutes');
-        return "https://min-api.cryptocompare.com/data/histominute?fsym=" + fsym + "&tsym=USD&limit=" + limit + "&aggregate=1&e=CCCAGG";
+        return "https://min-api.cryptocompare.com/data/histominute?fsym=" + fsym + "&tsym=USD&limit=" + limit + "&aggregate=1&e=CCCAGG&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b";
         break;
       }
       case '24HR': {
         let limit = moment().diff(moment().subtract(1, 'days'), 'minutes');
-        return "https://min-api.cryptocompare.com/data/histominute?fsym=" + fsym + "&tsym=USD&limit=" + limit + "&aggregate=1&e=CCCAGG";
+        return "https://min-api.cryptocompare.com/data/histominute?fsym=" + fsym + "&tsym=USD&limit=" + limit + "&aggregate=1&e=CCCAGG&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b";
         break;
       }
       case '1W': {
         let limit = moment().diff(moment().subtract(1, 'weeks'), 'hours');
-        return "https://min-api.cryptocompare.com/data/histohour?fsym=" + fsym + "&tsym=USD&limit=" + limit + "&aggregate=1&e=CCCAGG";
+        return "https://min-api.cryptocompare.com/data/histohour?fsym=" + fsym + "&tsym=USD&limit=" + limit + "&aggregate=1&e=CCCAGG&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b";
         break;
       }
       case '1M': {
         let limit = moment().diff(moment().subtract(1, 'months'), 'hours');
-        return "https://min-api.cryptocompare.com/data/histohour?fsym=" + fsym + "&tsym=USD&limit=" + limit + "&aggregate=1&e=CCCAGG";
+        return "https://min-api.cryptocompare.com/data/histohour?fsym=" + fsym + "&tsym=USD&limit=" + limit + "&aggregate=1&e=CCCAGG&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b";
         break;
       }
       case '6M': {
         let limit = moment().diff(moment().subtract(6, 'months'), 'days');
-        return "https://min-api.cryptocompare.com/data/histoday?fsym=" + fsym + "&tsym=USD&limit=" + limit + "&aggregate=1&e=CCCAGG";
+        return "https://min-api.cryptocompare.com/data/histoday?fsym=" + fsym + "&tsym=USD&limit=" + limit + "&aggregate=1&e=CCCAGG&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b";
         break;
       }
       case '1Y': {
         let limit = moment().diff(moment().subtract(1, 'years'), 'days');
-        return "https://min-api.cryptocompare.com/data/histoday?fsym=" + fsym + "&tsym=USD&limit=" + limit + "&aggregate=1&e=CCCAGG";
+        return "https://min-api.cryptocompare.com/data/histoday?fsym=" + fsym + "&tsym=USD&limit=" + limit + "&aggregate=1&e=CCCAGG&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b";
         break;
       }
       case 'ALL': {
-        return "https://min-api.cryptocompare.com/data/histoday?fsym=" + fsym + "&tsym=USD&allData=true&aggregate=1&e=CCCAGG";
+        return "https://min-api.cryptocompare.com/data/histoday?fsym=" + fsym + "&tsym=USD&allData=true&aggregate=1&e=CCCAGG&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b";
         break;
       }
     }
@@ -240,7 +240,7 @@ class ChartsPage extends React.Component {
     let thisPersist = this;
     let coinListKeys = Object.keys(coinList);
     let currency = "$";
-    let requestURL = 'https://min-api.cryptocompare.com/data/pricemulti?fsyms=' + coinListKeys.join(',') + '&tsyms=USD';
+    let requestURL = 'https://min-api.cryptocompare.com/data/pricemulti?fsyms=' + coinListKeys.join(',') + '&tsyms=USD&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b';
     axios.get(requestURL).then(res => {
       coinListKeys.forEach((item, index) => {
         let coinPrice = res.data[item].USD;

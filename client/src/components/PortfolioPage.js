@@ -12,6 +12,7 @@ import OurChart from './OurChart';
 import OurPieChart from './OurPieChart';
 import Grid from '@material-ui/core/Grid';
 import ChartMenuMiniCard from './ChartMenuMiniCard';
+import SortableTable from './SortableTable';
 import { withRouter } from 'react-router-dom';
 import axios from 'axios';
 import {priceFormat, numberFormat, isValidAddress, rangeToHours, weiToEther, subtractNumbers, addNumbers} from '../utils';
@@ -80,7 +81,7 @@ class PortfolioPage extends React.Component {
         super(props);
         this.state = {
           value: this.props.publicKey ? 1 : 0,
-          publicKey: this.props.publicKey ? this.props.publicKey.toLowerCase() : "",
+          publicKey: this.props.publicKey ? this.props.publicKey : "",
           coins: {},
           ethPriceUSD: 0,
           totalPortfolioValueUSD: 0,
@@ -139,7 +140,7 @@ class PortfolioPage extends React.Component {
     }
 
     getBaseCurrencyHistoricalUSD(historicalBaseCurrency){
-      let getHistoricalBaseCurrency = "https://min-api.cryptocompare.com/data/histoday?fsym=" + historicalBaseCurrency + "&tsym=USD&allData=true&aggregate=1&e=CCCAGG";
+      let getHistoricalBaseCurrency = "https://min-api.cryptocompare.com/data/histoday?fsym=" + historicalBaseCurrency + "&tsym=USD&allData=true&aggregate=1&e=CCCAGG&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b";
       return axios.get(getHistoricalBaseCurrency);
     }
 
@@ -278,12 +279,34 @@ class PortfolioPage extends React.Component {
       return returnArray;
     }
 
-  fetchPriceValues() {
+    delayApiCalls = async (config) => {
+        let configEntries = Object.entries(config);
+        let delayInMilliseconds = 150;
+        let callCollection = this.delayedApiCall(configEntries, 0, delayInMilliseconds);
+        return callCollection;
+    }
+
+    delayedApiCall(links = [], index = 0, delayInMilliseconds, values = []){
+      return axios.get(links[index][1])
+        .then(value => new Promise(resolve => {
+                setTimeout(() => {
+                  let finalIndex = links.length - 1;
+                    if(index === finalIndex){
+                      resolve([...values, value]);
+                    } else {
+                      resolve(this.delayedApiCall(links, index + 1, delayInMilliseconds, [...values, value]));
+                    }
+                }, delayInMilliseconds);
+            })
+        );
+    }
+
+  fetchPriceValues = async () => {
     let thisPersist = this;
     let currency = "$";
     let getAgainstETH = [];
     let coinListLocal = {};
-    let getETHUSD = "https://min-api.cryptocompare.com/data/pricemultifull?fsyms=ETH&tsyms=USD";
+    let getETHUSD = "https://min-api.cryptocompare.com/data/pricemultifull?fsyms=ETH&tsyms=USD&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b";
     axios.get(getETHUSD).then(res => {
       let etherToUSD = res.data.RAW.ETH.USD.PRICE;
       let etherMarketCap = res.data.RAW.ETH.USD.MKTCAP;
@@ -305,8 +328,8 @@ class PortfolioPage extends React.Component {
           }
         });
         thisPersist.setState({ coins: coinListLocal });
-        let getTokenPrices = 'https://min-api.cryptocompare.com/data/pricemulti?fsyms=' + getAgainstETH.join(',') + '&tsyms=ETH';
-        axios.get(getTokenPrices).then(res => {
+        let getTokenPrices = 'https://min-api.cryptocompare.com/data/pricemulti?fsyms=' + getAgainstETH.join(',') + '&tsyms=ETH&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b';
+        axios.get(getTokenPrices).then(async (res) => {
           let totalValueCountUSD = 0;
           let totalValueCountETH = 0;
           Object.keys(coinListLocal).forEach((item, index) => {
@@ -327,8 +350,24 @@ class PortfolioPage extends React.Component {
               totalValueCountETH += coinListLocal[item].value_eth
             }
           });
-          thisPersist.setState({ coins: coinListLocal, totalPortfolioValueUSD: totalValueCountUSD, totalPortfolioValueETH: totalValueCountETH });
+          let dailyChangeLinks = [];
+          for(let symbol of getAgainstETH){
+              dailyChangeLinks[symbol] = `https://min-api.cryptocompare.com/data/v2/histoday?fsym=${symbol}&tsym=USD&limit=1&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b`;
+          }
+          let tableData = this.buildTableData(coinListLocal, totalValueCountUSD);
+          thisPersist.setState({ coins: coinListLocal, tableData, totalPortfolioValueUSD: totalValueCountUSD, totalPortfolioValueETH: totalValueCountETH });
           this.fetchAddressTransactionHistory();
+          await this.delayApiCalls(dailyChangeLinks).then(data => {
+            let {coins} = this.state;
+            let index = 0;
+            for(let [symbol] of Object.entries(dailyChangeLinks)) {
+              coins[symbol].open = data[index].data.Data.Data[data[index].data.Data.Data.length - 1].open;
+              coins[symbol].close = data[index].data.Data.Data[data[index].data.Data.Data.length - 1].close;
+              index++;
+            }
+            let tableDataWithChanges = this.buildTableData(coins, totalValueCountUSD);
+            thisPersist.setState({coins, tableData: tableDataWithChanges});
+          });
         })
         thisPersist.setState({ coins: coinListLocal });
       })
@@ -343,7 +382,7 @@ class PortfolioPage extends React.Component {
     if (this.state.publicKey) {
       //this.intervalFetchPrices = setInterval(() => this.fetchPriceValues(), 60000);
       if ((this.state.publicKey.length > 0) && isValidAddress(this.state.publicKey)) {
-        window.localStorage.setItem("publicKey", this.state.publicKey);
+        this.setPublicKeyStorage(this.state.publicKey);
       };
       this.fetchPriceValues(); // also load one immediately
     }
@@ -353,10 +392,50 @@ class PortfolioPage extends React.Component {
     if (nextProps.publicKey && this.state.publicKey !== nextProps.publicKey) {
       this.setState({ publicKey: nextProps.publicKey, isChartLoading: true, coins: {}, historicalBaseCurrency: 'ETH' });
       if ((nextProps.publicKey.length > 0) && isValidAddress(nextProps.publicKey)) {
-        window.localStorage.setItem("publicKey", nextProps.publicKey);
+        this.setPublicKeyStorage(nextProps.publicKey);
         this.fetchPriceValues();
       }
     }
+  }
+
+  setPublicKeyStorage = (publicKey) => {
+    if ((publicKey.length > 0) && isValidAddress(publicKey)) {
+      let currentLocalStorageSet = window.localStorage.getItem("publicKey") || [];
+      if(currentLocalStorageSet.length > 0){
+        currentLocalStorageSet = currentLocalStorageSet.split(",");
+      }
+      if(currentLocalStorageSet.indexOf(publicKey) > -1){
+        currentLocalStorageSet.splice(currentLocalStorageSet.indexOf(publicKey), 1);
+        window.localStorage.setItem("publicKey", [publicKey, ...currentLocalStorageSet]);
+      }else if(currentLocalStorageSet && currentLocalStorageSet.length > 0){
+        window.localStorage.setItem("publicKey", [...currentLocalStorageSet, publicKey]);
+      }else{
+        window.localStorage.setItem("publicKey", [publicKey]);
+      }
+    }
+  }
+
+  buildTableData = (coinData, totalValue) => {
+    let sortedByPortfolioPortion = Object.entries(coinData).sort((a, b) => a[1].value_usd - b[1].value_usd).reverse();
+    let tableData = [];
+    for(let [key, data] of sortedByPortfolioPortion){
+      let portfolioPortion = (data.value_usd * 100 / totalValue).toFixed(2) * 1;
+      let changePercent = ((data.close * 100 / data.open) - 100).toFixed(2) * 1;
+      let relativeImpact = (portfolioPortion / 100 * changePercent) > 0.1 ? (portfolioPortion / 100 * changePercent).toFixed(2) * 1 : (portfolioPortion / 100 * changePercent).toFixed(3);
+      if(isNaN(relativeImpact)){
+        relativeImpact = "Loading...";
+      }
+      tableData.push({
+        id: tableData.length + 1,
+        symbol: key,
+        balance: data.balance.toFixed(2) * 1,
+        value_usd: data.value_usd.toFixed(2) * 1,
+        portfolio_portion: portfolioPortion,
+        change_today: changePercent,
+        relative_portfolio_impact_today: relativeImpact
+      })
+    }
+    return tableData;
   }
 
   componentWillUnmount() {
@@ -394,10 +473,9 @@ class PortfolioPage extends React.Component {
 
   render() {
     const { classes, history, isConsideredMobile } = this.props;
-    const { publicKey, coins, totalPortfolioValueUSD, totalPortfolioValueETH, isChartLoading, historicalBaseCurrency, baseCurrencyToUSD, enableFiatConversion, timeseriesRange } = this.state;
+    const { publicKey, tableData, coins, totalPortfolioValueUSD, totalPortfolioValueETH, isChartLoading, historicalBaseCurrency, baseCurrencyToUSD, enableFiatConversion, timeseriesRange } = this.state;
     let displayTotalUSD = priceFormat(totalPortfolioValueUSD);
     let displayTotalETH = "~ " + numberFormat(totalPortfolioValueETH) +  " ETH"
-
     let ethAddressError = false;
     if((publicKey.length > 0) && !isValidAddress(publicKey)){
       ethAddressError = true;
@@ -529,15 +607,18 @@ class PortfolioPage extends React.Component {
                         variant="outlined"
                       />
                     </form>
-                    {
-                      isValidAddress(window.localStorage.getItem("publicKey")) &&
-                      <div style={{display:'flex'}}>
-                      
-                      <Button onClick={() => this.setAddressInput(window.localStorage.getItem("publicKey"), history)} color="primary" size="large" variant="outlined" className={classes.textField} style={{textTransform: 'none', width: '100%'}}>
-                        {window.localStorage.getItem("publicKey")}
-                      </Button>
+                    <div style={{display:'flex', flexDirection: 'column', marginTop: '5px'}}>
+                    {window.localStorage.getItem("publicKey") && window.localStorage.getItem("publicKey").split(",").map((item) =>
+                      <div style={{marginBottom: '10px'}}>
+                        {
+                          isValidAddress(item) &&
+                          <Button onClick={() => this.setAddressInput(item, history)} color="primary" size="large" variant="outlined" className={classes.textField} style={{textTransform: 'none', width: '100%'}}>
+                            {item}
+                          </Button>
+                        }
                       </div>
-                    }
+                    )}
+                    </div>
                   </Grid>
                   <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
                   </Grid>
@@ -668,16 +749,16 @@ class PortfolioPage extends React.Component {
             </Grid>
             <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
             </Grid>
+            <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+            </Grid>
+            <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
+                <SortableTable tableData={tableData} />
+            </Grid>
+            <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+            </Grid>
             <Grid item xs={12} sm={12} md={12} lg={12}>
               <div style={{ height: '25px' }} />
             </Grid>
-            {/* <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
-                </Grid>
-                <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
-                   <EnhancedTable/>
-                </Grid>
-                <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
-                </Grid> */}
           </Grid>
           }
         </div>
