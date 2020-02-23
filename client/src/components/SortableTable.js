@@ -269,9 +269,9 @@ class EnhancedTable extends React.Component {
                     }
                   }
                   if(!isNaN(n.change_today)) {
-                    if(n.relative_portfolio_impact_today > 0) {
+                    if(n.change_today > 0) {
                         changeToday = (<span style={{color: 'green'}}>+ {tokenValueFormatDisplay(n.change_today, 2, "%", false, true)}</span>);
-                    }else if (n.relative_portfolio_impact_today === 0){
+                    }else if (n.change_today === 0){
                         changeToday = (<span>{tokenValueFormatDisplay(n.change_today, 2, "%", false, true)}</span>);
                     } else {
                         changeToday = (<span style={{color: 'red'}}>- {tokenValueFormatDisplay(n.change_today * -1, 2, "%", false, true)}</span>);
