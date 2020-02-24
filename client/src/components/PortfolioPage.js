@@ -313,19 +313,21 @@ class PortfolioPage extends React.Component {
       let getTokenBalances = 'https://api.ethplorer.io/getAddressInfo/' + thisPersist.state.publicKey + '?apiKey=freekey';
       axios.get(getTokenBalances).then(res => {
         let balanceOfETH = res.data.ETH.balance;
-          getAgainstETH.push("ETH");
-          coinListLocal["ETH"] = { balance: balanceOfETH }
-        res.data.tokens.forEach((item, index) => {
-          let balance = item.balance / 1000000000000000000;
-          let rateUSD = item.tokenInfo.price.rate;
-          let marketCapUSD = item.tokenInfo.price.marketCapUsd;
-          let balanceUSD = balance * rateUSD;
-          if (balanceUSD >= 5) {
-            let symbol = item.tokenInfo.symbol.toUpperCase();
-            getAgainstETH.push(symbol);
-            coinListLocal[symbol] = { balance, balanceUSD, marketCapUSD };
-          }
-        });
+        getAgainstETH.push("ETH");
+        coinListLocal["ETH"] = { balance: balanceOfETH }
+        if(res.data.tokens){
+          res.data.tokens.forEach((item, index) => {
+            let balance = item.balance / 1000000000000000000;
+            let rateUSD = item.tokenInfo.price.rate;
+            let marketCapUSD = item.tokenInfo.price.marketCapUsd;
+            let balanceUSD = balance * rateUSD;
+            if (balanceUSD >= 5) {
+              let symbol = item.tokenInfo.symbol.toUpperCase();
+              getAgainstETH.push(symbol);
+              coinListLocal[symbol] = { balance, balanceUSD, marketCapUSD };
+            }
+          });
+        }
         thisPersist.setState({ coins: coinListLocal });
         let getTokenPrices = 'https://min-api.cryptocompare.com/data/pricemulti?fsyms=' + getAgainstETH.join(',') + '&tsyms=ETH&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b';
         axios.get(getTokenPrices).then(async (res) => {
