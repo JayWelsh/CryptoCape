@@ -92,12 +92,28 @@ class PortfolioPage extends React.Component {
           historicalBaseCurrency: 'ETH',
           publicKeyError: false,
           enableFiatConversion: false,
-          timeseriesRange: "ALL"
+          enableCompositeGraph: false,
+          isCompositeReady: false,
+          timeseriesRange: "ALL",
         };
     }
     
   toggleFiatConversion = () => {
-    this.setState({ enableFiatConversion: !this.state.enableFiatConversion });
+    const { enableCompositeGraph } = this.state;
+    let setEnableCompositeGraph = enableCompositeGraph;
+    if(setEnableCompositeGraph){
+      setEnableCompositeGraph = false;
+    }
+    this.setState({ enableFiatConversion: !this.state.enableFiatConversion, enableCompositeGraph: setEnableCompositeGraph });
+  }
+
+  toggleCompositeGraph = () => {
+    const { enableFiatConversion } = this.state;
+    let setEnableFiatConversion = enableFiatConversion;
+    if(!setEnableFiatConversion){
+      setEnableFiatConversion = true;
+    }
+    this.setState({ enableCompositeGraph: !this.state.enableCompositeGraph, enableFiatConversion: setEnableFiatConversion });
   }
 
   handleSetAddress(event, history) {
@@ -166,13 +182,59 @@ class PortfolioPage extends React.Component {
     }
   }
 
-    fetchAddressTransactionHistory() {
+  buildCompositeTimeseries = async (coins) => {
+    const {timeseriesRange} = this.state;
+    let timeseriesData = [];
+    let fullHistoryLinks = [];
+    let fullHistoricalCurrencies = [];
+    let consolidatedTimeseries = {};
+    for(let historicalBaseCurrency of Object.keys(coins)){
+        fullHistoryLinks[historicalBaseCurrency] = "https://min-api.cryptocompare.com/data/histoday?fsym=" + historicalBaseCurrency + "&tsym=USD&allData=true&aggregate=1&e=CCCAGG&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b";
+    }
+    await this.delayApiCalls(fullHistoryLinks).then(data => {
+      let index = 0;
+      for(let symbol of Object.keys(fullHistoryLinks)){
+        fullHistoricalCurrencies[symbol] = data[index].data.Data;
+        index++;
+      }
+    })
+    let forceCurrentTime = moment();
+    for(let historicalBaseCurrency of Object.keys(coins)){
+      if(coins &&  coins[historicalBaseCurrency] && coins[historicalBaseCurrency].timeseries) {
+        let bufferTimeseries = this.bufferTimeseries(coins[historicalBaseCurrency].timeseries, 'daily', true, forceCurrentTime);
+        timeseriesData = this.convertBaseBalances(bufferTimeseries, fullHistoricalCurrencies[historicalBaseCurrency], true);
+        if(timeseriesRange && (timeseriesData.length > 0)) {
+          let rangeInHours = rangeToHours(timeseriesRange);
+          if (rangeInHours) {
+            let startTime = moment().subtract(rangeInHours, 'hours');
+            timeseriesData = timeseriesData.filter((item) => {
+              return moment(item.date).isAfter(startTime);
+            });
+          }
+        }
+      }
+      for(let timestamp of Object.keys(timeseriesData)) {
+        if(consolidatedTimeseries[timestamp]) {
+          consolidatedTimeseries[timestamp] += timeseriesData[timestamp].price;
+        }else{
+          consolidatedTimeseries[timestamp] = timeseriesData[timestamp].price;
+        }
+      }
+    }
+    let compositeTimeseries = [];
+    for(let [index, item] of Object.entries(consolidatedTimeseries)){
+      compositeTimeseries.push(Object.assign({date: moment.unix(index * 1), price: item}));
+    }
+    return compositeTimeseries;
+  }
+
+    fetchAddressTransactionHistory = async () => {
       let thisPersist = this;
       let publicKey = this.state.publicKey;
       let restrictCoins = this.state.coins;
       let historicalBaseCurrency = this.state.historicalBaseCurrency;
       let restrictCoinsKeys = Object.keys(restrictCoins);
-      axios.all([this.getEtherTransactionHistory(publicKey), this.getTokenTransactionHistory(publicKey),this.getBaseCurrencyHistoricalUSD(historicalBaseCurrency)]).then(res => {
+      axios.all([this.getEtherTransactionHistory(publicKey), this.getTokenTransactionHistory(publicKey),this.getBaseCurrencyHistoricalUSD(historicalBaseCurrency)]).then(async (res) => {
         if (res && res[1].data && res[1].data.result && (res[1].data.result.constructor === Array)) {
           let transactionDataEther = res[0].data.result.map((item) => {
             item.tokenSymbol = "ETH";
@@ -233,45 +295,51 @@ class PortfolioPage extends React.Component {
             });
           })
           thisPersist.setState({ coins: restrictCoins, isChartLoading: false, baseCurrencyToUSD: res[2].data.Data });
+          // Calculate composite value chart
+          let consolidatedTimeseries = await thisPersist.buildCompositeTimeseries(restrictCoins);
+          thisPersist.setState({ compositeTimeseriesUSD: consolidatedTimeseries, isCompositeReady: true});
         }
       });
     }
 
-    bufferTimeseries(timeseries, fillRange = false) {
-      
+    bufferTimeseries(timeseries, fillRange = false, isCompositeTimeseries = false, forceCurrentTime = false) {
       let returnArray = [];
       if (timeseries.length > 0) {
-        let firstDate = timeseries[0].date;
-        let lastDate = timeseries[timeseries.length - 1].date;
-
-        //console.log("timeseries",timeseries);
         timeseries.forEach((item, index) => {
           let thisDate = item.date;
           let thisPrice = item.price;
           let bufferPeriod = 7;
           if (index === 0) {
-            for (let i = 0; i < bufferPeriod; i++) {
-              returnArray.push({ date: moment(thisDate).subtract((bufferPeriod - i), 'days'), price: 0 });
+            for (let i = 0; i <= bufferPeriod; i++) {
+              returnArray.push({ date: moment(thisDate).startOf('day').subtract((bufferPeriod - i), 'days'), price: 0 });
             }
           }
           if (timeseries[index + 1]) {
             let nextDate = timeseries[index + 1].date;
-            let daysUntilNextDatapoint = nextDate.diff(thisDate, "days");
-            //console.log('daysUntilNextDatapoint', daysUntilNextDatapoint);
-            returnArray.push({ date: thisDate, price: thisPrice });
-            if ((daysUntilNextDatapoint > 1) && (fillRange === "daily")) {
-              for (let i = 1; i < daysUntilNextDatapoint; i++) {
-                returnArray.push({ date: moment(thisDate).add(i, 'days'), price: thisPrice });
+            let nextPrice = timeseries[index + 1].price;
+            let daysUntilNextDatapoint = moment(nextDate).diff(moment(thisDate), "days");
+            if(isCompositeTimeseries){
+              returnArray.push({ date: moment(thisDate).startOf('day'), price: thisPrice });
+            }else{
+              returnArray.push({ date: moment(thisDate), price: thisPrice });
+            }
+            if ((daysUntilNextDatapoint >= 1) && (fillRange === "daily")) {
+              for (let i = 1; i <= daysUntilNextDatapoint; i++) {
+                returnArray.push({ date: moment(thisDate).startOf('day').add(i, 'days'), price: thisPrice });
               }
+            } else if((daysUntilNextDatapoint === 0) && !isCompositeTimeseries){
+              returnArray.push({ date: moment(nextDate), price: nextPrice });
             }
           } else if (index === (timeseries.length - 1)) {
             let currentDate = moment();
-            let daysSinceLastTransaction = currentDate.diff(thisDate, "days");
-            returnArray.push({ date: thisDate, price: thisPrice });
-            for (let i = 1; i < daysSinceLastTransaction; i++) {
-              returnArray.push({ date: moment(thisDate).add(i, 'days'), price: thisPrice });
+            if(forceCurrentTime){
+              currentDate = forceCurrentTime;
             }
-            returnArray.push({ date: currentDate, price: thisPrice });
+            let daysSinceLastTransaction = currentDate.diff(thisDate, "days");
+            for (let i = 1; i <= daysSinceLastTransaction; i++) {
+              returnArray.push({ date: moment(thisDate).add(i, 'days').startOf('day'), price: thisPrice });
+            }
+            returnArray.push({ date: moment(currentDate), price: thisPrice });
           }
         });
       }
@@ -313,19 +381,21 @@ class PortfolioPage extends React.Component {
       let getTokenBalances = 'https://api.ethplorer.io/getAddressInfo/' + thisPersist.state.publicKey + '?apiKey=freekey';
       axios.get(getTokenBalances).then(res => {
         let balanceOfETH = res.data.ETH.balance;
-          getAgainstETH.push("ETH");
-          coinListLocal["ETH"] = { balance: balanceOfETH }
-        res.data.tokens.forEach((item, index) => {
-          let balance = item.balance / 1000000000000000000;
-          let rateUSD = item.tokenInfo.price.rate;
-          let marketCapUSD = item.tokenInfo.price.marketCapUsd;
-          let balanceUSD = balance * rateUSD;
-          if (balanceUSD >= 5) {
-            let symbol = item.tokenInfo.symbol.toUpperCase();
-            getAgainstETH.push(symbol);
-            coinListLocal[symbol] = { balance, balanceUSD, marketCapUSD };
-          }
-        });
+        getAgainstETH.push("ETH");
+        coinListLocal["ETH"] = { balance: balanceOfETH }
+        if(res.data.tokens){
+          res.data.tokens.forEach((item, index) => {
+            let balance = item.balance / 1000000000000000000;
+            let rateUSD = item.tokenInfo.price.rate;
+            let marketCapUSD = item.tokenInfo.price.marketCapUsd;
+            let balanceUSD = balance * rateUSD;
+            if (balanceUSD >= 5) {
+              let symbol = item.tokenInfo.symbol.toUpperCase();
+              getAgainstETH.push(symbol);
+              coinListLocal[symbol] = { balance, balanceUSD, marketCapUSD };
+            }
+          });
+        }
         thisPersist.setState({ coins: coinListLocal });
         let getTokenPrices = 'https://min-api.cryptocompare.com/data/pricemulti?fsyms=' + getAgainstETH.join(',') + '&tsyms=ETH&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b';
         axios.get(getTokenPrices).then(async (res) => {
@@ -422,8 +492,10 @@ class PortfolioPage extends React.Component {
     let usdTokenValueTotal = 0;
     let changeTodayTotal = 0;
     let relativePortfolioImpactTotal = 0;
+    let marketCapTotal = 0;
     for(let [key, data] of sortedByPortfolioPortion){
       let portfolioPortion = (data.value_usd * 100 / totalValue).toFixed(2) * 1;
+      let marketCapUSD = data.marketCapUSD.toFixed(2) * 1;
       let changePercent = ((data.close * 100 / data.open) - 100).toFixed(2) * 1;
       let relativeImpact = (portfolioPortion / 100 * changePercent) > 0.1 ? (portfolioPortion / 100 * changePercent).toFixed(2) * 1 : (portfolioPortion / 100 * changePercent).toFixed(3) * 1;
       let balance = data.balance.toFixed(2) * 1;
@@ -455,11 +527,17 @@ class PortfolioPage extends React.Component {
       }else if(close !== "Loading..."){
         usdTokenValueTotal += close;
       }
+      if(isNaN(marketCapUSD)) {
+        marketCapTotal = "Loading...";
+      }else if(marketCapUSD !== "Loading..."){
+        marketCapTotal += marketCapUSD;
+      }
       tableData.push({
         id: tableData.length + 1,
         symbol: key,
         balance: balance,
         value_usd: usdValue,
+        market_cap: marketCapUSD,
         portfolio_portion: portfolioPortion,
         change_today: changePercent,
         relative_portfolio_impact_today: relativeImpact,
@@ -470,6 +548,7 @@ class PortfolioPage extends React.Component {
       id: tableData.length + 1,
       symbol: 'Total',
       balance: isNaN(tokenBalanceTotal) ? tokenBalanceTotal : tokenBalanceTotal.toFixed(2) * 1,
+      market_cap: isNaN(marketCapTotal) ? marketCapTotal : marketCapTotal.toFixed(2) * 1,
       token_value_usd: isNaN(usdTokenValueTotal) ? usdTokenValueTotal : usdTokenValueTotal.toFixed(2) * 1,
       value_usd: isNaN(usdValueTotal) ? usdValueTotal : usdValueTotal.toFixed(2) * 1,
       portfolio_portion: 100,
@@ -500,21 +579,35 @@ class PortfolioPage extends React.Component {
     return placeholderComponents;
   }
 
-  convertBaseBalances = (timeseriesData) => {
+  convertBaseBalances = (timeseriesData, useBaseCurrencyToUSD, returnTimestampKeyedObject = false) => {
+    let { baseCurrencyToUSD } = this.state;
+    if(useBaseCurrencyToUSD) {
+      baseCurrencyToUSD = useBaseCurrencyToUSD;
+    }
     if (this.state.baseCurrencyToUSD) {
       let timeseriesDataMap = [...timeseriesData];
-      timeseriesDataMap.map((transaction) => {
-        let closestBasePriceToUSD = this.getClosestTimestamp(this.state.baseCurrencyToUSD, moment(transaction.date).unix(), 'time');
-        transaction.price = transaction.price * closestBasePriceToUSD.close;
+      let timeseriesTimestampKeyed = {};
+      timeseriesDataMap.map((transaction, index) => {
+        let closestBasePriceToUSD = this.getClosestTimestamp(baseCurrencyToUSD, moment(transaction.date).unix(), 'time');
+        if(index === (timeseriesDataMap.length - 1)){
+          transaction.price = transaction.price * closestBasePriceToUSD.close;
+        }else{
+          transaction.price = transaction.price * closestBasePriceToUSD.open;
+        }
+        timeseriesTimestampKeyed[transaction.date.unix()] = transaction;
         return transaction;
-      })
-      return timeseriesDataMap;
+      });
+      if(returnTimestampKeyedObject){
+        return timeseriesTimestampKeyed;
+      }else{
+        return timeseriesDataMap;
+      }
     }
   }
 
   render() {
     const { classes, history, isConsideredMobile } = this.props;
-    const { publicKey, tableData, coins, totalPortfolioValueUSD, totalPortfolioValueETH, isChartLoading, historicalBaseCurrency, baseCurrencyToUSD, enableFiatConversion, timeseriesRange } = this.state;
+    const { publicKey, tableData, compositeTimeseriesUSD, isCompositeReady, coins, totalPortfolioValueUSD, totalPortfolioValueETH, isChartLoading, historicalBaseCurrency, baseCurrencyToUSD, enableFiatConversion, enableCompositeGraph, timeseriesRange } = this.state;
     let displayTotalUSD = priceFormat(totalPortfolioValueUSD);
     let displayTotalETH = "~ " + numberFormat(totalPortfolioValueETH) +  " ETH"
     let ethAddressError = false;
@@ -542,8 +635,8 @@ class PortfolioPage extends React.Component {
 
       let timeseriesData = [];
       if(coins &&  coins[historicalBaseCurrency] && coins[historicalBaseCurrency].timeseries) {
-        timeseriesData =  this.bufferTimeseries(coins[historicalBaseCurrency].timeseries);
-        if(enableFiatConversion){
+        timeseriesData =  enableCompositeGraph ? compositeTimeseriesUSD : this.bufferTimeseries(coins[historicalBaseCurrency].timeseries);
+        if(enableFiatConversion && !enableCompositeGraph){
           timeseriesData = this.convertBaseBalances(this.bufferTimeseries(coins[historicalBaseCurrency].timeseries, 'daily'));
         }
         if(timeseriesRange && (timeseriesData.length > 0)) {
@@ -674,9 +767,7 @@ class PortfolioPage extends React.Component {
             </Grid>
             <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
               <div className={classes.addressOptions}>
-                <Grid container spacing={24}>
-                  <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
-                  </Grid>
+                <Grid justify="center" container spacing={24}>
                   <Grid item xs={12} sm={6} md={6} lg={6}>
                     <form className={classes.formContainer} autoComplete="on">
                       <TextField
@@ -701,7 +792,7 @@ class PortfolioPage extends React.Component {
                         select
                         label="Token"
                         className={classes.textField + " " + classes.fullWidth}
-                        value={this.state.historicalBaseCurrency}
+                        value={enableCompositeGraph ? "ALL" : this.state.historicalBaseCurrency}
                         onChange={this.handleChangeBaseCurrency('historicalBaseCurrency')}
                         SelectProps={{
                           MenuProps: {
@@ -710,7 +801,14 @@ class PortfolioPage extends React.Component {
                         }}
                         margin="normal"
                         variant="outlined"
+                        disabled={enableCompositeGraph}
                       >
+                        {
+                          enableCompositeGraph &&
+                          <MenuItem key={"ALL"} value={"ALL"}>
+                            ALL
+                          </MenuItem>
+                        }
                         {Object.keys(coins).map(key => (
                           <MenuItem key={key} value={key}>
                             {key}
@@ -724,7 +822,7 @@ class PortfolioPage extends React.Component {
                       className={classes.fiatSwitch}
                       control={
                         <Switch
-                          checked={this.state.enableFiatConversion}
+                          checked={enableFiatConversion}
                           onChange={this.toggleFiatConversion}
                           value="checkedB"
                           color="primary"
@@ -733,7 +831,20 @@ class PortfolioPage extends React.Component {
                       label="USD Value"
                     />
                   </Grid>
-                  <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+                  <Grid item xs={6} sm={2} md={2} lg={2}>
+                    <FormControlLabel
+                      className={classes.fiatSwitch}
+                      control={
+                        <Switch
+                          checked={enableCompositeGraph}
+                          onChange={this.toggleCompositeGraph}
+                          value="checkedB"
+                          color="primary"
+                          disabled={!isCompositeReady}
+                        />
+                      }
+                      label="Composite Graph"
+                    />
                   </Grid>
                 </Grid>
               </div>

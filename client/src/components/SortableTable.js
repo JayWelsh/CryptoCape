@@ -48,6 +48,7 @@ const rows = [
   { id: 'symbol', numeric: false, disablePadding: false, label: 'Symbol' },
   { id: 'token_value_usd', numeric: false, disablePadding: false, label: 'Token Value'},
   { id: 'value_usd', numeric: true, disablePadding: false, label: 'Portfolio Value' },
+  { id: 'market_cap', numeric: true, disablePadding: false, label: 'Market Cap' },
   { id: 'balance', numeric: true, disablePadding: false, label: 'Tokens' },
   { id: 'portfolio_portion', numeric: true, disablePadding: false, label: 'Portfolio Portion'},
   { id: 'change_today', numeric: true, disablePadding: false, label: 'Token Value Change (Today)' },
@@ -292,7 +293,8 @@ class EnhancedTable extends React.Component {
                         </TableCell>
                         <TableCell align="right">{isNaN(n.token_value_usd) ? n.token_value_usd : tokenValueFormatDisplay(n.token_value_usd, 2, "$", true)}</TableCell>
                         <TableCell align="right">{isNaN(n.value_usd) ? n.value_usd : tokenValueFormatDisplay(n.value_usd, 2, "$", true)}</TableCell>
-                        <TableCell align="right" className={classes.nowrap}>{isNaN(n.balance) ? n.balance : tokenValueFormatDisplay(n.balance, 2, n.symbol)}</TableCell>
+                        <TableCell align="right">{isNaN(n.market_cap) ? n.market_cap : tokenValueFormatDisplay(n.market_cap, 2, "$", true)}</TableCell>
+                        <TableCell align="right">{isNaN(n.balance) ? n.balance : tokenValueFormatDisplay(n.balance, 2, n.symbol)}</TableCell>
                         <TableCell align="right">{isNaN(n.portfolio_portion) ? n.portfolio_portion : tokenValueFormatDisplay(n.portfolio_portion, 2, "%")}</TableCell>
                         <TableCell align="right">{changeToday}</TableCell>
                         <TableCell align="right">{portfolioImpact}</TableCell>

@@ -46,9 +46,9 @@ export const tokenValueFormatDisplay = (value, decimals = 2, currency = false, p
     }
 	if(currency) {
         if(prepend){
-            return `${currency} ` + new BigNumber(tokenValueFormat(value, decimals)).toFormat(decimals);
+            return `${currency}${'\u00A0'}` + new BigNumber(tokenValueFormat(value, decimals)).toFormat(decimals);
         }
-		return new BigNumber(tokenValueFormat(value, decimals)).toFormat(decimals) + ` ${currency}`;
+		return new BigNumber(tokenValueFormat(value, decimals)).toFormat(decimals) + `${'\u00A0'}${currency}`;
 	}
 	return new BigNumber(tokenValueFormat(value, decimals)).toFormat(decimals);
 }
