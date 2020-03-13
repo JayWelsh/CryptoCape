@@ -258,8 +258,8 @@ class EnhancedTable extends React.Component {
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map(n => {
                   const isSelected = this.isSelected(n.id);
-                  let portfolioImpact = (<span>Loading...</span>);
-                  let changeToday = (<span>Loading...</span>);
+                  let portfolioImpact = (<span>N/A</span>);
+                  let changeToday = (<span>N/A</span>);
                   if(!isNaN(n.relative_portfolio_impact_today)){
                     if(n.relative_portfolio_impact_today > 0) {
                         portfolioImpact = (<span style={{color: 'green'}}>+ {tokenValueFormatDisplay(n.relative_portfolio_impact_today, 2, "%", false, true)}</span>);

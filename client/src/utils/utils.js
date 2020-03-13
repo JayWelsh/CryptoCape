@@ -28,9 +28,11 @@ export const weiToEther = (wei) => {
 	}
 }
 
-export const subtractNumbers = (value1, value2) => BigNumber(value1).minus(BigNumber(value2)).toNumber();
+export const subtractNumbers = (value1, value2) => BigNumber(value1).minus(BigNumber(value2)).toString();
 
-export const addNumbers = (value1, value2) => BigNumber(value1).plus(BigNumber(value2)).toNumber();
+export const addNumbers = (value1, value2) => BigNumber(value1).plus(BigNumber(value2)).toString();
+
+export const multiplyNumbers = (value1, value2) => BigNumber(value1).multipliedBy(BigNumber(value2)).toString();
 
 export const tokenValueFormat = (value, decimals = 2) => {
 	//Rounds down - I think it is better to under represent this value than to over represent it

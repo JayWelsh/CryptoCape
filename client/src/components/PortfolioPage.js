@@ -15,7 +15,7 @@ import ChartMenuMiniCard from './ChartMenuMiniCard';
 import SortableTable from './SortableTable';
 import { withRouter } from 'react-router-dom';
 import axios from 'axios';
-import {priceFormat, numberFormat, isValidAddress, rangeToHours, weiToEther, subtractNumbers, addNumbers} from '../utils';
+import {priceFormat, numberFormat, isValidAddress, rangeToHours, weiToEther, subtractNumbers, addNumbers, multiplyNumbers} from '../utils';
 import moment from 'moment';
 
 function TabContainer({ children, dir }) {
@@ -95,6 +95,7 @@ class PortfolioPage extends React.Component {
           enableCompositeGraph: false,
           isCompositeReady: false,
           timeseriesRange: "ALL",
+          includeInCompositePricingQueries: []
         };
     }
     
@@ -134,9 +135,17 @@ class PortfolioPage extends React.Component {
 
     handleChangeBaseCurrency = name => event => {
       axios.all([this.getBaseCurrencyHistoricalUSD(event.target.value)]).then((res) => {
+        let { baseCurrencyToUSD, enableFiatConversion } = this.state;
+        if(res[0].data.Data && res[0].data.Data.constructor === Array && res[0].data.Data.length > 0){
+          baseCurrencyToUSD = res[0].data.Data;
+        } else {
+          enableFiatConversion = false;
+          baseCurrencyToUSD = [];
+        }
         this.setState({
           [name]: event.target.value,
-          baseCurrencyToUSD: res[0].data.Data
+          baseCurrencyToUSD,
+          enableFiatConversion,
         });
       });
     };
@@ -155,15 +164,24 @@ class PortfolioPage extends React.Component {
       return axios.get(getEthTransactionHistoryURL);
     }
 
+    getInternalEtherTransactionHistory(publicKey) {
+      let getInternalEthTransactionHistoryURL = 'https://api.etherscan.io/api?module=account&action=txlistinternal&address=' + publicKey + '&startblock=0&endblock=99999999&sort=asc&apikey=4H7XW7VUYZD2A63GPIJ4YWEMIMTU6M9PGE';
+      return axios.get(getInternalEthTransactionHistoryURL);
+    }
+
     getBaseCurrencyHistoricalUSD(historicalBaseCurrency){
       let getHistoricalBaseCurrency = "https://min-api.cryptocompare.com/data/histoday?fsym=" + historicalBaseCurrency + "&tsym=USD&allData=true&aggregate=1&e=CCCAGG&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b";
       return axios.get(getHistoricalBaseCurrency);
     }
 
   getClosestTimestamp = (arr, goal, prop) => {
-    var indexArr = arr.map(function (k) { return Math.abs(k[prop] - goal) })
-    var min = Math.min.apply(Math, indexArr)
-    return arr[indexArr.indexOf(min)]
+    if(arr && arr.constructor === Array){
+      var indexArr = arr.map(function (k) { return Math.abs(k[prop] - goal) })
+      var min = Math.min.apply(Math, indexArr)
+      return arr[indexArr.indexOf(min)]
+    }else{
+      return false;
+    }
   }
 
   setTimeseriesRange(range) {
@@ -232,30 +250,48 @@ class PortfolioPage extends React.Component {
       let thisPersist = this;
       let publicKey = this.state.publicKey;
       let restrictCoins = this.state.coins;
+      let includeInCompositePricingQueries = this.state.includeInCompositePricingQueries || [];
       let historicalBaseCurrency = this.state.historicalBaseCurrency;
-      let restrictCoinsKeys = Object.keys(restrictCoins);
-      axios.all([this.getEtherTransactionHistory(publicKey), this.getTokenTransactionHistory(publicKey),this.getBaseCurrencyHistoricalUSD(historicalBaseCurrency)]).then(async (res) => {
+      axios.all([this.getEtherTransactionHistory(publicKey), this.getTokenTransactionHistory(publicKey),this.getBaseCurrencyHistoricalUSD(historicalBaseCurrency), this.getInternalEtherTransactionHistory(publicKey)]).then(async (res) => {
         if (res && res[1].data && res[1].data.result && (res[1].data.result.constructor === Array)) {
           let transactionDataEther = res[0].data.result.map((item) => {
             item.tokenSymbol = "ETH";
-            return item;
-          });
+            if(item.isError === "0") {
+              return item;
+            } else {
+              return null;
+            }
+          }).filter(item => item !== null);
+
+          let transactionDataEtherInternal = res[3].data.result.map((item) => {
+            item.tokenSymbol = "ETH";
+            item.internalTransaction = true;
+            if(item.isError === "0") {
+              return item;
+            } else {
+              return null;
+            }
+          }).filter(item => item !== null);
 
           let transactionDataTokens = res[1].data.result.filter((item) => {
-            return (restrictCoinsKeys.indexOf(item.tokenSymbol) >= 0)
+            return true;
           })
 
-          let transactionData = transactionDataEther.concat(transactionDataTokens);
+          let transactionData = transactionDataEther.concat(transactionDataEtherInternal).concat(transactionDataTokens).sort((a, b) => (a.blockNumber * 1) - (b.blockNumber * 1));
 
-          restrictCoinsKeys.forEach((coin) => {
-            let coinTransactionGroup = transactionData.filter((item) => {
-              return item.tokenSymbol === coin;
-            })
+          // restrictCoinsKeys.forEach((coin) => {
+            let coinTransactionGroup = transactionData;
             let latestTimestamp;
             let earliestTimestamp;
-            coinTransactionGroup.forEach((transaction, index) => {
-
-              if (index === 0) {
+            let tokenTimeseriesIndex = {};
+            coinTransactionGroup.forEach((transaction) => {
+              let coin = transaction.tokenSymbol;
+              if(!tokenTimeseriesIndex[coin] && tokenTimeseriesIndex[coin] !== 0){
+                tokenTimeseriesIndex[coin] = 0;
+              }else{
+                tokenTimeseriesIndex[coin] = tokenTimeseriesIndex[coin] + 1;
+              }
+              if (tokenTimeseriesIndex[coin] === 0) {
                 latestTimestamp = transaction.timeStamp;
                 earliestTimestamp = transaction.timeStamp;
               }
@@ -268,36 +304,70 @@ class PortfolioPage extends React.Component {
 
               let balanceAfterPriorTransactions = 0;
 
-              if (restrictCoins[transaction.tokenSymbol].timeseries && index !== 0) {
-                balanceAfterPriorTransactions += restrictCoins[transaction.tokenSymbol].timeseries[index - 1].price;
+              if (restrictCoins[transaction.tokenSymbol] && restrictCoins[transaction.tokenSymbol].timeseries && restrictCoins[transaction.tokenSymbol].timeseries && restrictCoins[transaction.tokenSymbol].timeseries.length > 0) {
+                balanceAfterPriorTransactions = addNumbers(balanceAfterPriorTransactions, restrictCoins[transaction.tokenSymbol].timeseries[tokenTimeseriesIndex[coin] - 1].price);
               }
 
               let setBalance;
+              let createGasTx;
+              let totalEtherUsedAsGasTx = weiToEther(multiplyNumbers(transaction.gasUsed, transaction.gasPrice));
               if (transaction.to.toLowerCase() === publicKey.toLowerCase()) {
-                setBalance = addNumbers(balanceAfterPriorTransactions, weiToEther(subtractNumbers(transaction.value, transaction.gasUsed)));
+                setBalance = addNumbers(balanceAfterPriorTransactions, weiToEther(transaction.value));
               } else {
-                setBalance = subtractNumbers(balanceAfterPriorTransactions, weiToEther(subtractNumbers(transaction.value, transaction.gasUsed)));
+                if(coin === "ETH"){
+                  setBalance = subtractNumbers(balanceAfterPriorTransactions, weiToEther(addNumbers(transaction.value, totalEtherUsedAsGasTx)));
+                } else {
+                  let ethBalanceAtTransaction = 0;
+                  if (restrictCoins["ETH"].timeseries && restrictCoins["ETH"].timeseries && restrictCoins["ETH"].timeseries.length > 0 && tokenTimeseriesIndex["ETH"]) {
+                    ethBalanceAtTransaction = restrictCoins["ETH"].timeseries[tokenTimeseriesIndex["ETH"] - 1].price;
+                  }
+                  // TODO handle gas transaction impacts on ETH balance
+                  // createGasTx = {
+                  //   date: moment.unix(transaction.timeStamp),
+                  //   price: subtractNumbers(ethBalanceAtTransaction, totalEtherUsedAsGasTx),
+                  //   totalEtherUsedAsGasTx,
+                  //   ethBalanceAtTransaction
+                  // }
+                  setBalance = subtractNumbers(balanceAfterPriorTransactions, weiToEther(transaction.value));
+                }
               }
 
               let transactionTimeseriesSingle = {
                 date: moment.unix(transaction.timeStamp),
                 price: setBalance
               }
-              if (restrictCoins[transaction.tokenSymbol].timeseries) {
+              if (restrictCoins[transaction.tokenSymbol] && restrictCoins[transaction.tokenSymbol].timeseries) {
                 restrictCoins[transaction.tokenSymbol].timeseries.push(transactionTimeseriesSingle);
               } else {
+                if(!restrictCoins[transaction.tokenSymbol]){
+                  restrictCoins[transaction.tokenSymbol] = {};
+                }
                 restrictCoins[transaction.tokenSymbol].timeseries = [];
                 restrictCoins[transaction.tokenSymbol].timeseries.push(transactionTimeseriesSingle);
               }
+              if(createGasTx) {
+                if (restrictCoins["ETH"].timeseries) {
+                  restrictCoins["ETH"].timeseries.push(createGasTx);
+                } else {
+                  restrictCoins["ETH"].timeseries = [];
+                  restrictCoins["ETH"].timeseries.push(createGasTx);
+                }
+              }
               restrictCoins[transaction.tokenSymbol].latestTimestamp = latestTimestamp;
               restrictCoins[transaction.tokenSymbol].earliestTimestamp = earliestTimestamp;
-              
             });
-          })
+          // })
           thisPersist.setState({ coins: restrictCoins, isChartLoading: false, baseCurrencyToUSD: res[2].data.Data });
           // Calculate composite value chart
-          let consolidatedTimeseries = await thisPersist.buildCompositeTimeseries(restrictCoins);
+          let compositeCoins = Object.keys(restrictCoins)
+          .filter(key => includeInCompositePricingQueries.includes(key))
+          .reduce((obj, key) => {
+            obj[key] = restrictCoins[key];
+            return obj;
+          }, {});
+          let consolidatedTimeseries = await thisPersist.buildCompositeTimeseries(compositeCoins);
           thisPersist.setState({ compositeTimeseriesUSD: consolidatedTimeseries, isCompositeReady: true});
+          return Object.keys(restrictCoins);
         }
       });
     }
@@ -383,20 +453,23 @@ class PortfolioPage extends React.Component {
         let balanceOfETH = res.data.ETH.balance;
         getAgainstETH.push("ETH");
         coinListLocal["ETH"] = { balance: balanceOfETH }
+        let coinCalculationsBlacklist = [];
         if(res.data.tokens){
           res.data.tokens.forEach((item, index) => {
             let balance = item.balance / 1000000000000000000;
-            let rateUSD = item.tokenInfo.price.rate;
-            let marketCapUSD = item.tokenInfo.price.marketCapUsd;
+            let rateUSD = item.tokenInfo.price ? item.tokenInfo.price.rate : 0;
+            let marketCapUSD = item.tokenInfo.price ? item.tokenInfo.price.marketCapUsd : 0;
             let balanceUSD = balance * rateUSD;
-            if (balanceUSD >= 5) {
-              let symbol = item.tokenInfo.symbol.toUpperCase();
+            let symbol = item.tokenInfo.symbol.toUpperCase();
+            if (balanceUSD >= 0 && (item.tokenInfo.price !== false)) {
               getAgainstETH.push(symbol);
               coinListLocal[symbol] = { balance, balanceUSD, marketCapUSD };
+            }else{
+              coinCalculationsBlacklist.push(symbol);
             }
           });
         }
-        thisPersist.setState({ coins: coinListLocal });
+        thisPersist.setState({ coins: coinListLocal, coinCalculationsBlacklist });
         let getTokenPrices = 'https://min-api.cryptocompare.com/data/pricemulti?fsyms=' + getAgainstETH.join(',') + '&tsyms=ETH&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b';
         axios.get(getTokenPrices).then(async (res) => {
           let totalValueCountUSD = 0;
@@ -425,20 +498,23 @@ class PortfolioPage extends React.Component {
           }
           let tableData = this.buildTableData(coinListLocal, totalValueCountUSD);
           thisPersist.setState({ coins: coinListLocal, tableData, totalPortfolioValueUSD: totalValueCountUSD, totalPortfolioValueETH: totalValueCountETH });
-          this.fetchAddressTransactionHistory();
           await this.delayApiCalls(dailyChangeLinks).then(data => {
             let {coins} = this.state;
             let index = 0;
+            let includeInCompositePricingQueries = [];
             for(let [symbol] of Object.entries(dailyChangeLinks)) {
-              coins[symbol].open = data[index].data.Data.Data[data[index].data.Data.Data.length - 1].open;
-              coins[symbol].close = data[index].data.Data.Data[data[index].data.Data.Data.length - 1].close;
+              if(data[index].data.Data && data[index].data.Data.Data && data[index].data.Data.Data.constructor === Array && data[index].data.Data.Data.length > 0){
+                coins[symbol].open = data[index].data.Data.Data[data[index].data.Data.Data.length - 1].open;
+                coins[symbol].close = data[index].data.Data.Data[data[index].data.Data.Data.length - 1].close;
+                includeInCompositePricingQueries.push(symbol);
+              }
               index++;
             }
             let tableDataWithChanges = this.buildTableData(coins, totalValueCountUSD);
-            thisPersist.setState({coins, tableData: tableDataWithChanges});
+            thisPersist.setState({coins, tableData: tableDataWithChanges, includeInCompositePricingQueries});
           });
+          await this.fetchAddressTransactionHistory();
         })
-        thisPersist.setState({ coins: coinListLocal });
       })
     });
   }
@@ -495,54 +571,43 @@ class PortfolioPage extends React.Component {
     let marketCapTotal = 0;
     for(let [key, data] of sortedByPortfolioPortion){
       let portfolioPortion = (data.value_usd * 100 / totalValue).toFixed(2) * 1;
-      let marketCapUSD = data.marketCapUSD.toFixed(2) * 1;
+      let marketCapUSD = data.marketCapUSD ? data.marketCapUSD.toFixed(2) * 1 : "N/A";
       let changePercent = ((data.close * 100 / data.open) - 100).toFixed(2) * 1;
       let relativeImpact = (portfolioPortion / 100 * changePercent) > 0.1 ? (portfolioPortion / 100 * changePercent).toFixed(2) * 1 : (portfolioPortion / 100 * changePercent).toFixed(3) * 1;
-      let balance = data.balance.toFixed(2) * 1;
-      let close = data.close ? data.close.toFixed(2) * 1 : "Loading...";
-      let usdValue = data.value_usd.toFixed(2) * 1;
-      if(isNaN(relativeImpact)){
-        relativeImpact = "Loading...";
-        relativePortfolioImpactTotal = "Loading...";
-      }else if(relativePortfolioImpactTotal !== "Loading..."){
-        relativePortfolioImpactTotal += relativeImpact;
+      let balance = data.balance ? data.balance.toFixed(2) * 1 : "N/A";
+      let close = data.close ? data.close.toFixed(2) * 1 : "N/A";
+      let usdValue = data.value_usd ? data.value_usd.toFixed(2) * 1 : "N/A";
+      if(marketCapUSD !== "N/A" && (portfolioPortion > 0)){
+        if(!isNaN(relativeImpact) && relativePortfolioImpactTotal !== "N/A"){
+          relativePortfolioImpactTotal += relativeImpact;
+        }
+        if(!isNaN(changePercent) && changePercent !== "N/A"){
+          changeTodayTotal += changePercent;
+        }
+        if(!isNaN(balance) && balance !== "N/A"){
+          tokenBalanceTotal += balance;
+        }
+        if(!isNaN(usdValue) && usdValue !== "N/A"){
+          usdValueTotal += usdValue;
+        }
+        if(!isNaN(close) && close !== "N/A"){
+          usdTokenValueTotal += close;
+        }
+        if(!isNaN(marketCapUSD) && marketCapUSD !== "N/A"){
+          marketCapTotal += marketCapUSD;
+        }
+        tableData.push({
+          id: tableData.length + 1,
+          symbol: key,
+          balance: balance,
+          value_usd: usdValue,
+          market_cap: marketCapUSD,
+          portfolio_portion: portfolioPortion,
+          change_today: changePercent,
+          relative_portfolio_impact_today: relativeImpact,
+          token_value_usd: close,
+        })
       }
-      if(isNaN(changePercent)){
-        changeTodayTotal = "Loading...";
-      }else if(changePercent !== "Loading..."){
-        changeTodayTotal += changePercent;
-      }
-      if(isNaN(balance)){
-        tokenBalanceTotal = "Loading...";
-      }else if(balance !== "Loading..."){
-        tokenBalanceTotal += balance;
-      }
-      if(isNaN(usdValue)){
-        usdValueTotal = "Loading...";
-      }else if(usdValue !== "Loading..."){
-        usdValueTotal += usdValue;
-      }
-      if(isNaN(close)){
-        usdTokenValueTotal = "Loading...";
-      }else if(close !== "Loading..."){
-        usdTokenValueTotal += close;
-      }
-      if(isNaN(marketCapUSD)) {
-        marketCapTotal = "Loading...";
-      }else if(marketCapUSD !== "Loading..."){
-        marketCapTotal += marketCapUSD;
-      }
-      tableData.push({
-        id: tableData.length + 1,
-        symbol: key,
-        balance: balance,
-        value_usd: usdValue,
-        market_cap: marketCapUSD,
-        portfolio_portion: portfolioPortion,
-        change_today: changePercent,
-        relative_portfolio_impact_today: relativeImpact,
-        token_value_usd: close,
-      })
     }
     tableData.push({
       id: tableData.length + 1,
@@ -590,9 +655,9 @@ class PortfolioPage extends React.Component {
       timeseriesDataMap.map((transaction, index) => {
         let closestBasePriceToUSD = this.getClosestTimestamp(baseCurrencyToUSD, moment(transaction.date).unix(), 'time');
         if(index === (timeseriesDataMap.length - 1)){
-          transaction.price = transaction.price * closestBasePriceToUSD.close;
+          transaction.price = closestBasePriceToUSD ? transaction.price * closestBasePriceToUSD.close : 0;
         }else{
-          transaction.price = transaction.price * closestBasePriceToUSD.open;
+          transaction.price = closestBasePriceToUSD ? transaction.price * closestBasePriceToUSD.open : 0;
         }
         timeseriesTimestampKeyed[transaction.date.unix()] = transaction;
         return transaction;
@@ -611,8 +676,12 @@ class PortfolioPage extends React.Component {
     let displayTotalUSD = priceFormat(totalPortfolioValueUSD);
     let displayTotalETH = "~ " + numberFormat(totalPortfolioValueETH) +  " ETH"
     let ethAddressError = false;
+    let allowFiatConversion = false;
     if((publicKey.length > 0) && !isValidAddress(publicKey)){
       ethAddressError = true;
+    }
+    if(baseCurrencyToUSD && (baseCurrencyToUSD.constructor === Array) && (baseCurrencyToUSD.length > 0)){
+      allowFiatConversion = true;
     }
 
     let pieChartDataUSD = [];
@@ -826,6 +895,7 @@ class PortfolioPage extends React.Component {
                           onChange={this.toggleFiatConversion}
                           value="checkedB"
                           color="primary"
+                          disabled={!allowFiatConversion}
                         />
                       }
                       label="USD Value"
