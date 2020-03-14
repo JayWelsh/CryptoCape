@@ -78,6 +78,10 @@ body {
   }
 }
 
+.highcharts-credits {
+  pointer-events: none;
+}
+
 /* Loading Icon From https://github.com/tobiasahlin/SpinKit */
 
 .sk-folding-cube {

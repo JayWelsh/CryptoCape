@@ -848,7 +848,6 @@ class PortfolioPage extends React.Component {
                         value={publicKey}
                         onChange={(event) => this.handleSetAddress(event, history)}
                         onFocus={(event) => this.handleFocus(event)}
-                        autoFocus={true}
                         margin="normal"
                         variant="outlined"
                       />
