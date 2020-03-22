@@ -58,7 +58,7 @@ class OurChartVX extends React.Component {
 
         const width = parentWidth - margin.left - margin.right;
         const height = parentHeight - margin.top - margin.bottom;
-        const tooltipAnimation = 'all .1s cubic-bezier(.42,.2,.5,1)';
+        const tooltipAnimation = 'all .1s ease-out';
 
         let tooltipPriceTranslate = 'translateX(0%)';
         let tooltipDateTranslate = 'translateX(-50%)';
