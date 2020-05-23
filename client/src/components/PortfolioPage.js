@@ -564,11 +564,12 @@ class PortfolioPage extends React.Component {
                   coins[symbol].marketCapUSD = data[index].data.market_caps[data[index].data.market_caps.length - 1][1];
                 }
                 if(!coins[symbol].value_eth_per_token) {
-                  let ethValue = await axios.get(`https://api.coingecko.com/api/v3/simple/price?ids=anj&vs_currencies=eth`);
-                  if(ethValue && ethValue.data && ethValue.data.anj && ethValue.data.anj.eth){
-                    coins[symbol].value_eth_per_token = ethValue.data.anj.eth;
+                  let referenceSymbol = symbol.toLowerCase();
+                  let ethValue = await axios.get(`https://api.coingecko.com/api/v3/simple/price?ids=${referenceSymbol}&vs_currencies=eth`);
+                  if(ethValue && ethValue.data && ethValue.data[referenceSymbol] && ethValue.data[referenceSymbol].eth){
+                    coins[symbol].value_eth_per_token = ethValue.data[referenceSymbol].eth;
                     if(!coins[symbol].value_eth && coins[symbol].balance) {
-                      coins[symbol].value_eth = coins[symbol].balance * ethValue.data.anj.eth;
+                      coins[symbol].value_eth = coins[symbol].balance * ethValue.data[referenceSymbol].eth;
                     }
                   }
                 }
