@@ -136,8 +136,8 @@ class PortfolioPage extends React.Component {
     handleChangeBaseCurrency = name => event => {
       axios.all([this.getBaseCurrencyHistoricalUSD(event.target.value)]).then((res) => {
         let { baseCurrencyToUSD, enableFiatConversion } = this.state;
-        if(res[0].data.Data && res[0].data.Data.constructor === Array && res[0].data.Data.length > 0){
-          baseCurrencyToUSD = res[0].data.Data;
+        if(res[0] && res[0].constructor === Array && res[0].length > 0){
+          baseCurrencyToUSD = res[0];
         } else {
           enableFiatConversion = false;
           baseCurrencyToUSD = [];
@@ -169,9 +169,26 @@ class PortfolioPage extends React.Component {
       return axios.get(getInternalEthTransactionHistoryURL);
     }
 
-    getBaseCurrencyHistoricalUSD(historicalBaseCurrency){
+    getBaseCurrencyHistoricalUSD = async (historicalBaseCurrency) => {
       let getHistoricalBaseCurrency = "https://min-api.cryptocompare.com/data/histoday?fsym=" + historicalBaseCurrency + "&tsym=USD&allData=true&aggregate=1&e=CCCAGG&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b";
-      return axios.get(getHistoricalBaseCurrency);
+      let result = await axios.get(getHistoricalBaseCurrency);
+      if(result && result.data && result.data.Data && result.data.Data.length > 0) {
+        return result.data.Data;
+      }else{
+        // Use CoinGecko Fallback
+        let fallbackResult = await axios.get(`https://api.coingecko.com/api/v3/coins/${historicalBaseCurrency.toLowerCase()}/market_chart?vs_currency=usd&days=max`);
+        if(fallbackResult && fallbackResult.data && fallbackResult.data.prices) {
+          let fallbackLinkTimeseries = [];
+          for(let timeseriesEntry of fallbackResult.data.prices) {
+            fallbackLinkTimeseries.push({
+              time: Math.floor(timeseriesEntry[0] / 1000),
+              close: timeseriesEntry[1],
+              open: timeseriesEntry[1]
+            })
+          }
+          return fallbackLinkTimeseries;
+        }
+      }
     }
 
   getClosestTimestamp = (arr, goal, prop) => {
@@ -204,6 +221,7 @@ class PortfolioPage extends React.Component {
     const {timeseriesRange} = this.state;
     let timeseriesData = [];
     let fullHistoryLinks = [];
+    let fullHistoryFallbackLinks = [];
     let fullHistoricalCurrencies = [];
     let consolidatedTimeseries = {};
     for(let historicalBaseCurrency of Object.keys(coins)){
@@ -213,9 +231,27 @@ class PortfolioPage extends React.Component {
       let index = 0;
       for(let symbol of Object.keys(fullHistoryLinks)){
         fullHistoricalCurrencies[symbol] = data[index].data.Data;
+        if(!data[index].data.Data || data[index].data.Data.length === 0) {
+          fullHistoryFallbackLinks[symbol] = `https://api.coingecko.com/api/v3/coins/${symbol.toLowerCase()}/market_chart?vs_currency=usd&days=max`;
+        }
         index++;
       }
-    })
+    });
+    await this.delayApiCalls(fullHistoryFallbackLinks).then(data => {
+      let index = 0;
+      for(let symbol of Object.keys(fullHistoryFallbackLinks)){
+        let fallbackLinkTimeseries = [];
+        for(let timeseriesEntry of data[index].data.prices) {
+          fallbackLinkTimeseries.push({
+            time: Math.floor(timeseriesEntry[0] / 1000),
+            close: timeseriesEntry[1],
+            open: timeseriesEntry[1]
+          })
+        }
+        fullHistoricalCurrencies[symbol] = fallbackLinkTimeseries;
+        index++;
+      }
+    });
     let forceCurrentTime = moment();
     for(let historicalBaseCurrency of Object.keys(coins)){
       if(coins &&  coins[historicalBaseCurrency] && coins[historicalBaseCurrency].timeseries) {
@@ -357,7 +393,7 @@ class PortfolioPage extends React.Component {
               restrictCoins[transaction.tokenSymbol].earliestTimestamp = earliestTimestamp;
             });
           // })
-          thisPersist.setState({ coins: restrictCoins, isChartLoading: false, baseCurrencyToUSD: res[2].data.Data });
+          thisPersist.setState({ coins: restrictCoins, isChartLoading: false, baseCurrencyToUSD: res[2] });
           // Calculate composite value chart
           let compositeCoins = Object.keys(restrictCoins)
           .filter(key => includeInCompositePricingQueries.includes(key))
@@ -423,7 +459,7 @@ class PortfolioPage extends React.Component {
         return callCollection;
     }
 
-    delayedApiCall(links = [], index = 0, delayInMilliseconds, values = []){
+    delayedApiCall = (links = [], index = 0, delayInMilliseconds, values = []) => {
       return axios.get(links[index][1])
         .then(value => new Promise(resolve => {
                 setTimeout(() => {
@@ -493,6 +529,7 @@ class PortfolioPage extends React.Component {
             }
           });
           let dailyChangeLinks = [];
+          let dailyChangeLinksFallback = [];
           for(let symbol of getAgainstETH){
               dailyChangeLinks[symbol] = `https://min-api.cryptocompare.com/data/v2/histoday?fsym=${symbol}&tsym=USD&limit=1&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b`;
           }
@@ -503,9 +540,38 @@ class PortfolioPage extends React.Component {
             let index = 0;
             let includeInCompositePricingQueries = [];
             for(let [symbol] of Object.entries(dailyChangeLinks)) {
-              if(data[index].data.Data && data[index].data.Data.Data && data[index].data.Data.Data.constructor === Array && data[index].data.Data.Data.length > 0){
+              if(data[index].data.Data && data[index].data.Data.Data && data[index].data.Data.Data.constructor === Array && data[index].data.Data.Data.length > 0 && data[index].data.Data.Data[data[index].data.Data.Data.length - 1].open){
                 coins[symbol].open = data[index].data.Data.Data[data[index].data.Data.Data.length - 1].open;
                 coins[symbol].close = data[index].data.Data.Data[data[index].data.Data.Data.length - 1].close;
+                includeInCompositePricingQueries.push(symbol);
+              } else if (coins[symbol].value_usd > 0) {
+                // Create list of fallback links using CoinGecko as fallback for Cryptocompare data unavailability
+                dailyChangeLinksFallback[symbol] = `https://api.coingecko.com/api/v3/coins/${symbol.toLowerCase()}/market_chart?vs_currency=usd&days=1`;
+              }
+              index++;
+            }
+            let tableDataWithChanges = this.buildTableData(coins, totalValueCountUSD);
+            thisPersist.setState({coins, tableData: tableDataWithChanges, includeInCompositePricingQueries});
+          });
+          await this.delayApiCalls(dailyChangeLinksFallback).then(async data => {
+            let {coins, includeInCompositePricingQueries} = this.state;
+            let index = 0;
+            for(let [symbol] of Object.entries(dailyChangeLinksFallback)) {
+              if(data[index].data && data[index].data.prices && data[index].data.prices.constructor === Array && data[index].data.prices.length > 0){
+                coins[symbol].open = this.getClosestTimestamp(data[index].data.prices, moment().startOf('day').unix() * 1000, 0)[1];
+                coins[symbol].close = data[index].data.prices[data[index].data.prices.length - 1][1];
+                if(!coins[symbol].marketCapUSD && data[index].data.market_caps && data[index].data.market_caps.length > 0) {
+                  coins[symbol].marketCapUSD = data[index].data.market_caps[data[index].data.market_caps.length - 1][1];
+                }
+                if(!coins[symbol].value_eth_per_token) {
+                  let ethValue = await axios.get(`https://api.coingecko.com/api/v3/simple/price?ids=anj&vs_currencies=eth`);
+                  if(ethValue && ethValue.data && ethValue.data.anj && ethValue.data.anj.eth){
+                    coins[symbol].value_eth_per_token = ethValue.data.anj.eth;
+                    if(!coins[symbol].value_eth && coins[symbol].balance) {
+                      coins[symbol].value_eth = coins[symbol].balance * ethValue.data.anj.eth;
+                    }
+                  }
+                }
                 includeInCompositePricingQueries.push(symbol);
               }
               index++;
