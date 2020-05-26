@@ -462,8 +462,8 @@ class PortfolioPage extends React.Component {
     }
 
     delayedApiCall = (links = [], index = 0, delayInMilliseconds, values = []) => {
-      return axios.get(links[index][1])
-        .then(value => new Promise(resolve => {
+      if(links[index] && links[index][1]){
+        return axios.get(links[index][1]).then(value => new Promise(resolve => {
                 setTimeout(() => {
                   let finalIndex = links.length - 1;
                     if(index === finalIndex){
@@ -474,6 +474,7 @@ class PortfolioPage extends React.Component {
                 }, delayInMilliseconds);
             })
         );
+      }
     }
 
   fetchPriceValues = async () => {
