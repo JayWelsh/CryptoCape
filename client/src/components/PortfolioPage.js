@@ -442,7 +442,7 @@ class PortfolioPage extends React.Component {
               currentDate = forceCurrentTime;
             }
             let daysSinceLastTransaction = currentDate.diff(thisDate, "days");
-            for (let i = 1; i <= daysSinceLastTransaction; i++) {
+            for (let i = isCompositeTimeseries ? 0 : 1; i <= daysSinceLastTransaction; i++) {
               if(moment(thisDate).add(i, 'days').isBefore(moment(currentDate).startOf('day'))){
                 returnArray.push({ date: moment(thisDate).add(i, 'days').startOf('day'), price: thisPrice });
               }
