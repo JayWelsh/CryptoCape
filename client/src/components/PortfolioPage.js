@@ -543,7 +543,7 @@ class PortfolioPage extends React.Component {
             let index = 0;
             let includeInCompositePricingQueries = [];
             for(let [symbol] of Object.entries(dailyChangeLinks)) {
-              if(data[index].data.Data && data[index].data.Data.Data && data[index].data.Data.Data.constructor === Array && data[index].data.Data.Data.length > 0 && data[index].data.Data.Data[data[index].data.Data.Data.length - 1].open){
+              if(data[index].data.Data && data[index].data.Data.Data && data[index].data.Data.Data.constructor === Array && data[index].data.Data.Data.length > 0 && data[index].data.Data.Data[data[index].data.Data.Data.length - 1].open && coins[symbol].marketCapUSD){
                 coins[symbol].open = data[index].data.Data.Data[data[index].data.Data.Data.length - 1].open;
                 coins[symbol].close = data[index].data.Data.Data[data[index].data.Data.Data.length - 1].close;
                 includeInCompositePricingQueries.push(symbol);
