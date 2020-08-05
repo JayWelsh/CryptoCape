@@ -547,7 +547,7 @@ class PortfolioPage extends React.Component {
                 coins[symbol].open = data[index].data.Data.Data[data[index].data.Data.Data.length - 1].open;
                 coins[symbol].close = data[index].data.Data.Data[data[index].data.Data.Data.length - 1].close;
                 includeInCompositePricingQueries.push(symbol);
-              } else if (coins[symbol].value_usd > 0) {
+              } else if (coins[symbol].value_usd > 1) {
                 // Create list of fallback links using CoinGecko as fallback for Cryptocompare data unavailability
                 dailyChangeLinksFallback[symbol] = `https://api.coingecko.com/api/v3/coins/${symbol.toLowerCase()}/market_chart?vs_currency=usd&days=1`;
               }
