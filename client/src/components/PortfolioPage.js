@@ -176,7 +176,7 @@ class PortfolioPage extends React.Component {
         return result.data.Data;
       }else{
         // Use CoinGecko Fallback
-        let fallbackResult = await axios.get(`https://api.coingecko.com/api/v3/coins/${historicalBaseCurrency.toLowerCase()}/market_chart?vs_currency=usd&days=max`);
+        let fallbackResult = await axios.get(`https://api.coingecko.com/api/v3/coins/${historicalBaseCurrency.toLowerCase() !== "eth" ? historicalBaseCurrency.toLowerCase() : "ethereum"}/market_chart?vs_currency=usd&days=max`);
         if(fallbackResult && fallbackResult.data && fallbackResult.data.prices) {
           let fallbackLinkTimeseries = [];
           for(let timeseriesEntry of fallbackResult.data.prices) {
@@ -232,7 +232,7 @@ class PortfolioPage extends React.Component {
       for(let symbol of Object.keys(fullHistoryLinks)){
         fullHistoricalCurrencies[symbol] = data[index].data.Data;
         if(!data[index].data.Data || data[index].data.Data.length === 0) {
-          fullHistoryFallbackLinks[symbol] = `https://api.coingecko.com/api/v3/coins/${symbol.toLowerCase()}/market_chart?vs_currency=usd&days=max`;
+          fullHistoryFallbackLinks[symbol] = `https://api.coingecko.com/api/v3/coins/${symbol.toLowerCase() !== "eth" ? symbol.toLowerCase() : "ethereum"}/market_chart?vs_currency=usd&days=max`;
         }
         index++;
       }
@@ -401,6 +401,7 @@ class PortfolioPage extends React.Component {
             obj[key] = restrictCoins[key];
             return obj;
           }, {});
+          console.log({compositeCoins});
           let consolidatedTimeseries = await thisPersist.buildCompositeTimeseries(compositeCoins);
           thisPersist.setState({ compositeTimeseriesUSD: consolidatedTimeseries, isCompositeReady: true});
           return Object.keys(restrictCoins);
@@ -500,9 +501,10 @@ class PortfolioPage extends React.Component {
             let marketCapUSD = item.tokenInfo.price ? item.tokenInfo.price.marketCapUsd : 0;
             let balanceUSD = balance * rateUSD;
             let symbol = item.tokenInfo.symbol.toUpperCase();
+            let tokenAddress = item.tokenInfo.address;
             if (balanceUSD >= 0 && (item.tokenInfo.price !== false)) {
               getAgainstETH.push(symbol);
-              coinListLocal[symbol] = { balance, balanceUSD, marketCapUSD };
+              coinListLocal[symbol] = { balance, balanceUSD, marketCapUSD, tokenAddress };
             }else{
               coinCalculationsBlacklist.push(symbol);
             }
@@ -549,7 +551,11 @@ class PortfolioPage extends React.Component {
                 includeInCompositePricingQueries.push(symbol);
               } else if (coins[symbol].value_usd > 1) {
                 // Create list of fallback links using CoinGecko as fallback for Cryptocompare data unavailability
-                dailyChangeLinksFallback[symbol] = `https://api.coingecko.com/api/v3/coins/${symbol.toLowerCase()}/market_chart?vs_currency=usd&days=1`;
+                if(coins[symbol].tokenAddress && symbol.toLowerCase() !== "eth") {
+                  dailyChangeLinksFallback[symbol] = `https://api.coingecko.com/api/v3/coins/ethereum/contract/${coins[symbol].tokenAddress}/market_chart?vs_currency=usd&days=1`;
+                }else if(symbol.toLowerCase() === "eth") {
+                  dailyChangeLinksFallback[symbol] = `https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=1`;
+                }
               }
               index++;
             }
@@ -584,8 +590,28 @@ class PortfolioPage extends React.Component {
             thisPersist.setState({coins, tableData: tableDataWithChanges, includeInCompositePricingQueries});
           });
           await this.fetchAddressTransactionHistory();
+          await this.fetchCoinGeckoLinks(this.state.coins, totalValueCountUSD);
         })
       })
+    });
+  }
+
+  fetchCoinGeckoLinks = async (coins, totalValueCountUSD) => {
+    let thisPersist = this;
+    let getCoinGeckoLinks = [];
+    for(let symbol of Object.keys(coins)) {
+      if(coins[symbol].tokenAddress){
+        getCoinGeckoLinks[symbol] = `https://api.coingecko.com/api/v3/coins/ethereum/contract/${coins[symbol].tokenAddress}`
+      }else if(symbol.toLowerCase() === "eth"){
+        coins[symbol].coinGeckoLink = "https://www.coingecko.com/en/coins/ethereum";
+      }
+    }
+    await this.delayApiCalls(getCoinGeckoLinks).then(async data => {
+      for(let item of data) {
+        coins[item.data.symbol.toUpperCase()].coinGeckoLink = `https://www.coingecko.com/en/coins/${item.data.id}`;
+      }
+      let tableDataWithChanges = this.buildTableData(coins, totalValueCountUSD);
+      thisPersist.setState({coins, tableData: tableDataWithChanges});
     });
   }
 
@@ -593,22 +619,22 @@ class PortfolioPage extends React.Component {
     event.target.select();
   }
 
-  componentDidMount() {
+  componentDidMount = async () => {
     if (this.state.publicKey) {
       //this.intervalFetchPrices = setInterval(() => this.fetchPriceValues(), 60000);
       if ((this.state.publicKey.length > 0) && isValidAddress(this.state.publicKey)) {
         this.setPublicKeyStorage(this.state.publicKey);
       };
-      this.fetchPriceValues(); // also load one immediately
+      await this.fetchPriceValues(); // also load one immediately
     }
   }
 
-  componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps = async (nextProps) => {
     if (nextProps.publicKey && this.state.publicKey !== nextProps.publicKey) {
       this.setState({ publicKey: nextProps.publicKey, isChartLoading: true, coins: {}, historicalBaseCurrency: 'ETH' });
       if ((nextProps.publicKey.length > 0) && isValidAddress(nextProps.publicKey)) {
         this.setPublicKeyStorage(nextProps.publicKey);
-        this.fetchPriceValues();
+        await this.fetchPriceValues();
       }
     }
   }
@@ -676,6 +702,7 @@ class PortfolioPage extends React.Component {
           change_today: changePercent,
           relative_portfolio_impact_today: relativeImpact,
           token_value_usd: close,
+          coin_gecko_link: data.coinGeckoLink ? data.coinGeckoLink : false
         })
       }
     }

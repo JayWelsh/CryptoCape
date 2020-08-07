@@ -289,7 +289,9 @@ class EnhancedTable extends React.Component {
                       className={n.symbol === "Total" ? classes.totalRow : null}
                     >
                         <TableCell component="th" scope="row">
-                        {n.symbol}
+                        {
+                          n.coin_gecko_link ? <a href={n.coin_gecko_link} target="_blank" rel="noopener noreferrer">{n.symbol}</a> : n.symbol
+                        }
                         </TableCell>
                         <TableCell align="right">{isNaN(n.token_value_usd) ? n.token_value_usd : tokenValueFormatDisplay(n.token_value_usd, 2, "$", true)}</TableCell>
                         <TableCell align="right">{isNaN(n.value_usd) ? n.value_usd : tokenValueFormatDisplay(n.value_usd, 2, "$", true)}</TableCell>
