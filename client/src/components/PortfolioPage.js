@@ -411,6 +411,7 @@ class PortfolioPage extends React.Component {
 
     bufferTimeseries(timeseries, fillRange = false, isCompositeTimeseries = false, forceCurrentTime = false) {
       let returnArray = [];
+      let currentDate = moment();
       if (timeseries.length > 0) {
         timeseries.forEach((item, index) => {
           let thisDate = item.date;
@@ -426,7 +427,9 @@ class PortfolioPage extends React.Component {
             let nextPrice = timeseries[index + 1].price;
             let daysUntilNextDatapoint = moment(nextDate).diff(moment(thisDate), "days");
             if(isCompositeTimeseries){
-              returnArray.push({ date: moment(thisDate).startOf('day'), price: thisPrice });
+              if(moment(thisDate).startOf('day').isBefore(moment(currentDate).startOf('day'))){
+                returnArray.push({ date: moment(thisDate).startOf('day'), price: thisPrice });
+              }
             }else{
               returnArray.push({ date: moment(thisDate), price: thisPrice });
             }
@@ -438,17 +441,17 @@ class PortfolioPage extends React.Component {
               returnArray.push({ date: moment(nextDate), price: nextPrice });
             }
           } else if (index === (timeseries.length - 1)) {
-            let currentDate = moment();
-            if(forceCurrentTime){
-              currentDate = forceCurrentTime;
-            }
             let daysSinceLastTransaction = currentDate.diff(thisDate, "days");
             for (let i = isCompositeTimeseries ? 0 : 1; i <= daysSinceLastTransaction; i++) {
-              if(moment(thisDate).add(i, 'days').isBefore(moment(currentDate).startOf('day'))){
+              if(moment(thisDate).add(i, 'days').startOf('day').isBefore(moment(currentDate).startOf('day'))){
                 returnArray.push({ date: moment(thisDate).add(i, 'days').startOf('day'), price: thisPrice });
               }
             }
-            returnArray.push({ date: moment(currentDate), price: thisPrice });
+            if(forceCurrentTime){
+              returnArray.push({ date: moment(forceCurrentTime), price: thisPrice });
+            } else {
+              returnArray.push({ date: moment(currentDate), price: thisPrice });
+            }
           }
         });
       }
