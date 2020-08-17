@@ -277,7 +277,9 @@ class PortfolioPage extends React.Component {
     }
     let compositeTimeseries = [];
     for(let [index, item] of Object.entries(consolidatedTimeseries)){
-      compositeTimeseries.push(Object.assign({date: moment.unix(index * 1), price: item}));
+      if(!moment.unix(index * 1).isSame(moment().startOf('day'))){
+        compositeTimeseries.push(Object.assign({date: moment.unix(index * 1), price: item}));
+      }
     }
     return compositeTimeseries;
   }
@@ -401,7 +403,6 @@ class PortfolioPage extends React.Component {
             obj[key] = restrictCoins[key];
             return obj;
           }, {});
-          console.log({compositeCoins});
           let consolidatedTimeseries = await thisPersist.buildCompositeTimeseries(compositeCoins);
           thisPersist.setState({ compositeTimeseriesUSD: consolidatedTimeseries, isCompositeReady: true});
           return Object.keys(restrictCoins);
@@ -610,11 +611,13 @@ class PortfolioPage extends React.Component {
       }
     }
     await this.delayApiCalls(getCoinGeckoLinks).then(async data => {
-      for(let item of data) {
-        coins[item.data.symbol.toUpperCase()].coinGeckoLink = `https://www.coingecko.com/en/coins/${item.data.id}`;
+      if(data) {
+        for(let item of data) {
+          coins[item.data.symbol.toUpperCase()].coinGeckoLink = `https://www.coingecko.com/en/coins/${item.data.id}`;
+        }
+        let tableDataWithChanges = this.buildTableData(coins, totalValueCountUSD);
+        thisPersist.setState({coins, tableData: tableDataWithChanges});
       }
-      let tableDataWithChanges = this.buildTableData(coins, totalValueCountUSD);
-      thisPersist.setState({coins, tableData: tableDataWithChanges});
     });
   }
 

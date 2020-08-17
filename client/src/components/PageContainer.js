@@ -52,7 +52,6 @@ class PageContainer extends React.Component {
   render() {
     //TODO Props
     const { classes, theme, history, isConsideredMobile } = this.props;
-    console.log("isConsideredMobile in page container",isConsideredMobile);
     return (
       <div className={classes.pageContainer}>
           <Route exact={true} path="/" render={(props) => HomePageRoute(props, isConsideredMobile)}/>
