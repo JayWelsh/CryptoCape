@@ -28,6 +28,14 @@ export const weiToEther = (wei) => {
 	}
 }
 
+export const tokenBalanceFromDecimals = (value, decimals = 18) => {
+    if(typeof value === "string"){
+		return BigNumber(value).dividedBy(`1e${decimals}`).toString();
+	}else{
+		return BigNumber(value.toString()).dividedBy(`1e${decimals}`).toString();
+	}
+}
+
 export const subtractNumbers = (value1, value2) => BigNumber(value1).minus(BigNumber(value2)).toString();
 
 export const addNumbers = (value1, value2) => BigNumber(value1).plus(BigNumber(value2)).toString();
