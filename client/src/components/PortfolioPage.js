@@ -66,6 +66,11 @@ const styles = theme => ({
   },
   formContainer: {
     display: 'flex'
+  },
+  etherscanLink: {
+    fontWeight: 'bold',
+    fontSize: '13px',
+    marginBottom: '0px'
   }
 });
 
@@ -170,31 +175,25 @@ class PortfolioPage extends React.Component {
     }
 
     getBaseCurrencyHistoricalUSD = async (historicalBaseCurrency) => {
-      let getHistoricalBaseCurrency = "https://min-api.cryptocompare.com/data/histoday?fsym=" + historicalBaseCurrency + "&tsym=USD&allData=true&aggregate=1&e=CCCAGG&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b";
-      let result = await axios.get(getHistoricalBaseCurrency);
       let { coins } = this.state;
-      if(result && result.data && result.data.Data && result.data.Data.length > 0) {
-        return result.data.Data;
-      }else{
-        // Use CoinGecko Fallback
-        let useLink;
-        if(coins[historicalBaseCurrency].tokenAddress && historicalBaseCurrency.toLowerCase() !== "eth") {
-          useLink = `https://api.coingecko.com/api/v3/coins/ethereum/contract/${coins[historicalBaseCurrency].tokenAddress}/market_chart?vs_currency=usd&days=max`;
-        }else if(historicalBaseCurrency.toLowerCase() === "eth") {
-          useLink = `https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=max`;
+      // Use CoinGecko Fallback
+      let useLink;
+      if(coins[historicalBaseCurrency].tokenAddress && historicalBaseCurrency.toLowerCase() !== "eth") {
+        useLink = `https://api.coingecko.com/api/v3/coins/ethereum/contract/${coins[historicalBaseCurrency].tokenAddress}/market_chart?vs_currency=usd&days=max`;
+      }else if(historicalBaseCurrency.toLowerCase() === "eth") {
+        useLink = `https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=max`;
+      }
+      let fallbackResult = await axios.get(useLink);
+      if(fallbackResult && fallbackResult.data && fallbackResult.data.prices) {
+        let fallbackLinkTimeseries = [];
+        for(let timeseriesEntry of fallbackResult.data.prices) {
+          fallbackLinkTimeseries.push({
+            time: Math.floor(timeseriesEntry[0] / 1000),
+            close: timeseriesEntry[1],
+            open: timeseriesEntry[1]
+          })
         }
-        let fallbackResult = await axios.get(useLink);
-        if(fallbackResult && fallbackResult.data && fallbackResult.data.prices) {
-          let fallbackLinkTimeseries = [];
-          for(let timeseriesEntry of fallbackResult.data.prices) {
-            fallbackLinkTimeseries.push({
-              time: Math.floor(timeseriesEntry[0] / 1000),
-              close: timeseriesEntry[1],
-              open: timeseriesEntry[1]
-            })
-          }
-          return fallbackLinkTimeseries;
-        }
+        return fallbackLinkTimeseries;
       }
     }
 
@@ -228,25 +227,18 @@ class PortfolioPage extends React.Component {
     const {timeseriesRange} = this.state;
     let timeseriesData = [];
     let fullHistoryLinks = [];
-    let fullHistoryFallbackLinks = [];
     let fullHistoricalCurrencies = [];
     let consolidatedTimeseries = {};
     for(let historicalBaseCurrency of Object.keys(coins)){
-        fullHistoryLinks[historicalBaseCurrency] = "https://min-api.cryptocompare.com/data/histoday?fsym=" + historicalBaseCurrency + "&tsym=USD&allData=true&aggregate=1&e=CCCAGG&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b";
+        if(coins[historicalBaseCurrency].tokenAddress && historicalBaseCurrency.toLowerCase() !== "eth") {
+          fullHistoryLinks[historicalBaseCurrency] = `https://api.coingecko.com/api/v3/coins/ethereum/contract/${coins[historicalBaseCurrency].tokenAddress}/market_chart?vs_currency=usd&days=max`;
+        }else if(historicalBaseCurrency.toLowerCase() === "eth") {
+          fullHistoryLinks[historicalBaseCurrency] = `https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=max`;
+        }
     }
     await this.delayApiCalls(fullHistoryLinks).then(data => {
       let index = 0;
       for(let symbol of Object.keys(fullHistoryLinks)){
-        fullHistoricalCurrencies[symbol] = data[index].data.Data;
-        if(!data[index].data.Data || data[index].data.Data.length === 0) {
-          fullHistoryFallbackLinks[symbol] = `https://api.coingecko.com/api/v3/coins/${symbol.toLowerCase() !== "eth" ? symbol.toLowerCase() : "ethereum"}/market_chart?vs_currency=usd&days=max`;
-        }
-        index++;
-      }
-    });
-    await this.delayApiCalls(fullHistoryFallbackLinks).then(data => {
-      let index = 0;
-      for(let symbol of Object.keys(fullHistoryFallbackLinks)){
         let fallbackLinkTimeseries = [];
         for(let timeseriesEntry of data[index].data.prices) {
           fallbackLinkTimeseries.push({
@@ -274,12 +266,19 @@ class PortfolioPage extends React.Component {
           }
         }
       }
-      for(let timestamp of Object.keys(timeseriesData)) {
-        if(consolidatedTimeseries[timestamp]) {
-          consolidatedTimeseries[timestamp] += timeseriesData[timestamp].price;
-        }else{
-          consolidatedTimeseries[timestamp] = timeseriesData[timestamp].price;
+      let timeseriesKeys = Object.keys(timeseriesData);
+      let timeseriesIndex = 0;
+      for(let timestamp of timeseriesKeys) {
+        let usePrice = timeseriesData[timestamp].price;
+        if(timeseriesIndex === timeseriesKeys.length - 1) {
+          usePrice = coins[historicalBaseCurrency].value_usd;
         }
+        if(consolidatedTimeseries[timestamp]) {
+          consolidatedTimeseries[timestamp] += usePrice;
+        }else{
+          consolidatedTimeseries[timestamp] = usePrice;
+        }
+        timeseriesIndex++;
       }
     }
     let compositeTimeseries = [];
@@ -563,11 +562,9 @@ class PortfolioPage extends React.Component {
                 coinListLocal[item].value_eth_per_token = res.data.RAW[item].ETH.PRICE;
                 coinListLocal[item].value_eth = coinListLocal[item].balance * res.data.RAW[item].ETH.PRICE;
               }
-              if (coinListLocal[item].value_eth > 0) {
-                totalValueCountETH += coinListLocal[item].value_eth
-              }
             }
           });
+          totalValueCountETH = totalValueCountUSD / etherToUSD;
           let dailyChangeLinks = [];
           let dailyChangeLinksFallback = [];
           for(let symbol of getAgainstETH){
@@ -782,7 +779,7 @@ class PortfolioPage extends React.Component {
     return placeholderComponents;
   }
 
-  convertBaseBalances = (timeseriesData, useBaseCurrencyToUSD, returnTimestampKeyedObject = false) => {
+  convertBaseBalances = (timeseriesData, useBaseCurrencyToUSD, returnTimestampKeyedObject = false, forceLatestPrice) => {
     let { baseCurrencyToUSD } = this.state;
     if(useBaseCurrencyToUSD) {
       baseCurrencyToUSD = useBaseCurrencyToUSD;
@@ -793,7 +790,11 @@ class PortfolioPage extends React.Component {
       timeseriesDataMap.map((transaction, index) => {
         let closestBasePriceToUSD = this.getClosestTimestamp(baseCurrencyToUSD, moment(transaction.date).unix(), 'time');
         if(index === (timeseriesDataMap.length - 1)){
-          transaction.price = closestBasePriceToUSD ? transaction.price * closestBasePriceToUSD.close : 0;
+          if(forceLatestPrice) {
+            transaction.price = forceLatestPrice;
+          } else {
+            transaction.price = closestBasePriceToUSD ? transaction.price * closestBasePriceToUSD.close : 0;
+          }
         }else{
           transaction.price = closestBasePriceToUSD ? transaction.price * closestBasePriceToUSD.open : 0;
         }
@@ -844,7 +845,7 @@ class PortfolioPage extends React.Component {
       if(coins &&  coins[historicalBaseCurrency] && coins[historicalBaseCurrency].timeseries) {
         timeseriesData =  enableCompositeGraph ? compositeTimeseriesUSD : this.bufferTimeseries(coins[historicalBaseCurrency].timeseries);
         if(enableFiatConversion && !enableCompositeGraph){
-          timeseriesData = this.convertBaseBalances(this.bufferTimeseries(coins[historicalBaseCurrency].timeseries, 'daily'));
+          timeseriesData = this.convertBaseBalances(this.bufferTimeseries(coins[historicalBaseCurrency].timeseries, 'daily'), false, false, coins[historicalBaseCurrency].balanceUSD);
         }
         if(timeseriesRange && (timeseriesData.length > 0)) {
           let rangeInHours = rangeToHours(timeseriesRange);
@@ -990,6 +991,7 @@ class PortfolioPage extends React.Component {
                         variant="outlined"
                       />
                     </form>
+                    <a className={classes.etherscanLink} target="_blank" href={`https://etherscan.io/address/${publicKey}`} rel="noopener noreferrer">View on Etherscan.io</a>
                   </Grid>
                   <Grid item xs={6} sm={2} md={2} lg={2}>
                     <form className={classes.formContainer}>
@@ -1061,7 +1063,10 @@ class PortfolioPage extends React.Component {
             <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
             </Grid>
             <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
-                  {/* <Button className={classes.button} onClick={() => this.setTimeseriesRange("1M")} style={this.getSelectedTimeseriesRange("1M")}>
+                  <Button className={classes.button} onClick={() => this.setTimeseriesRange("1W")} style={this.getSelectedTimeseriesRange("1W")}>
+                    1W
+                  </Button>
+                  <Button className={classes.button} onClick={() => this.setTimeseriesRange("1M")} style={this.getSelectedTimeseriesRange("1M")}>
                     1M
                   </Button>
                   <Button className={classes.button} onClick={() => this.setTimeseriesRange("3M")} style={this.getSelectedTimeseriesRange("3M")}>
@@ -1075,7 +1080,13 @@ class PortfolioPage extends React.Component {
                   </Button>
                   <Button className={classes.button} onClick={() => this.setTimeseriesRange("ALL")} style={this.getSelectedTimeseriesRange("ALL")}>
                     ALL
-                  </Button> */}
+                  </Button>
+            </Grid>
+            <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+            </Grid>
+            <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
+            </Grid>
+            <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
               <OurChart enableCurveStepAfter={enableFiatConversion ? false : true} isChartLoading={isChartLoading} isConsideredMobile={isConsideredMobile} chartTitle={chartData.name} chartSubtitle={chartData.abbreviation} chartData={timeseriesData} chartCurrency={chartCurrency} />
             </Grid>
             <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>

@@ -15,7 +15,7 @@ const styles = theme => ({
 class Loading extends React.Component {
     render() {
         const { classes, theme, chartLink, isConsideredMobile, chartTitle, chartSubtitle, chartData, width, height, isLoading } = this.props;
-        console.log("isLoading",isLoading);
+
         const containerFitToParent = {
             height:height,
             width:width,
