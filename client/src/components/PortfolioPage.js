@@ -517,20 +517,22 @@ class PortfolioPage extends React.Component {
         let coinCalculationsBlacklist = [];
         if(res.data.tokens){
           res.data.tokens.forEach((item, index) => {
-            let decimals = item.tokenInfo.decimals;
-            let balance = tokenBalanceFromDecimals(item.balance, decimals) * 1;
-            let rateUSD = item.tokenInfo.price ? item.tokenInfo.price.rate : 0;
-            let marketCapUSD = item.tokenInfo.price ? item.tokenInfo.price.marketCapUsd : 0;
-            let balanceUSD = balance * rateUSD;
-            let symbol = item.tokenInfo.symbol.toUpperCase();
-            let tokenAddress = item.tokenInfo.address;
-            if(["MNE", "KICK"].indexOf(symbol) === -1){ // Blacklist
-              getAgainstETH.push(symbol);
-              coinListLocal[symbol] = { balance, balanceUSD, marketCapUSD, tokenAddress, decimals };
-              if (balanceUSD >= 0 && (item.tokenInfo.price !== false)) {
+            if(item.tokenInfo.symbol){
+              let decimals = item.tokenInfo.decimals;
+              let balance = tokenBalanceFromDecimals(item.balance, decimals) * 1;
+              let rateUSD = item.tokenInfo.price ? item.tokenInfo.price.rate : 0;
+              let marketCapUSD = item.tokenInfo.price ? item.tokenInfo.price.marketCapUsd : 0;
+              let balanceUSD = balance * rateUSD;
+              let symbol = item.tokenInfo.symbol.toUpperCase();
+              let tokenAddress = item.tokenInfo.address;
+              if(["MNE", "KICK"].indexOf(symbol) === -1){ // Blacklist
+                getAgainstETH.push(symbol);
                 coinListLocal[symbol] = { balance, balanceUSD, marketCapUSD, tokenAddress, decimals };
-              }else{
-                coinCalculationsBlacklist.push(symbol);
+                if (balanceUSD >= 0 && (item.tokenInfo.price !== false)) {
+                  coinListLocal[symbol] = { balance, balanceUSD, marketCapUSD, tokenAddress, decimals };
+                }else{
+                  coinCalculationsBlacklist.push(symbol);
+                }
               }
             }
           });
