@@ -504,6 +504,16 @@ class PortfolioPage extends React.Component {
     let getAgainstETH = [];
     let coinListLocal = {};
     let getETHUSD = "https://min-api.cryptocompare.com/data/pricemultifull?fsyms=ETH&tsyms=USD&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b";
+		let shimTokens = {
+			"DAI": {
+				tokenAddress: "0x6b175474e89094c44da98b954eedeac495271d0f",
+				decimals: 18,
+			},
+			"USDT": {
+				tokenAddress: "0xdac17f958d2ee523a2206206994597c13d831ec7",
+				decimals: 6,
+			}
+		}
     axios.get(getETHUSD).then(res => {
       let etherToUSD = res.data.RAW.ETH.USD.PRICE;
       let etherMarketCap = res.data.RAW.ETH.USD.MKTCAP;
@@ -537,6 +547,12 @@ class PortfolioPage extends React.Component {
             }
           });
         }
+				for(let shim of Object.keys(shimTokens)) {
+					if(!coinListLocal[shim]) {
+						coinListLocal[shim] = { balance: 0, balanceUSD: 0, tokenAddress: shimTokens[shim].tokenAddress, decimals: shimTokens[shim].decimals };
+						getAgainstETH.push(shim);
+					}
+				}
         thisPersist.setState({ coins: coinListLocal, coinCalculationsBlacklist });
         let getTokenPrices = 'https://min-api.cryptocompare.com/data/pricemultifull?fsyms=' + getAgainstETH.join(',') + '&tsyms=ETH&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b';
         axios.get(getTokenPrices).then(async (res) => {
@@ -552,7 +568,7 @@ class PortfolioPage extends React.Component {
               if(!coinListLocal[item].balanceUSD && coinListLocal[item].value_usd) {
                 coinListLocal[item].balanceUSD = coinListLocal[item].value_usd * coinListLocal[item].balance;
               }
-              if(!coinListLocal[item].value_usd || coinListLocal[item].value_usd < 5) {
+              if(!shimTokens[item] && (!coinListLocal[item].value_usd || coinListLocal[item].value_usd < 5)) {
                 delete coinListLocal[item];
               }
             }
@@ -585,7 +601,7 @@ class PortfolioPage extends React.Component {
                 coins[symbol].open = data[index].data.Data.Data[data[index].data.Data.Data.length - 1].open;
                 coins[symbol].close = data[index].data.Data.Data[data[index].data.Data.Data.length - 1].close;
                 includeInCompositePricingQueries.push(symbol);
-              } else if (coins[symbol].value_usd > 1) {
+              } else {
                 // Create list of fallback links using CoinGecko as fallback for Cryptocompare data unavailability
                 if(coins[symbol].tokenAddress && symbol.toLowerCase() !== "eth") {
                   dailyChangeLinksFallback[symbol] = `https://api.coingecko.com/api/v3/coins/ethereum/contract/${coins[symbol].tokenAddress}/market_chart?vs_currency=usd&days=1`;
@@ -830,16 +846,18 @@ class PortfolioPage extends React.Component {
     let coinsKeys = Object.keys(coins);
       if (coinsKeys.length > 0) {
             coinsKeys.forEach((item, index) => {
-              let localArrayUSD = [];
-              localArrayUSD.push(coinsKeys[index]);
-              localArrayUSD.push(coins[item].value_usd);
-              localArrayUSD.push(false);
-              pieChartDataUSD.push(localArrayUSD);
-              let localArrayMarketCaps = [];
-              localArrayMarketCaps.push(coinsKeys[index]);
-              localArrayMarketCaps.push(coins[item].marketCapUSD * 1);
-              localArrayMarketCaps.push(false);
-              pieChartDataMarketCaps.push(localArrayMarketCaps);
+							if(coins[item].value_usd > 1){
+								let localArrayUSD = [];
+								localArrayUSD.push(coinsKeys[index]);
+								localArrayUSD.push(coins[item].value_usd);
+								localArrayUSD.push(false);
+								pieChartDataUSD.push(localArrayUSD);
+								let localArrayMarketCaps = [];
+								localArrayMarketCaps.push(coinsKeys[index]);
+								localArrayMarketCaps.push(coins[item].marketCapUSD * 1);
+								localArrayMarketCaps.push(false);
+								pieChartDataMarketCaps.push(localArrayMarketCaps);
+							}
           })
       }
 
