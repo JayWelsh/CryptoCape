@@ -265,7 +265,9 @@ class PortfolioPage extends React.Component {
             });
           }
         }
-      }
+			} else {
+				timeseriesData = [];
+			}
       let timeseriesKeys = Object.keys(timeseriesData);
       let timeseriesIndex = 0;
       for(let timestamp of timeseriesKeys) {
