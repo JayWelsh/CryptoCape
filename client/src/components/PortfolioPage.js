@@ -724,13 +724,13 @@ class PortfolioPage extends React.Component {
     let relativePortfolioImpactTotal = 0;
     let marketCapTotal = 0;
     for(let [key, data] of sortedByPortfolioPortion){
-      let portfolioPortion = (data.value_usd * 100 / totalValue).toFixed(2) * 1;
-      let marketCapUSD = data.marketCapUSD ? data.marketCapUSD.toFixed(2) * 1 : "N/A";
-      let changePercent = ((data.close * 100 / data.open) - 100).toFixed(2) * 1;
+      let portfolioPortion = (data.value_usd * 100 / totalValue) * 1;
+      let marketCapUSD = data.marketCapUSD ? data.marketCapUSD * 1 : "N/A";
+      let changePercent = ((data.close * 100 / data.open) - 100) * 1;
       let relativeImpact = (portfolioPortion / 100 * changePercent) > 0.1 ? (portfolioPortion / 100 * changePercent).toFixed(2) * 1 : (portfolioPortion / 100 * changePercent).toFixed(3) * 1;
-      let balance = data.balance ? data.balance.toFixed(2) * 1 : "N/A";
-      let close = data.close ? data.close.toFixed(2) * 1 : "N/A";
-      let usdValue = data.value_usd ? data.value_usd.toFixed(2) * 1 : "N/A";
+      let balance = data.balance ? data.balance * 1 : "N/A";
+      let close = data.close ? data.close * 1 : "N/A";
+      let usdValue = data.value_usd ? data.value_usd * 1 : "N/A";
       if(marketCapUSD !== "N/A" && (portfolioPortion > 0)){
         if(!isNaN(relativeImpact) && relativePortfolioImpactTotal !== "N/A"){
           relativePortfolioImpactTotal += relativeImpact;
@@ -767,13 +767,13 @@ class PortfolioPage extends React.Component {
     tableData.push({
       id: tableData.length + 1,
       symbol: 'Total',
-      balance: isNaN(tokenBalanceTotal) ? tokenBalanceTotal : tokenBalanceTotal.toFixed(2) * 1,
-      market_cap: isNaN(marketCapTotal) ? marketCapTotal : marketCapTotal.toFixed(2) * 1,
-      token_value_usd: isNaN(usdTokenValueTotal) ? usdTokenValueTotal : usdTokenValueTotal.toFixed(2) * 1,
-      value_usd: isNaN(usdValueTotal) ? usdValueTotal : usdValueTotal.toFixed(2) * 1,
+      balance: isNaN(tokenBalanceTotal) ? tokenBalanceTotal : tokenBalanceTotal * 1,
+      market_cap: isNaN(marketCapTotal) ? marketCapTotal : marketCapTotal * 1,
+      token_value_usd: isNaN(usdTokenValueTotal) ? usdTokenValueTotal : usdTokenValueTotal * 1,
+      value_usd: isNaN(usdValueTotal) ? usdValueTotal : usdValueTotal * 1,
       portfolio_portion: 100,
-      change_today: isNaN(changeTodayTotal) ? changeTodayTotal : changeTodayTotal.toFixed(2) * 1,
-      relative_portfolio_impact_today: isNaN(relativePortfolioImpactTotal) ? relativePortfolioImpactTotal : relativePortfolioImpactTotal.toFixed(2) * 1,
+      change_today: isNaN(changeTodayTotal) ? changeTodayTotal : changeTodayTotal * 1,
+      relative_portfolio_impact_today: isNaN(relativePortfolioImpactTotal) ? relativePortfolioImpactTotal : relativePortfolioImpactTotal * 1,
     })
     return tableData;
   }
