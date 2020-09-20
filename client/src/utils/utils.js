@@ -4,6 +4,55 @@ import BigNumber from 'bignumber.js';
 
 BigNumber.config({ EXPONENTIAL_AT: 100 });
 
+const getDynamicFormat = (currentFormat = '0,0.00', number) => {
+    let requestedDecimals;
+    let preDecimalFormat;
+    let postDecimalFormat;
+    if(currentFormat.split(".").length > 0) {
+        requestedDecimals = currentFormat.split(".")[1].length;
+        postDecimalFormat = currentFormat.split(".")[1];
+        preDecimalFormat = currentFormat.split(".")[0];
+    }
+    let currentFormattedNumber = numeral(number).format(currentFormat).toString();
+    let currentFormattedDecimals = '';
+    if(currentFormattedNumber.split('.') && currentFormattedNumber.split('.')[1]) {
+        currentFormattedDecimals = currentFormattedNumber.split('.')[1];
+    }
+    let currentUnformattedDecimals = '';
+    if(number.toString().split(".").length > 0 && number.toString().split(".")[1]) {
+        currentUnformattedDecimals = number.toString().split(".")[1];
+    }
+    let dynamicFormat = currentFormat;
+    if((currentFormattedDecimals.replace(/[^1-9]/g,"").length < requestedDecimals) && (currentUnformattedDecimals.replace(/[^1-9]/g,"").length >= requestedDecimals)) {
+        let indexOfSignificantFigureAchievement;
+        let significantFiguresEncountered = 0;
+        let numberString = number.toString();
+        let numberStringPostDecimal = "";
+        if(numberString.split(".").length > 0) {
+            numberStringPostDecimal = numberString.split(".")[1]
+        }
+        for(let i = 0; i < numberStringPostDecimal.length; i++) {
+            if((numberStringPostDecimal[i] * 1) > 0) {
+                significantFiguresEncountered++;
+                if(significantFiguresEncountered === requestedDecimals) {
+                    indexOfSignificantFigureAchievement = i + 1;
+                }
+            }
+        }
+        if(indexOfSignificantFigureAchievement > requestedDecimals) {
+            let requestedDecimalsToSignificantFiguresDelta = indexOfSignificantFigureAchievement - requestedDecimals;
+            dynamicFormat = preDecimalFormat + ".";
+            if(postDecimalFormat) {
+                dynamicFormat = preDecimalFormat + "." + postDecimalFormat;
+            }
+            for(let i = 0; i < requestedDecimalsToSignificantFiguresDelta; i++) {
+                dynamicFormat = dynamicFormat + "0";
+            }
+        }
+    }
+    return dynamicFormat;
+}
+
 export const priceFormat = (number, decimals = 2, currency = "$", prefix = true) => {
     let decimalString = "";
     for(let i = 0; i < decimals; i++){
@@ -13,10 +62,13 @@ export const priceFormat = (number, decimals = 2, currency = "$", prefix = true)
         prefix = false;
     }
     let format = '0,0.' + decimalString;
+    if(number < 10) {
+        format = getDynamicFormat(format, number);
+    }
     if (prefix) {
-        return currency + numeral(number).format(format);
+        return `${currency}${'\u00A0'}`+ numeral(number).format(format);
     } else {
-        return numeral(number).format(format) + " " + currency;
+        return numeral(number).format(format) + `${'\u00A0'}${currency}`
     }
 }
 

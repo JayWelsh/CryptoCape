@@ -18,7 +18,7 @@ import Tooltip from '@material-ui/core/Tooltip';
 import DeleteIcon from '@material-ui/icons/Delete';
 import FilterListIcon from '@material-ui/icons/FilterList';
 import { lighten } from '@material-ui/core/styles/colorManipulator';
-import { tokenValueFormatDisplay } from '../utils';
+import { priceFormat } from '../utils';
 
 function desc(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -262,20 +262,20 @@ class EnhancedTable extends React.Component {
                   let changeToday = (<span>N/A</span>);
                   if(!isNaN(n.relative_portfolio_impact_today)){
                     if(n.relative_portfolio_impact_today > 0) {
-                        portfolioImpact = (<span style={{color: 'green'}}>+ {tokenValueFormatDisplay(n.relative_portfolio_impact_today, 2, "%", false, true)}</span>);
+                        portfolioImpact = (<span style={{color: 'green'}}>+ {priceFormat(n.relative_portfolio_impact_today, 2, "%", false, true)}</span>);
                     }else if(n.relative_portfolio_impact_today === 0){
-                        portfolioImpact = (<span>- {tokenValueFormatDisplay(n.relative_portfolio_impact_today, 2, "%", false, true)}</span>);
+                        portfolioImpact = (<span>- {priceFormat(n.relative_portfolio_impact_today, 2, "%", false, true)}</span>);
                     } else {
-                        portfolioImpact = (<span style={{color: 'red'}}>- {tokenValueFormatDisplay(n.relative_portfolio_impact_today * -1, 2, "%", false, true)}</span>);
+                        portfolioImpact = (<span style={{color: 'red'}}>- {priceFormat(n.relative_portfolio_impact_today * -1, 2, "%", false, true)}</span>);
                     }
                   }
                   if(!isNaN(n.change_today)) {
                     if(n.change_today > 0) {
-                        changeToday = (<span style={{color: 'green'}}>+ {tokenValueFormatDisplay(n.change_today, 2, "%", false, true)}</span>);
+                        changeToday = (<span style={{color: 'green'}}>+ {priceFormat(n.change_today, 2, "%", false, true)}</span>);
                     }else if (n.change_today === 0){
-                        changeToday = (<span>{tokenValueFormatDisplay(n.change_today, 2, "%", false, true)}</span>);
+                        changeToday = (<span>{priceFormat(n.change_today, 2, "%", false, true)}</span>);
                     } else {
-                        changeToday = (<span style={{color: 'red'}}>- {tokenValueFormatDisplay(n.change_today * -1, 2, "%", false, true)}</span>);
+                        changeToday = (<span style={{color: 'red'}}>- {priceFormat(n.change_today * -1, 2, "%", false, true)}</span>);
                     }
                   }
                   return (
@@ -293,11 +293,11 @@ class EnhancedTable extends React.Component {
                           n.coin_gecko_link ? <a href={n.coin_gecko_link} target="_blank" rel="noopener noreferrer">{n.symbol}</a> : n.symbol
                         }
                         </TableCell>
-                        <TableCell align="right">{isNaN(n.token_value_usd) ? n.token_value_usd : tokenValueFormatDisplay(n.token_value_usd, 2, "$", true)}</TableCell>
-                        <TableCell align="right">{isNaN(n.value_usd) ? n.value_usd : tokenValueFormatDisplay(n.value_usd, 2, "$", true)}</TableCell>
-                        <TableCell align="right">{isNaN(n.market_cap) ? n.market_cap : tokenValueFormatDisplay(n.market_cap, 2, "$", true)}</TableCell>
-                        <TableCell align="right">{isNaN(n.balance) ? n.balance : tokenValueFormatDisplay(n.balance, 2, n.symbol)}</TableCell>
-                        <TableCell align="right">{isNaN(n.portfolio_portion) ? n.portfolio_portion : tokenValueFormatDisplay(n.portfolio_portion, 2, "%")}</TableCell>
+                        <TableCell align="right">{isNaN(n.token_value_usd) ? n.token_value_usd : priceFormat(n.token_value_usd, 2, "$", true)}</TableCell>
+                        <TableCell align="right">{isNaN(n.value_usd) ? n.value_usd : priceFormat(n.value_usd, 2, "$", true)}</TableCell>
+                        <TableCell align="right">{isNaN(n.market_cap) ? n.market_cap : priceFormat(n.market_cap, 2, "$", true)}</TableCell>
+                        <TableCell align="right">{isNaN(n.balance) ? n.balance : priceFormat(n.balance, 2, n.symbol, false)}</TableCell>
+                        <TableCell align="right">{isNaN(n.portfolio_portion) ? n.portfolio_portion : priceFormat(n.portfolio_portion, 2, "%", false)}</TableCell>
                         <TableCell align="right">{changeToday}</TableCell>
                         <TableCell align="right">{portfolioImpact}</TableCell>
                     </TableRow>
