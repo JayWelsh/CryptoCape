@@ -1060,12 +1060,10 @@ class PortfolioPage extends React.Component {
                             ALL
                           </MenuItem>
                         }
-                        {Object.keys(coins).map(key => {
-                            if(coins[key].balance > 0) {
-                              return (
-                                <MenuItem key={key} value={key}>
-                                  {key}
-                                </MenuItem>
+                        {Object.keys(coins).filter(item => coins[item].balance > 0).map(key => (
+                          <MenuItem key={key} value={key}>
+                            {key}
+                          </MenuItem>
                         ))}
                       </TextField>
                     </form>
