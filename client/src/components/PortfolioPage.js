@@ -723,6 +723,7 @@ class PortfolioPage extends React.Component {
     let changeTodayTotal = 0;
     let relativePortfolioImpactTotal = 0;
     let marketCapTotal = 0;
+    let coinGeckoLinkCache = localStorage.getItem("coinGeckoLinkCache") ? JSON.parse(localStorage.getItem("coinGeckoLinkCache")) : {};
     for(let [key, data] of sortedByPortfolioPortion){
       let portfolioPortion = (data.value_usd * 100 / totalValue) * 1;
       let marketCapUSD = data.marketCapUSD ? data.marketCapUSD * 1 : "N/A";
@@ -750,6 +751,10 @@ class PortfolioPage extends React.Component {
         if(!isNaN(marketCapUSD) && marketCapUSD !== "N/A"){
           marketCapTotal += marketCapUSD;
         }
+        let useCoinGeckoLink = data.coinGeckoLink ? data.coinGeckoLink : false;
+        if(coinGeckoLinkCache[key] || coinGeckoLinkCache[data.tokenAddress]) {
+          useCoinGeckoLink = data.tokenAddress && coinGeckoLinkCache[data.tokenAddress] ? coinGeckoLinkCache[data.tokenAddress] : coinGeckoLinkCache[key];
+        }
         tableData.push({
           id: tableData.length + 1,
           symbol: key,
@@ -760,10 +765,26 @@ class PortfolioPage extends React.Component {
           change_today: changePercent,
           relative_portfolio_impact_today: relativeImpact,
           token_value_usd: close,
-          coin_gecko_link: data.coinGeckoLink ? data.coinGeckoLink : false
+          coin_gecko_link: useCoinGeckoLink
         })
       }
     }
+    
+    // Cache CoinGecko Links Below
+    for(let row of tableData) {
+      let tokenData = coinData[row.symbol];
+      if(tokenData) {
+        let tokenAddress = tokenData.tokenAddress ? tokenData.tokenAddress: false;
+        let tokenCoinGeckoLink = tokenData.coinGeckoLink ? tokenData.coinGeckoLink : false;
+        let useTokenKey = tokenAddress ? tokenAddress : row.symbol;
+        if(useTokenKey && useTokenKey.length > 0 && tokenCoinGeckoLink && tokenCoinGeckoLink.length > 0) {
+          coinGeckoLinkCache[useTokenKey] = tokenCoinGeckoLink;
+        }
+      }
+    }
+    localStorage.setItem("coinGeckoLinkCache", JSON.stringify(coinGeckoLinkCache));
+    // Cache CoinGecko Links Above
+
     tableData.push({
       id: tableData.length + 1,
       symbol: 'Total',
@@ -1039,10 +1060,12 @@ class PortfolioPage extends React.Component {
                             ALL
                           </MenuItem>
                         }
-                        {Object.keys(coins).map(key => (
-                          <MenuItem key={key} value={key}>
-                            {key}
-                          </MenuItem>
+                        {Object.keys(coins).map(key => {
+                            if(coins[key].balance > 0) {
+                              return (
+                                <MenuItem key={key} value={key}>
+                                  {key}
+                                </MenuItem>
                         ))}
                       </TextField>
                     </form>
