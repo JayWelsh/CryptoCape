@@ -50,9 +50,9 @@ class HomePage extends React.Component {
               Dashboard
             </Typography>
             <Grid container style={{ "textAlign": "center", 'padding': '15px' }} spacing={24}>
-              <Grid item xs={12} sm={1} md={2} lg={2} className={"disable-padding"}>
+              <Grid item xs={12} sm={4} md={4} lg={4} className={"disable-padding"}>
               </Grid>
-              <Grid item xs={12} sm={5} md={4} lg={4}>
+              <Grid item xs={12} sm={4} md={4} lg={4}>
                 <Card>
                   <CardActionArea className={'hoverOpacity'} onClick={() => { history.push(`/portfolio`) }} style={{width: '100%'}}>
                       <PortfolioDonut style={{ fontSize: 150 }} />
@@ -63,7 +63,7 @@ class HomePage extends React.Component {
                   </CardActionArea>
                 </Card>
               </Grid>
-              <Grid item xs={12} sm={1} md={2} lg={2} className={"disable-padding"}>
+              <Grid item xs={12} sm={4} md={4} lg={4} className={"disable-padding"}>
               </Grid>
             </Grid>
           </Grid>
