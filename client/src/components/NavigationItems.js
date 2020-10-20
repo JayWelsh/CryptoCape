@@ -50,14 +50,6 @@ function NavigationItemsMain(props) {
             <ListItemText primary="Portfolio" />
           </ListItem>
         </Link>
-        <Link to={'/charts'} style={{ textDecoration: 'none' }}>
-          <ListItem onClick={emitMenuToggleFunction} button>
-            <ListItemIcon>
-              <Timeline />
-            </ListItemIcon>
-            <ListItemText primary="Charts" />
-          </ListItem>
-        </Link>
         {/* <Link to={'/alerts'} style={{ textDecoration: 'none' }}>
           <ListItem onClick={emitMenuToggleFunction} button>
             <ListItemIcon>

@@ -63,17 +63,6 @@ class HomePage extends React.Component {
                   </CardActionArea>
                 </Card>
               </Grid>
-              <Grid item xs={12} sm={5} md={4} lg={4}>
-                <Card>
-                  <CardActionArea className={'hoverOpacity'} onClick={() => { history.push(`/charts`) }} style={{width: '100%'}}>
-                      <Timeline style={{ fontSize: 150 }} />
-                      <br/>
-                      <Typography variant="headline" component="h2" gutterBottom>
-                      Charts
-                      </Typography>
-                  </CardActionArea>
-                </Card>
-              </Grid>
               <Grid item xs={12} sm={1} md={2} lg={2} className={"disable-padding"}>
               </Grid>
             </Grid>
