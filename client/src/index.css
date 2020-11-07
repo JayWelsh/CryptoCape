@@ -52,6 +52,16 @@ body {
   }
 }
 
+.flex-space-between {
+  display: flex;
+  justify-content: space-between;
+}
+
+.radio-button-dense {
+  padding-top: 5px!important;
+  padding-bottom: 5px!important;
+}
+
 .disable-pointer-events {
   pointer-events: none;
 }

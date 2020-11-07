@@ -51,14 +51,14 @@ class PageContainer extends React.Component {
 
   render() {
     //TODO Props
-    const { classes, theme, history, isConsideredMobile } = this.props;
+    const { classes, theme, history, isConsideredMobile, setLoading, isLoading } = this.props;
     return (
       <div className={classes.pageContainer}>
           <Route exact={true} path="/" render={(props) => HomePageRoute(props, isConsideredMobile)}/>
           <Route exact={true} path="/charts/:chartLink" render={(props) => ChartsPageRoute(props, isConsideredMobile)}/>
           <Route exact={true} path="/charts" render={(props) => ChartsPageRoute(props, isConsideredMobile)}/>
           <Route exact={true} path="/portfolio" render={(props) => PortfolioPageRoute(props, isConsideredMobile)}/>
-          <Route exact={true} path="/portfolio/:publicKey" render={(props) => PortfolioPageRoute(props, isConsideredMobile)}/>
+          <Route exact={true} path="/portfolio/:publicKey" render={(props) => PortfolioPageRoute(props, isConsideredMobile, setLoading, isLoading)}/>
       </div>
     );
   }
@@ -76,9 +76,9 @@ const ChartsPageRoute = ({ match }, isConsideredMobile) => {
   }
 }
 
-const PortfolioPageRoute = ({ match }, isConsideredMobile) => {
+const PortfolioPageRoute = ({ match }, isConsideredMobile, setLoading, isLoading) => {
   if(match.params && match.params.publicKey){
-    return <PortfolioPage isConsideredMobile={isConsideredMobile} publicKey={match.params.publicKey}/>
+    return <PortfolioPage isConsideredMobile={isConsideredMobile} publicKey={match.params.publicKey} setLoading={setLoading} isLoading={isLoading}/>
   }else{
     return <PortfolioPage isConsideredMobile={isConsideredMobile}/>
   }

@@ -71,6 +71,9 @@ const styles = theme => ({
     fontWeight: 'bold',
     fontSize: '13px',
     marginBottom: '0px'
+  },
+  compositeSwitchBottomPadding: {
+    marginBottom: theme.spacing.unit
   }
 });
 
@@ -182,6 +185,8 @@ class PortfolioPage extends React.Component {
         useLink = `https://api.coingecko.com/api/v3/coins/ethereum/contract/${coins[historicalBaseCurrency].tokenAddress}/market_chart?vs_currency=usd&days=max`;
       }else if(historicalBaseCurrency.toLowerCase() === "eth") {
         useLink = `https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=max`;
+      } else if(coins[historicalBaseCurrency].isManualEntry) {
+        useLink = `https://api.coingecko.com/api/v3/coins/${coins[historicalBaseCurrency].coinGeckoId}/market_chart?vs_currency=usd&days=max`;
       }
       let fallbackResult = await axios.get(useLink);
       if(fallbackResult && fallbackResult.data && fallbackResult.data.prices) {
@@ -234,6 +239,8 @@ class PortfolioPage extends React.Component {
           fullHistoryLinks[historicalBaseCurrency] = `https://api.coingecko.com/api/v3/coins/ethereum/contract/${coins[historicalBaseCurrency].tokenAddress}/market_chart?vs_currency=usd&days=max`;
         }else if(historicalBaseCurrency.toLowerCase() === "eth") {
           fullHistoryLinks[historicalBaseCurrency] = `https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=max`;
+        } else if (coins[historicalBaseCurrency].isManualEntry) {
+          fullHistoryLinks[historicalBaseCurrency] = `https://api.coingecko.com/api/v3/coins/${coins[historicalBaseCurrency].coinGeckoId}/market_chart?vs_currency=usd&days=max`;
         }
     }
     await this.delayApiCalls(fullHistoryLinks).then(data => {
@@ -282,7 +289,7 @@ class PortfolioPage extends React.Component {
         }
         timeseriesIndex++;
       }
-    }
+		}
     let compositeTimeseries = [];
     for(let [index, item] of Object.entries(consolidatedTimeseries)){
       if(!moment.unix(index * 1).isSame(moment().startOf('day'))){
@@ -501,11 +508,14 @@ class PortfolioPage extends React.Component {
     }
 
   fetchPriceValues = async () => {
+    let { setLoading } = this.props;
+    setLoading(true);
+    let { historicalBaseCurrency } = this.state;
     let thisPersist = this;
     let currency = "$";
     let getAgainstETH = [];
     let coinListLocal = {};
-    let getETHUSD = "https://min-api.cryptocompare.com/data/pricemultifull?fsyms=ETH&tsyms=USD&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b";
+		let getETHUSD = "https://min-api.cryptocompare.com/data/pricemultifull?fsyms=ETH&tsyms=USD&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b";
 		let shimTokens = {
 			"DAI": {
 				tokenAddress: "0x6b175474e89094c44da98b954eedeac495271d0f",
@@ -526,7 +536,7 @@ class PortfolioPage extends React.Component {
         getAgainstETH.push("ETH");
         coinListLocal["ETH"] = { balance: balanceOfETH }
         coinListLocal["ETH"].decimals = 18;
-        let coinCalculationsBlacklist = [];
+				let coinCalculationsBlacklist = [];
         if(res.data.tokens){
           res.data.tokens.forEach((item, index) => {
             if(item.tokenInfo.symbol){
@@ -549,6 +559,15 @@ class PortfolioPage extends React.Component {
             }
           });
         }
+        let currentManualEntries = localStorage.getItem("manualAccountEntries") ? JSON.parse(localStorage.getItem("manualAccountEntries")) : {};
+        if(currentManualEntries[thisPersist.state.publicKey]) {
+          for(let manualEntryId of Object.keys(currentManualEntries[thisPersist.state.publicKey])) {
+            let manualEntry = currentManualEntries[thisPersist.state.publicKey][manualEntryId];
+            let symbol = manualEntry.symbol.toUpperCase();
+            getAgainstETH.push(symbol);
+            coinListLocal[symbol] = { balance: manualEntry.tokenQuantity * 1, balance: manualEntry.tokenQuantity * 1, isManualEntry: true, decimals: 2, coinGeckoId: manualEntry.id, timeseries: manualEntry.timeseries };
+          }
+        }
 				for(let shim of Object.keys(shimTokens)) {
 					if(!coinListLocal[shim]) {
 						coinListLocal[shim] = { balance: 0, balanceUSD: 0, tokenAddress: shimTokens[shim].tokenAddress, decimals: shimTokens[shim].decimals };
@@ -570,7 +589,7 @@ class PortfolioPage extends React.Component {
               if(!coinListLocal[item].balanceUSD && coinListLocal[item].value_usd) {
                 coinListLocal[item].balanceUSD = coinListLocal[item].value_usd * coinListLocal[item].balance;
               }
-              if(!shimTokens[item] && (!coinListLocal[item].value_usd || coinListLocal[item].value_usd < 5)) {
+              if(!shimTokens[item] && (!coinListLocal[item].value_usd || coinListLocal[item].value_usd < 5) && !coinListLocal[item].isManualEntry) {
                 delete coinListLocal[item];
               }
             }
@@ -586,45 +605,39 @@ class PortfolioPage extends React.Component {
           });
           totalValueCountETH = totalValueCountUSD / etherToUSD;
           let dailyChangeLinks = [];
-          let dailyChangeLinksFallback = [];
-          for(let symbol of getAgainstETH){
-            if(coinListLocal[symbol]){
-              dailyChangeLinks[symbol] = `https://min-api.cryptocompare.com/data/v2/histoday?fsym=${symbol}&tsym=USD&limit=1&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b`;
-            }
-          }
           let tableData = this.buildTableData(coinListLocal, totalValueCountUSD);
           thisPersist.setState({ coins: coinListLocal, tableData, totalPortfolioValueUSD: totalValueCountUSD, totalPortfolioValueETH: totalValueCountETH });
-          await this.delayApiCalls(dailyChangeLinks).then(data => {
-            let {coins} = this.state;
-            let index = 0;
-            let includeInCompositePricingQueries = [];
-            for(let [symbol] of Object.entries(dailyChangeLinks)) {
-              if(data[index].data.Data && data[index].data.Data.Data && data[index].data.Data.Data.constructor === Array && data[index].data.Data.Data.length > 0 && data[index].data.Data.Data[data[index].data.Data.Data.length - 1].open && coins[symbol].marketCapUSD){
-                coins[symbol].open = data[index].data.Data.Data[data[index].data.Data.Data.length - 1].open;
-                coins[symbol].close = data[index].data.Data.Data[data[index].data.Data.Data.length - 1].close;
-                includeInCompositePricingQueries.push(symbol);
-              } else {
-                // Create list of fallback links using CoinGecko as fallback for Cryptocompare data unavailability
-                if(coins[symbol].tokenAddress && symbol.toLowerCase() !== "eth") {
-                  dailyChangeLinksFallback[symbol] = `https://api.coingecko.com/api/v3/coins/ethereum/contract/${coins[symbol].tokenAddress}/market_chart?vs_currency=usd&days=1`;
-                }else if(symbol.toLowerCase() === "eth") {
-                  dailyChangeLinksFallback[symbol] = `https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=1`;
-                }
+          let {coins} = this.state;
+          let index = 0;
+          let includeInCompositePricingQueries = [];
+          for(let symbol of getAgainstETH){
+            if(coinListLocal[symbol]){
+              if(coins[symbol].tokenAddress && symbol.toLowerCase() !== "eth") {
+                dailyChangeLinks[symbol] = `https://api.coingecko.com/api/v3/coins/ethereum/contract/${coins[symbol].tokenAddress}/market_chart?vs_currency=usd&days=1`;
+              }else if(symbol.toLowerCase() === "eth") {
+                dailyChangeLinks[symbol] = `https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=1`;
+              } else if (coins[symbol].isManualEntry) {
+                dailyChangeLinks[symbol] = `https://api.coingecko.com/api/v3/coins/${coins[symbol].coinGeckoId}/market_chart?vs_currency=usd&days=1`;
               }
               index++;
             }
-            let tableDataWithChanges = this.buildTableData(coins, totalValueCountUSD);
-            thisPersist.setState({coins, tableData: tableDataWithChanges, includeInCompositePricingQueries});
-          });
-          await this.delayApiCalls(dailyChangeLinksFallback).then(async data => {
+          }
+          let tableDataWithChanges = this.buildTableData(coins, totalValueCountUSD);
+          thisPersist.setState({coins, tableData: tableDataWithChanges, includeInCompositePricingQueries});
+          await this.delayApiCalls(dailyChangeLinks).then(async data => {
             let {coins, includeInCompositePricingQueries} = this.state;
             let index = 0;
-            for(let [symbol] of Object.entries(dailyChangeLinksFallback)) {
+            for(let [symbol] of Object.entries(dailyChangeLinks)) {
               if(data && data[index] && data[index].data && data[index].data.prices && data[index].data.prices.constructor === Array && data[index].data.prices.length > 0){
                 coins[symbol].open = this.getClosestTimestamp(data[index].data.prices, moment().startOf('day').unix() * 1000, 0)[1];
                 coins[symbol].close = data[index].data.prices[data[index].data.prices.length - 1][1];
-                if(!coins[symbol].marketCapUSD && data[index].data.market_caps && data[index].data.market_caps.length > 0) {
-                  coins[symbol].marketCapUSD = data[index].data.market_caps[data[index].data.market_caps.length - 1][1];
+                coins[symbol].balanceUSD = coins[symbol].close * coins[symbol].balance;
+                coins[symbol].value_usd = coins[symbol].balanceUSD;
+                if(data[index].data.market_caps && data[index].data.market_caps.length > 0) {
+                  // Always overwrite market cap with coingecko market cap (if it exists and is over zero)
+                  if(data[index].data.market_caps[data[index].data.market_caps.length - 1][1] > 0) {
+                    coins[symbol].marketCapUSD = data[index].data.market_caps[data[index].data.market_caps.length - 1][1];
+                  }
                 }
                 if(!coins[symbol].value_eth_per_token) {
                   let referenceSymbol = symbol.toLowerCase();
@@ -643,7 +656,34 @@ class PortfolioPage extends React.Component {
             let tableDataWithChanges = this.buildTableData(coins, totalValueCountUSD);
             thisPersist.setState({coins, tableData: tableDataWithChanges, includeInCompositePricingQueries});
           });
+          let findNewSelectedHistoricalBaseCurrency = false;
+          let newSelectedHistoricalBaseCurrency = false;
+          if(!coinListLocal[historicalBaseCurrency] || coinListLocal[historicalBaseCurrency].balance <= 0) {
+            findNewSelectedHistoricalBaseCurrency = true;
+          }
+          totalValueCountUSD = 0;
+          totalValueCountETH = 0;
+          Object.keys(coinListLocal).forEach((item, index) => {
+            if (coinListLocal[item].value_usd > 0) {
+              totalValueCountUSD += coinListLocal[item].value_usd
+              if(!newSelectedHistoricalBaseCurrency) {
+                newSelectedHistoricalBaseCurrency = item;
+              }
+            }
+          });
+          
+          totalValueCountETH = totalValueCountUSD / etherToUSD;
+          thisPersist.setState({ 
+            totalPortfolioValueUSD: totalValueCountUSD,
+            totalPortfolioValueETH: totalValueCountETH,
+            ...(
+              findNewSelectedHistoricalBaseCurrency &&
+              newSelectedHistoricalBaseCurrency &&
+              { historicalBaseCurrency: newSelectedHistoricalBaseCurrency }
+            )
+          });
           await this.fetchAddressTransactionHistory();
+          setLoading(false);
           await this.fetchCoinGeckoLinks(this.state.coins, totalValueCountUSD);
         })
       })
@@ -658,6 +698,8 @@ class PortfolioPage extends React.Component {
         getCoinGeckoLinks[symbol] = `https://api.coingecko.com/api/v3/coins/ethereum/contract/${coins[symbol].tokenAddress}`
       }else if(symbol.toLowerCase() === "eth"){
         coins[symbol].coinGeckoLink = "https://www.coingecko.com/en/coins/ethereum";
+      } else if(coins[symbol].isManualEntry) {
+        coins[symbol].coinGeckoLink = `https://www.coingecko.com/en/coins/${coins[symbol].coinGeckoId}`;
       }
     }
     await this.delayApiCalls(getCoinGeckoLinks).then(async data => {
@@ -675,6 +717,13 @@ class PortfolioPage extends React.Component {
 
   handleFocus(event) {
     event.target.select();
+  }
+
+  refetchData = async (callback) => {
+    await this.fetchPriceValues();
+    if(callback){
+      callback();
+    }
   }
 
   componentDidMount = async () => {
@@ -732,7 +781,7 @@ class PortfolioPage extends React.Component {
       let balance = data.balance ? data.balance * 1 : "N/A";
       let close = data.close ? data.close * 1 : "N/A";
       let usdValue = data.value_usd ? data.value_usd * 1 : "N/A";
-      if(marketCapUSD !== "N/A" && (portfolioPortion > 0)){
+      if(portfolioPortion > 0){
         if(!isNaN(relativeImpact) && relativePortfolioImpactTotal !== "N/A"){
           relativePortfolioImpactTotal += relativeImpact;
         }
@@ -803,23 +852,6 @@ class PortfolioPage extends React.Component {
     clearInterval(this.intervalFetchPrices);
   }
 
-  getPlaceholders = () => {
-    let placeholderComponents = [];
-    let placeholderComponentCount = 9;
-    for(let i = 0;i<placeholderComponentCount;i++ ){
-      placeholderComponents.push(<Grid item key={i} xs={12} sm={6} md={4} lg={3}>
-        <ChartMenuMiniCard
-          externalLink={"Loading..."}
-          headline={"Loading..."}
-          subHeadline={"Loading..."}
-          publicKey={"Loading..."}
-          isPlaceholding={true}
-          image={null} />
-      </Grid>)
-    }
-    return placeholderComponents;
-  }
-
   convertBaseBalances = (timeseriesData, useBaseCurrencyToUSD, returnTimestampKeyedObject = false, forceLatestPrice) => {
     let { baseCurrencyToUSD } = this.state;
     if(useBaseCurrencyToUSD) {
@@ -851,8 +883,22 @@ class PortfolioPage extends React.Component {
   }
 
   render() {
-    const { classes, history, isConsideredMobile } = this.props;
-    const { publicKey, tableData, compositeTimeseriesUSD, isCompositeReady, coins, totalPortfolioValueUSD, totalPortfolioValueETH, isChartLoading, historicalBaseCurrency, baseCurrencyToUSD, enableFiatConversion, enableCompositeGraph, timeseriesRange } = this.state;
+    const { classes, history, isConsideredMobile, isLoading } = this.props;
+    const { 
+      publicKey,
+      tableData,
+      compositeTimeseriesUSD,
+      isCompositeReady,
+      coins,
+      totalPortfolioValueUSD,
+      totalPortfolioValueETH,
+      isChartLoading,
+      historicalBaseCurrency,
+      baseCurrencyToUSD,
+      enableFiatConversion,
+      enableCompositeGraph,
+      timeseriesRange
+    } = this.state;
     let displayTotalUSD = priceFormat(totalPortfolioValueUSD);
     let displayTotalETH = "~ " + numberFormat(totalPortfolioValueETH) +  " ETH"
     let ethAddressError = false;
@@ -866,7 +912,7 @@ class PortfolioPage extends React.Component {
 
     let pieChartDataUSD = [];
     let pieChartDataMarketCaps = [];
-    let coinsKeys = Object.keys(coins);
+		let coinsKeys = Object.keys(coins);
       if (coinsKeys.length > 0) {
             coinsKeys.forEach((item, index) => {
 							if(coins[item].value_usd > 1){
@@ -875,11 +921,13 @@ class PortfolioPage extends React.Component {
 								localArrayUSD.push(coins[item].value_usd);
 								localArrayUSD.push(false);
 								pieChartDataUSD.push(localArrayUSD);
-								let localArrayMarketCaps = [];
-								localArrayMarketCaps.push(coinsKeys[index]);
-								localArrayMarketCaps.push(coins[item].marketCapUSD * 1);
-								localArrayMarketCaps.push(false);
-								pieChartDataMarketCaps.push(localArrayMarketCaps);
+                let localArrayMarketCaps = [];
+                if((coins[item].marketCapUSD * 1) > 0) {
+                  localArrayMarketCaps.push(coinsKeys[index]);
+                  localArrayMarketCaps.push(coins[item].marketCapUSD * 1);
+                  localArrayMarketCaps.push(false);
+                  pieChartDataMarketCaps.push(localArrayMarketCaps);
+                }
 							}
           })
       }
@@ -1083,7 +1131,7 @@ class PortfolioPage extends React.Component {
                       label="USD Value"
                     />
                   </Grid>
-                  <Grid item xs={6} sm={2} md={2} lg={2}>
+                  <Grid item xs={6} sm={2} md={2} lg={2} className={isConsideredMobile ? classes.compositeSwitchBottomPadding : null}>
                     <FormControlLabel
                       className={classes.fiatSwitch}
                       control={
@@ -1165,7 +1213,7 @@ class PortfolioPage extends React.Component {
             <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
             </Grid>
             <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
-                <SortableTable isConsideredMobile={isConsideredMobile} tableData={tableData} />
+                <SortableTable isLoading={isLoading} refetchData={this.refetchData} publicKey={publicKey} isConsideredMobile={isConsideredMobile} tableData={tableData} />
             </Grid>
             <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
             </Grid>

@@ -18,6 +18,7 @@ import Tooltip from '@material-ui/core/Tooltip';
 import DeleteIcon from '@material-ui/icons/Delete';
 import FilterListIcon from '@material-ui/icons/FilterList';
 import { lighten } from '@material-ui/core/styles/colorManipulator';
+import OurAddRecordDialog from './OurAddRecordDialog';
 import { priceFormat } from '../utils';
 
 function desc(a, b, orderBy) {
@@ -106,9 +107,6 @@ EnhancedTableHead.propTypes = {
 };
 
 const toolbarStyles = theme => ({
-  root: {
-    paddingRight: theme.spacing.unit,
-  },
   highlight:
     theme.palette.type === 'light'
       ? {
@@ -126,14 +124,15 @@ const toolbarStyles = theme => ({
     color: theme.palette.text.secondary,
   },
   title: {
+    width: '100%',
     flex: '0 0 auto',
     marginTop: theme.spacing.unit * 3,
-    marginBottom: theme.spacing.unit * 2,
+    marginBottom: theme.spacing.unit * 3,
   },
 });
 
 let EnhancedTableToolbar = props => {
-  const { numSelected, classes, isConsideredMobile } = props;
+  const { numSelected, classes, isConsideredMobile, publicKey, refetchData, isLoading } = props;
 
   return (
     <Toolbar
@@ -141,16 +140,11 @@ let EnhancedTableToolbar = props => {
         [classes.highlight]: numSelected > 0,
       })}
     >
-      <div className={classes.title}>
-        {numSelected > 0 ? (
-          <Typography color="inherit" variant="subtitle1">
-            {numSelected} selected
-          </Typography>
-        ) : (
-          <Typography variant={isConsideredMobile ? "display1" : "display2"} id="tableTitle">
-            Key Figures
-          </Typography>
-        )}
+      <div className={[classes.title, "flex-space-between"].join(" ")}>
+        <Typography variant={isConsideredMobile ? "display1" : "display2"} id="tableTitle">
+          Key Figures
+        </Typography>
+        <OurAddRecordDialog refetchData={refetchData} publicKey={publicKey} isLoading={isLoading}/>
       </div>
       <div className={classes.spacer} />
     </Toolbar>
@@ -235,13 +229,13 @@ class EnhancedTable extends React.Component {
   isSelected = id => this.state.selected.indexOf(id) !== -1;
 
   render() {
-    const { classes } = this.props;
+    const { classes, publicKey, refetchData, isLoading } = this.props;
     const { data, order, orderBy, selected, rowsPerPage, page } = this.state;
     const emptyRows = rowsPerPage - Math.min(rowsPerPage, data.length - page * rowsPerPage);
 
     return (
       <Paper className={classes.root}>
-        <EnhancedTableToolbar numSelected={selected.length} />
+        <EnhancedTableToolbar refetchData={refetchData} numSelected={selected.length} publicKey={publicKey} isLoading={isLoading} />
         <div className={classes.tableWrapper}>
           <Table className={classes.table} aria-labelledby="tableTitle">
             <EnhancedTableHead

@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import { withStyles } from '@material-ui/core/styles';
 import Drawer from '@material-ui/core/Drawer';
+import LinearProgress from '@material-ui/core/LinearProgress';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Divider from '@material-ui/core/Divider';
@@ -143,7 +144,8 @@ class App extends React.Component {
     open: false,
     anchor: 'left',
     lastPageWidth: 0,
-    lastDocumentWidth: 0
+    lastDocumentWidth: 0,
+    isLoading: false,
   };
 
   
@@ -190,9 +192,16 @@ class App extends React.Component {
     });
   };
 
+  setLoading = (useLoadingState) => {
+    let { isLoading } = this.state;
+    if(useLoadingState !== isLoading) {
+      this.setState({isLoading: useLoadingState});
+    }
+  }
+
   render() {
     const { classes, theme } = this.props;
-    const { anchor, open } = this.state;
+    const { anchor, open, isLoading } = this.state;
     let isConsideredMobile = false;
     const documentBodyClientWidth = document.body.clientWidth;
 
@@ -295,6 +304,7 @@ class App extends React.Component {
                 })}
               >
                 {toolbar}
+                {isLoading && <LinearProgress/>}
               </AppBar>
               {before}
               <main
@@ -307,7 +317,7 @@ class App extends React.Component {
               >
                 <div className={classes.drawerHeader} />
                 <div ref={this.pageContainer} className={classNames({ [classes.pageWidth]: open }) + " " + classes.transitionWidth} style={widthOverride}>
-                  <PageContainer isConsideredMobile={isConsideredMobile} />
+                  <PageContainer setLoading={this.setLoading} isLoading={isLoading} isConsideredMobile={isConsideredMobile} />
                 </div>
               </main>
               {after}
