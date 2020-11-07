@@ -1,8 +1,9 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import { ParentSize } from "@vx/responsive";
+// import OurBrushChart from './OurBrushChart';
 import { LinearGradient } from '@vx/gradient';
 import OurChartVX from './OurChartVX';
 import { priceFormat } from '../utils';
@@ -32,6 +33,9 @@ const styles = theme => ({
     innerContainer: {
         flex: 1,
         display:'flex'
+    },
+    brushContainer: {
+        height: '100px'
     },
     chart: {
         flexDirection: 'column',
@@ -91,80 +95,78 @@ function Background({width, height}) {
     );
 }
 
-class OurChartVXContainer extends React.Component {
-    constructor(props) {
-        super(props);
-    }
+const OurChartVXContainer = ({ margin, enableFiatConversion, classes, chartTitle, chartSubtitle, isConsideredMobile, chartData = [], parentWidth, parentHeight, isChartLoading, chartCurrency, enableCurveStepAfter = false }) => {
+    const [prices, setPrices] = useState(chartData);
+    const [currentPrice, setCurrentPrice] = useState(0);
+    const [diffPrice, setDiffPrice] = useState(0);
+    const [hasIncreased, setHasIncreased] = useState(true);
+    const [percentDiff, setPercentDiff] = useState(0);
 
-    state = {
-        //TODO
-    };
+    useEffect(() => {
+        setPrices(chartData);
+    }, [chartData])
 
-    render() {
-        const { classes, theme, margin, chartTitle, chartSubtitle, isConsideredMobile, chartData, parentWidth, parentHeight, isChartLoading, chartCurrency, enableCurveStepAfter = false } = this.props;
-        let currentPrice = 0;
-        let diffPrice = 0;
-        let hasIncreased = true;
-        let prices = [];
-        let percentDiff = 0;
-
-        if (chartData && chartData.length  > 0) {
-            prices = Object.keys(chartData).map(key => {
-                return {
-                    date: chartData[key].date,
-                    price: chartData[key].price
-                };
-            })
+    useEffect(() => {
+        if (prices && prices.length  > 0) {
             let indexOfFirstNonZeroValue = prices.findIndex(priceObj=> priceObj.price > 0);
-            let firstPrice = prices[indexOfFirstNonZeroValue].price;
-            currentPrice = prices[prices.length - 1].price;
-            percentDiff = ((currentPrice * 100) / firstPrice) - 100;
-            diffPrice = currentPrice - firstPrice;
-            hasIncreased = diffPrice >= 0;
+            if(indexOfFirstNonZeroValue > -1) {
+                let firstPrice = prices[indexOfFirstNonZeroValue].price;
+                setCurrentPrice(prices[prices.length - 1].price);
+                setPercentDiff(((currentPrice * 100) / firstPrice) - 100);
+                setDiffPrice(currentPrice - firstPrice);
+                setHasIncreased(diffPrice >= 0);
+            }
         }
-        return (
-            <div className={classes.outerContainer}>
-                <Loading isLoading={isChartLoading} width={parentWidth} height={parentHeight}/>
-                <div className={classes.center}>
-                    <div className={classes.chart + " elevation-shadow-two"} style={{ width: '100%', height: '500px' }}>
-                        <div className={classes.titleBar}>
-                            <div className={classes.leftTitles}>
-                                <div>
-                                    <Typography className={classes.vxChartTitle + " no-padding-bottom"} variant="headline" component="h2">
-                                        {chartTitle}
-                                    </Typography>
-                                </div>
-                                <div>
-                                    <Typography className={classes.vxChartTitle + " no-padding-top"} component="p">
-                                        {chartSubtitle}
-                                    </Typography>
-                                </div>
+        setPrices(prices);
+    }, [prices])
+
+    return (
+        <div className={classes.outerContainer}>
+            <Loading isLoading={isChartLoading} width={parentWidth} height={parentHeight}/>
+            <div className={classes.center}>
+                <div className={classes.chart + " elevation-shadow-two"} style={{ width: '100%', height: '600px' }}>
+                    <div className={classes.titleBar}>
+                        <div className={classes.leftTitles}>
+                            <div>
+                                <Typography className={classes.vxChartTitle + " no-padding-bottom"} variant="headline" component="h2">
+                                    {chartTitle}
+                                </Typography>
                             </div>
-                            <div className={classes.spacer}/>
-                            <div className={classes.rightTitles}>
-                                <div>
-                                    <Typography className={classes.vxChartTitle + " no-padding-bottom"} variant="headline" component="h2">
-                                        {priceFormat(currentPrice, 4, chartCurrency)}
-                                    </Typography>
-                                </div>
-                                <div>
-                                    <Typography className={classes.vxChartTitle + " no-padding-top " + (hasIncreased ? classes.vxPriceIncrease : classes.vxPriceDecrease)} component="p">
-                                        {hasIncreased ? ("+ " + priceFormat(percentDiff, 2, "%", false)) : ("- " + priceFormat(percentDiff * -1, 2, "%", false))}
-                                    </Typography>
-                                </div>
+                            <div>
+                                <Typography className={classes.vxChartTitle + " no-padding-top"} component="p">
+                                    {chartSubtitle}
+                                </Typography>
                             </div>
                         </div>
-                        <div className={classes.innerContainer}>
-                            <OurChartVX enableCurveStepAfter={enableCurveStepAfter} isConsideredMobile={isConsideredMobile} chartCurrency={chartCurrency} margin={margin} data={prices} />
+                        <div className={classes.spacer}/>
+                        <div className={classes.rightTitles}>
+                            <div>
+                                <Typography className={classes.vxChartTitle + " no-padding-bottom"} variant="headline" component="h2">
+                                    {priceFormat(currentPrice, 4, chartCurrency)}
+                                </Typography>
+                            </div>
+                            <div>
+                                <Typography className={classes.vxChartTitle + " no-padding-top " + (hasIncreased ? classes.vxPriceIncrease : classes.vxPriceDecrease)} component="p">
+                                    {hasIncreased ? ("+ " + priceFormat(percentDiff, 2, "%", false)) : ("- " + priceFormat(percentDiff * -1, 2, "%", false))}
+                                </Typography>
+                            </div>
                         </div>
                     </div>
+                    <div className={classes.innerContainer}>
+                        <OurChartVX enableCurveStepAfter={enableCurveStepAfter} isConsideredMobile={isConsideredMobile} chartCurrency={chartCurrency} margin={margin} data={prices} />
+                    </div>
+                    {/* <div className={classes.brushContainer}>
+                        {chartData.length > 0 && enableFiatConversion && <OurBrushChart enableCurveStepAfter={enableCurveStepAfter} setPrices={setPrices} height={100} enableCurveStepAfter={enableCurveStepAfter} isChartLoading={isChartLoading} isConsideredMobile={isConsideredMobile} chartData={chartData} chartCurrency={chartCurrency} />}
+                    </div> */}
                 </div>
-                {/* <Typography className={classes.disclaimer} gutterBottom component="p">
-                    {chartData.disclaimer}
-                </Typography> */}
             </div>
-        )
-    }
+            {/*
+                <Typography className={classes.disclaimer} gutterBottom component="p">
+                    {chartData.disclaimer}
+                </Typography>
+            */}
+        </div>
+    )
 }
 
 OurChartVXContainer.propTypes = {
