@@ -48,7 +48,7 @@ class OurChart extends React.Component {
   }
 
   render() {
-    const { classes, theme, chartLink, isConsideredMobile, chartTitle, chartSubtitle, chartData, isChartLoading, chartCurrency, enableCurveStepAfter } = this.props;
+    const { classes, theme, chartLink, isConsideredMobile, chartTitle, chartSubtitle, chartData, isChartLoading, chartCurrency, enableCurveStepAfter, children } = this.props;
 
     let margin = {
       top: 15,
@@ -60,12 +60,16 @@ class OurChart extends React.Component {
     if (chartData) {
       return (
         <div>
-          <OurChartVXContainer enableCurveStepAfter={enableCurveStepAfter} isChartLoading={isChartLoading} chartCurrency={chartCurrency} isConsideredMobile={isConsideredMobile} margin={margin} chartData={chartData} chartTitle={chartTitle} chartSubtitle={chartSubtitle} />
+          <OurChartVXContainer enableCurveStepAfter={enableCurveStepAfter} isChartLoading={isChartLoading} chartCurrency={chartCurrency} isConsideredMobile={isConsideredMobile} margin={margin} chartData={chartData} chartTitle={chartTitle} chartSubtitle={chartSubtitle}>
+            {children}
+          </OurChartVXContainer>
         </div>
       );
     }else{
       return <div>
-        <OurChartVXContainer enableCurveStepAfter={enableCurveStepAfter} isChartLoading={isChartLoading} chartCurrency={chartCurrency} isConsideredMobile={isConsideredMobile} margin={margin}/>
+        <OurChartVXContainer enableCurveStepAfter={enableCurveStepAfter} isChartLoading={isChartLoading} chartCurrency={chartCurrency} isConsideredMobile={isConsideredMobile} margin={margin}>
+          {children}
+        </OurChartVXContainer>
       </div>
     }
   }

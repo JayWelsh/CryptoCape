@@ -1,5 +1,5 @@
 import React from 'react';
-import { withParentSize } from '@vx/responsive'
+import { withParentSize } from '@vx/responsive';
 import { scaleTime, scaleLinear } from '@vx/scale';
 import { LinePath, AreaClosed, Bar, Line } from '@vx/shape';
 import { LinearGradient } from '@vx/gradient';
@@ -58,7 +58,7 @@ class OurChartVX extends React.Component {
 
         const width = parentWidth - margin.left - margin.right;
         const height = parentHeight - margin.top - margin.bottom;
-        const tooltipAnimation = 'all .1s ease-out';
+        const tooltipAnimation = 'all .25s ease-out';
 
         let tooltipPriceTranslate = 'translateX(0%)';
         let tooltipDateTranslate = 'translateX(-50%)';
@@ -151,7 +151,7 @@ class OurChartVX extends React.Component {
                             toOpacity={0}
                         />
                         
-                        <AreaClosed
+                        {/* <AreaClosed
                             curve={enableCurveStepAfter ? curveStepAfter : curveLinear}
                             data={data}
                             yScale={yScale}
@@ -169,8 +169,25 @@ class OurChartVX extends React.Component {
                             x={x}
                             y={y}
                             fill="url(#dLines)"
+                        /> */}
+                        <AreaClosed
+                            data={data}
+                            yScale={yScale}
+                            x={d => xScale(x(d))}
+                            curve={enableCurveStepAfter ? curveStepAfter : curveLinear}
+                            y={d => yScale(y(d))}
+                            fill={`url(#area-fill)`}
+                            stroke="transparent" />
+                        <AreaClosed
+                            stroke="transparent"
+                            data={data}
+                            yScale={yScale}
+                            curve={enableCurveStepAfter ? curveStepAfter : curveLinear}
+                            y={d => yScale(y(d))}
+                            x={d => xScale(x(d))}
+                            fill="url(#dLines)"
                         />
-                        <LinePath curve={enableCurveStepAfter ? curveStepAfter : curveLinear} data={data} yScale={yScale} xScale={xScale} x={x} y={y} />
+                        <LinePath curve={enableCurveStepAfter ? curveStepAfter : curveLinear} strokeWidth={2} stroke={"#4682b4"} data={data} x={d => xScale(x(d))} y={d => yScale(y(d))} />
                         <OurMaxPriceVX
                             data={maxPricesData}
                             yScale={yScale}
@@ -179,7 +196,7 @@ class OurChartVX extends React.Component {
                             y={y}
                             label={priceFormat(maxPrice , 2, chartCurrency)}
                             yText={yScale(maxPrice)}
-                        />
+                        /> 
                         <OurMinPriceVX
                             data={minPricesData}
                             yScale={yScale}
@@ -194,27 +211,27 @@ class OurChartVX extends React.Component {
                             width={width}
                             height={height}
                             fill="transparent"
-                            onMouseMove={data => event => {
+                            onMouseMove={event => {
                                 this.handleTooltip({
                                     event,
-                                    data,
+                                    data: data,
                                     x,
                                     xScale,
                                     yScale,
                                   })
                             }}
-                            onTouchStart={data => event =>
+                            onTouchStart={event =>
                                 this.handleTooltip({
                                   event,
-                                  data,
+                                  data: data,
                                   x,
                                   xScale,
                                   yScale,
                                 })}
-                              onTouchMove={data => event =>
+                              onTouchMove={event =>
                                 this.handleTooltip({
                                   event,
-                                  data,
+                                  data: data,
                                   x,
                                   xScale,
                                   yScale,
