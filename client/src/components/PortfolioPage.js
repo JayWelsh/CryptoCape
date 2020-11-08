@@ -563,9 +563,11 @@ class PortfolioPage extends React.Component {
         if(currentManualEntries[thisPersist.state.publicKey]) {
           for(let manualEntryId of Object.keys(currentManualEntries[thisPersist.state.publicKey])) {
             let manualEntry = currentManualEntries[thisPersist.state.publicKey][manualEntryId];
-            let symbol = manualEntry.symbol.toUpperCase();
-            getAgainstETH.push(symbol);
-            coinListLocal[symbol] = { balance: manualEntry.tokenQuantity * 1, balance: manualEntry.tokenQuantity * 1, isManualEntry: true, decimals: 2, coinGeckoId: manualEntry.id, timeseries: manualEntry.timeseries };
+            if(manualEntry.id && manualEntry.symbol) {
+              let symbol = manualEntry.symbol.toUpperCase()
+              getAgainstETH.push(symbol);
+              coinListLocal[symbol] = { balance: manualEntry.tokenQuantity * 1, balance: manualEntry.tokenQuantity * 1, isManualEntry: true, decimals: 2, coinGeckoId: manualEntry.id, timeseries: manualEntry.timeseries };
+            }
           }
         }
 				for(let shim of Object.keys(shimTokens)) {
