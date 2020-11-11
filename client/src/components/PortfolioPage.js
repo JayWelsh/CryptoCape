@@ -144,7 +144,13 @@ class PortfolioPage extends React.Component {
   handleSetAddress(event, history) {
     if (event.target.value !== this.state.publicKey) {
       if (isValidAddress(event.target.value)) {
-        this.setState({ isEth2DepositContract: event.target.value.toLowerCase() === eth2DepositContract});
+        this.setState({
+          isEth2DepositContract: event.target.value.toLowerCase() === eth2DepositContract,
+          enableFiatConversion: false,
+          enableCompositeGraph: false,
+          isCompositeReady: false,
+          coins: {}
+        });
         history.push("/portfolio/" + event.target.value);
       }else{
         this.setState({publicKey:event.target.value});
@@ -768,7 +774,16 @@ class PortfolioPage extends React.Component {
 
   componentWillReceiveProps = async (nextProps) => {
     if (nextProps.publicKey && this.state.publicKey !== nextProps.publicKey) {
-      this.setState({ publicKey: nextProps.publicKey, isChartLoading: true, coins: {}, historicalBaseCurrency: 'ETH', isEth2DepositContract: nextProps.publicKey.toLowerCase() === eth2DepositContract });
+      this.setState({
+        publicKey: nextProps.publicKey,
+        isChartLoading: true,
+        coins: {},
+        historicalBaseCurrency: 'ETH',
+        isEth2DepositContract: nextProps.publicKey.toLowerCase() === eth2DepositContract,
+        enableFiatConversion: false,
+        enableCompositeGraph: false,
+        isCompositeReady: false,
+      });
       if ((nextProps.publicKey.length > 0) && isValidAddress(nextProps.publicKey)) {
         this.setPublicKeyStorage(nextProps.publicKey);
         await this.fetchPriceValues();
