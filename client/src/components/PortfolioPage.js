@@ -948,7 +948,7 @@ class PortfolioPage extends React.Component {
       isEth2DepositContract,
     } = this.state;
     let displayTotalUSD = priceFormat(totalPortfolioValueUSD);
-    let displayTotalETH = "~ " + numberFormat(totalPortfolioValueETH) +  " ETH"
+    let displayTotalETH = isEth2DepositContract && coins["ETH"] && coins["ETH"].balance ? numberFormat(coins["ETH"].balance) +  " ETH" : "~ " + numberFormat(totalPortfolioValueETH) +  " ETH"
     let ethAddressError = false;
     let allowFiatConversion = false;
     if((publicKey.length > 0) && !isValidAddress(publicKey)){

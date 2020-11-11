@@ -167,7 +167,7 @@ const OurChartVXContainer = ({
                         <div className={classes.rightTitles}>
                             <div>
                                 <Typography className={classes.vxChartTitle + " no-padding-bottom"} variant="headline" component="h2">
-                                    {priceFormat(currentPrice, 4, chartCurrency)}
+                                    {priceFormat(currentPrice, useIsEth2DepositContract ? 2 : 4, chartCurrency)}
                                 </Typography>
                             </div>
                             <div>
