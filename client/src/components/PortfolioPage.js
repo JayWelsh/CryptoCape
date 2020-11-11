@@ -15,8 +15,21 @@ import ChartMenuMiniCard from './ChartMenuMiniCard';
 import SortableTable from './SortableTable';
 import { withRouter } from 'react-router-dom';
 import axios from 'axios';
-import {priceFormat, numberFormat, isValidAddress, rangeToHours, weiToEther, subtractNumbers, addNumbers, multiplyNumbers, tokenBalanceFromDecimals} from '../utils';
+import {
+  priceFormat,
+  numberFormat,
+  isValidAddress,
+  rangeToHours,
+  weiToEther,
+  subtractNumbers,
+  addNumbers,
+  multiplyNumbers,
+  divideNumbers,
+  tokenBalanceFromDecimals,
+} from '../utils';
 import moment from 'moment';
+
+const eth2DepositContract = "0x00000000219ab540356cbb839cbe05303d7705fa";
 
 function TabContainer({ children, dir }) {
   return (
@@ -103,7 +116,10 @@ class PortfolioPage extends React.Component {
           enableCompositeGraph: false,
           isCompositeReady: false,
           timeseriesRange: "ALL",
-          includeInCompositePricingQueries: []
+          timeboxTimestamp: new Date().getTime(),
+          includeInCompositePricingQueries: [],
+          genesisProgress: 0,
+          isEth2DepositContract: this.props.publicKey && eth2DepositContract === this.props.publicKey.toLowerCase()
         };
     }
     
@@ -128,6 +144,7 @@ class PortfolioPage extends React.Component {
   handleSetAddress(event, history) {
     if (event.target.value !== this.state.publicKey) {
       if (isValidAddress(event.target.value)) {
+        this.setState({ isEth2DepositContract: event.target.value.toLowerCase() === eth2DepositContract});
         history.push("/portfolio/" + event.target.value);
       }else{
         this.setState({publicKey:event.target.value});
@@ -214,7 +231,7 @@ class PortfolioPage extends React.Component {
 
   setTimeseriesRange(range) {
     if(range !== this.state.timeseriesRange){
-      this.setState({timeseriesRange: range});
+      this.setState({timeseriesRange: range, timeboxTimestamp: new Date().getTime()});
     }
   }
 
@@ -263,15 +280,15 @@ class PortfolioPage extends React.Component {
       if(coins &&  coins[historicalBaseCurrency] && coins[historicalBaseCurrency].timeseries) {
         let bufferTimeseries = this.bufferTimeseries(coins[historicalBaseCurrency].timeseries, 'daily', true, forceCurrentTime);
         timeseriesData = this.convertBaseBalances(bufferTimeseries, fullHistoricalCurrencies[historicalBaseCurrency], true);
-        if(timeseriesRange && (timeseriesData.length > 0)) {
-          let rangeInHours = rangeToHours(timeseriesRange);
-          if (rangeInHours) {
-            let startTime = moment().subtract(rangeInHours, 'hours');
-            timeseriesData = timeseriesData.filter((item) => {
-              return moment(item.date).isAfter(startTime);
-            });
-          }
-        }
+        // if(timeseriesRange && (timeseriesData.length > 0)) {
+        //   let rangeInHours = rangeToHours(timeseriesRange);
+        //   if (rangeInHours) {
+        //     let startTime = moment().subtract(rangeInHours, 'hours');
+        //     timeseriesData = timeseriesData.filter((item) => {
+        //       return moment(item.date).isAfter(startTime);
+        //     });
+        //   }
+        // }
 			} else {
 				timeseriesData = [];
 			}
@@ -305,7 +322,7 @@ class PortfolioPage extends React.Component {
       let restrictCoins = this.state.coins;
       let includeInCompositePricingQueries = this.state.includeInCompositePricingQueries || [];
       let historicalBaseCurrency = this.state.historicalBaseCurrency;
-      axios.all([this.getEtherTransactionHistory(publicKey), this.getTokenTransactionHistory(publicKey),this.getBaseCurrencyHistoricalUSD(historicalBaseCurrency), this.getInternalEtherTransactionHistory(publicKey)]).then(async (res) => {
+      await axios.all([this.getEtherTransactionHistory(publicKey), this.getTokenTransactionHistory(publicKey),this.getBaseCurrencyHistoricalUSD(historicalBaseCurrency), this.getInternalEtherTransactionHistory(publicKey)]).then(async (res) => {
         if (res && res[1].data && res[1].data.result && (res[1].data.result.constructor === Array)) {
           let transactionDataEther = res[0].data.result.map((item) => {
             item.tokenSymbol = "ETH";
@@ -358,7 +375,7 @@ class PortfolioPage extends React.Component {
 
                 let balanceAfterPriorTransactions = 0;
 
-                if (restrictCoins[coin] && restrictCoins[coin].timeseries && restrictCoins[coin].timeseries && restrictCoins[coin].timeseries.length > 0) {
+                if (restrictCoins[coin] && restrictCoins[coin].timeseries && restrictCoins[coin].timeseries && restrictCoins[coin].timeseries.length > 0 && tokenTimeseriesIndex[coin] > 0) {
                   balanceAfterPriorTransactions = addNumbers(balanceAfterPriorTransactions, restrictCoins[coin].timeseries[tokenTimeseriesIndex[coin] - 1].price);
                 }
 
@@ -414,7 +431,7 @@ class PortfolioPage extends React.Component {
               }
             });
           // })
-          thisPersist.setState({ coins: restrictCoins, isChartLoading: false, baseCurrencyToUSD: res[2] });
+          thisPersist.setState({ coins: restrictCoins, baseCurrencyToUSD: res[2] });
           // Calculate composite value chart
           let compositeCoins = Object.keys(restrictCoins)
           .filter(key => includeInCompositePricingQueries.includes(key))
@@ -423,13 +440,14 @@ class PortfolioPage extends React.Component {
             return obj;
           }, {});
           let consolidatedTimeseries = await thisPersist.buildCompositeTimeseries(compositeCoins);
-          thisPersist.setState({ compositeTimeseriesUSD: consolidatedTimeseries, isCompositeReady: true});
+          thisPersist.setState({ compositeTimeseriesUSD: consolidatedTimeseries, isCompositeReady: true, isChartLoading: false});
           return Object.keys(restrictCoins);
         }
       });
     }
 
     bufferTimeseries(timeseries, fillRange = false, isCompositeTimeseries = false, forceCurrentTime = false) {
+      let { isEth2DepositContract } = this.state;
       let returnArray = [];
       let currentDate = moment();
       if (timeseries.length > 0) {
@@ -474,6 +492,9 @@ class PortfolioPage extends React.Component {
             }
           }
         });
+      }
+      if(isEth2DepositContract) {
+        returnArray = returnArray.filter(item => moment(item.date).isSameOrAfter(moment(new Date("2020-11-03"))))
       }
       return returnArray;
     }
@@ -532,37 +553,44 @@ class PortfolioPage extends React.Component {
       this.setState({ ethPriceUSD: etherToUSD, etherMarketCap: etherMarketCap });
       let getTokenBalances = 'https://api.ethplorer.io/getAddressInfo/' + thisPersist.state.publicKey + '?apiKey=freekey';
       axios.get(getTokenBalances).then(res => {
+        let genesisProgress = thisPersist.state.genesisProgress;
+        let publicKeyLowerCase = thisPersist.state.publicKey.toLowerCase();
         let balanceOfETH = res.data.ETH.balance;
         getAgainstETH.push("ETH");
         coinListLocal["ETH"] = { balance: balanceOfETH }
         coinListLocal["ETH"].decimals = 18;
+        if(publicKeyLowerCase === eth2DepositContract) {
+          genesisProgress = divideNumbers(multiplyNumbers(coinListLocal["ETH"].balance, 100), 524288);
+        }
 				let coinCalculationsBlacklist = [];
         if(res.data.tokens){
           res.data.tokens.forEach((item, index) => {
             if(item.tokenInfo.symbol){
-              let decimals = item.tokenInfo.decimals;
-              let balance = tokenBalanceFromDecimals(item.balance, decimals) * 1;
-              let rateUSD = item.tokenInfo.price ? item.tokenInfo.price.rate : 0;
-              let marketCapUSD = item.tokenInfo.price ? item.tokenInfo.price.marketCapUsd : 0;
-              let balanceUSD = balance * rateUSD;
               let symbol = item.tokenInfo.symbol.toUpperCase();
-              let tokenAddress = item.tokenInfo.address;
-              if(["MNE", "KICK"].indexOf(symbol) === -1){ // Blacklist
-                getAgainstETH.push(symbol);
-                coinListLocal[symbol] = { balance, balanceUSD, marketCapUSD, tokenAddress, decimals };
-                if (balanceUSD >= 0 && (item.tokenInfo.price !== false)) {
+              if(publicKeyLowerCase !== eth2DepositContract || ((publicKeyLowerCase === eth2DepositContract) && (symbol === "ETH"))){
+                let decimals = item.tokenInfo.decimals;
+                let balance = tokenBalanceFromDecimals(item.balance, decimals) * 1;
+                let rateUSD = item.tokenInfo.price ? item.tokenInfo.price.rate : 0;
+                let marketCapUSD = item.tokenInfo.price ? item.tokenInfo.price.marketCapUsd : 0;
+                let balanceUSD = balance * rateUSD;
+                let tokenAddress = item.tokenInfo.address;
+                if(["MNE", "KICK"].indexOf(symbol) === -1){ // Blacklist
+                  getAgainstETH.push(symbol);
                   coinListLocal[symbol] = { balance, balanceUSD, marketCapUSD, tokenAddress, decimals };
-                }else{
-                  coinCalculationsBlacklist.push(symbol);
+                  if (balanceUSD >= 0 && (item.tokenInfo.price !== false)) {
+                    coinListLocal[symbol] = { balance, balanceUSD, marketCapUSD, tokenAddress, decimals };
+                  }else{
+                    coinCalculationsBlacklist.push(symbol);
+                  }
                 }
               }
             }
           });
         }
         let currentManualEntries = localStorage.getItem("manualAccountEntries") ? JSON.parse(localStorage.getItem("manualAccountEntries")) : {};
-        if(currentManualEntries[thisPersist.state.publicKey]) {
-          for(let manualEntryId of Object.keys(currentManualEntries[thisPersist.state.publicKey])) {
-            let manualEntry = currentManualEntries[thisPersist.state.publicKey][manualEntryId];
+        if(currentManualEntries[publicKeyLowerCase]) {
+          for(let manualEntryId of Object.keys(currentManualEntries[publicKeyLowerCase])) {
+            let manualEntry = currentManualEntries[publicKeyLowerCase][manualEntryId];
             if(manualEntry.id && manualEntry.symbol) {
               let symbol = manualEntry.symbol.toUpperCase()
               getAgainstETH.push(symbol);
@@ -576,7 +604,7 @@ class PortfolioPage extends React.Component {
 						getAgainstETH.push(shim);
 					}
 				}
-        thisPersist.setState({ coins: coinListLocal, coinCalculationsBlacklist });
+        thisPersist.setState({ coins: coinListLocal, coinCalculationsBlacklist, genesisProgress });
         let getTokenPrices = 'https://min-api.cryptocompare.com/data/pricemultifull?fsyms=' + getAgainstETH.join(',') + '&tsyms=ETH&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b';
         axios.get(getTokenPrices).then(async (res) => {
           let totalValueCountUSD = 0;
@@ -630,7 +658,7 @@ class PortfolioPage extends React.Component {
             let {coins, includeInCompositePricingQueries} = this.state;
             let index = 0;
             for(let [symbol] of Object.entries(dailyChangeLinks)) {
-              if(data && data[index] && data[index].data && data[index].data.prices && data[index].data.prices.constructor === Array && data[index].data.prices.length > 0){
+              if(data && data[index] && data[index].data && data[index].data.prices && data[index].data.prices.constructor === Array && data[index].data.prices.length > 0 && coins[symbol]){
                 coins[symbol].open = this.getClosestTimestamp(data[index].data.prices, moment().startOf('day').unix() * 1000, 0)[1];
                 coins[symbol].close = data[index].data.prices[data[index].data.prices.length - 1][1];
                 coins[symbol].balanceUSD = coins[symbol].close * coins[symbol].balance;
@@ -740,7 +768,7 @@ class PortfolioPage extends React.Component {
 
   componentWillReceiveProps = async (nextProps) => {
     if (nextProps.publicKey && this.state.publicKey !== nextProps.publicKey) {
-      this.setState({ publicKey: nextProps.publicKey, isChartLoading: true, coins: {}, historicalBaseCurrency: 'ETH' });
+      this.setState({ publicKey: nextProps.publicKey, isChartLoading: true, coins: {}, historicalBaseCurrency: 'ETH', isEth2DepositContract: nextProps.publicKey.toLowerCase() === eth2DepositContract });
       if ((nextProps.publicKey.length > 0) && isValidAddress(nextProps.publicKey)) {
         this.setPublicKeyStorage(nextProps.publicKey);
         await this.fetchPriceValues();
@@ -899,7 +927,10 @@ class PortfolioPage extends React.Component {
       baseCurrencyToUSD,
       enableFiatConversion,
       enableCompositeGraph,
-      timeseriesRange
+      timeseriesRange,
+      timeboxTimestamp,
+      genesisProgress,
+      isEth2DepositContract,
     } = this.state;
     let displayTotalUSD = priceFormat(totalPortfolioValueUSD);
     let displayTotalETH = "~ " + numberFormat(totalPortfolioValueETH) +  " ETH"
@@ -936,6 +967,7 @@ class PortfolioPage extends React.Component {
 
       let timeseriesData = [];
       if(coins &&  coins[historicalBaseCurrency] && coins[historicalBaseCurrency].timeseries) {
+        //TODO: These buffers should run outside of the render, similarly to composite chart data
         timeseriesData =  enableCompositeGraph ? compositeTimeseriesUSD : this.bufferTimeseries(coins[historicalBaseCurrency].timeseries);
         if(enableFiatConversion && !enableCompositeGraph){
           timeseriesData = this.convertBaseBalances(this.bufferTimeseries(coins[historicalBaseCurrency].timeseries, 'daily'), false, false, coins[historicalBaseCurrency].balanceUSD);
@@ -1082,6 +1114,7 @@ class PortfolioPage extends React.Component {
                         onFocus={(event) => this.handleFocus(event)}
                         margin="normal"
                         variant="outlined"
+                        disabled={isLoading}
                       />
                     </form>
                     <a className={classes.etherscanLink} target="_blank" href={`https://etherscan.io/address/${publicKey}`} rel="noopener noreferrer">View on Etherscan.io</a>
@@ -1102,7 +1135,7 @@ class PortfolioPage extends React.Component {
                         }}
                         margin="normal"
                         variant="outlined"
-                        disabled={enableCompositeGraph}
+                        disabled={enableCompositeGraph || isLoading}
                       >
                         {
                           enableCompositeGraph &&
@@ -1127,7 +1160,7 @@ class PortfolioPage extends React.Component {
                           onChange={this.toggleFiatConversion}
                           value="checkedB"
                           color="primary"
-                          disabled={!allowFiatConversion}
+                          disabled={!allowFiatConversion || isLoading}
                         />
                       }
                       label="USD Value"
@@ -1142,7 +1175,7 @@ class PortfolioPage extends React.Component {
                           onChange={this.toggleCompositeGraph}
                           value="checkedB"
                           color="primary"
-                          disabled={!isCompositeReady}
+                          disabled={!isCompositeReady || isLoading}
                         />
                       }
                       label="Composite Graph"
@@ -1156,22 +1189,22 @@ class PortfolioPage extends React.Component {
             <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
             </Grid>
             <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
-                  <Button className={classes.button} onClick={() => this.setTimeseriesRange("1W")} style={this.getSelectedTimeseriesRange("1W")}>
+                  <Button disabled={isLoading || (!timeseriesData || !timeseriesData[0] || !timeseriesData[0].date) || moment().diff(moment(timeseriesData[0].date), 'weeks') < 1} className={classes.button} onClick={() => this.setTimeseriesRange("1W")} style={this.getSelectedTimeseriesRange("1W")}>
                     1W
                   </Button>
-                  <Button className={classes.button} onClick={() => this.setTimeseriesRange("1M")} style={this.getSelectedTimeseriesRange("1M")}>
+                  <Button disabled={isLoading || (!timeseriesData || !timeseriesData[0] || !timeseriesData[0].date) || moment().diff(moment(timeseriesData[0].date), 'months') < 1} className={classes.button} onClick={() => this.setTimeseriesRange("1M")} style={this.getSelectedTimeseriesRange("1M")}>
                     1M
                   </Button>
-                  <Button className={classes.button} onClick={() => this.setTimeseriesRange("3M")} style={this.getSelectedTimeseriesRange("3M")}>
+                  <Button disabled={isLoading || (!timeseriesData || !timeseriesData[0] || !timeseriesData[0].date) || moment().diff(moment(timeseriesData[0].date), 'months') < 3} className={classes.button} onClick={() => this.setTimeseriesRange("3M")} style={this.getSelectedTimeseriesRange("3M")}>
                     3M
                   </Button>
-                  <Button className={classes.button} onClick={() => this.setTimeseriesRange("6M")} style={this.getSelectedTimeseriesRange("6M")}>
+                  <Button disabled={isLoading || (!timeseriesData || !timeseriesData[0] || !timeseriesData[0].date) || moment().diff(moment(timeseriesData[0].date), 'months') < 6} className={classes.button} onClick={() => this.setTimeseriesRange("6M")} style={this.getSelectedTimeseriesRange("6M")}>
                     6M
                   </Button>
-                  <Button className={classes.button} onClick={() => this.setTimeseriesRange("1Y")} style={this.getSelectedTimeseriesRange("1Y")}>
+                  <Button disabled={isLoading || (!timeseriesData || !timeseriesData[0] || !timeseriesData[0].date) || moment().diff(moment(timeseriesData[0].date), 'months') < 12} className={classes.button} onClick={() => this.setTimeseriesRange("1Y")} style={this.getSelectedTimeseriesRange("1Y")}>
                     1Y
                   </Button>
-                  <Button className={classes.button} onClick={() => this.setTimeseriesRange("ALL")} style={this.getSelectedTimeseriesRange("ALL")}>
+                  <Button disabled={isLoading} className={classes.button} onClick={() => this.setTimeseriesRange("ALL")} style={this.getSelectedTimeseriesRange("ALL")}>
                     ALL
                   </Button>
             </Grid>
@@ -1180,7 +1213,7 @@ class PortfolioPage extends React.Component {
             <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
             </Grid>
             <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
-              <OurChart enableCurveStepAfter={enableFiatConversion ? false : true} isChartLoading={isChartLoading} isConsideredMobile={isConsideredMobile} chartTitle={chartData.name} chartSubtitle={chartData.abbreviation} chartData={timeseriesData} chartCurrency={chartCurrency} />
+              <OurChart isEth2DepositContract={isEth2DepositContract} genesisProgress={genesisProgress} timebox={timeseriesRange} timeboxTimestamp={timeboxTimestamp} enableCurveStepAfter={enableFiatConversion ? false : true} isChartLoading={isChartLoading} isConsideredMobile={isConsideredMobile} chartTitle={chartData.name} chartSubtitle={chartData.abbreviation} chartData={timeseriesData} chartCurrency={chartCurrency} isLoading={isLoading} />
             </Grid>
             <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
             </Grid>
@@ -1215,7 +1248,7 @@ class PortfolioPage extends React.Component {
             <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
             </Grid>
             <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
-                <SortableTable isLoading={isLoading} refetchData={this.refetchData} publicKey={publicKey} isConsideredMobile={isConsideredMobile} tableData={tableData} />
+                <SortableTable isEth2DepositContract={isEth2DepositContract} isLoading={isLoading} refetchData={this.refetchData} publicKey={publicKey} isConsideredMobile={isConsideredMobile} tableData={tableData} />
             </Grid>
             <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
             </Grid>

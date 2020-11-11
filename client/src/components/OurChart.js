@@ -48,7 +48,24 @@ class OurChart extends React.Component {
   }
 
   render() {
-    const { classes, theme, chartLink, isConsideredMobile, chartTitle, chartSubtitle, chartData, isChartLoading, chartCurrency, enableCurveStepAfter, children } = this.props;
+    const {
+      classes,
+      theme,
+      chartLink,
+      isConsideredMobile,
+      chartTitle,
+      chartSubtitle,
+      chartData,
+      isChartLoading,
+      chartCurrency,
+      enableCurveStepAfter,
+      children,
+      timebox,
+      timeboxTimestamp,
+      genesisProgress,
+      isEth2DepositContract,
+      isLoading,
+    } = this.props;
 
     let margin = {
       top: 15,
@@ -57,10 +74,10 @@ class OurChart extends React.Component {
       right: 0
     }
 
-    if (chartData) {
+    if (chartData && !isLoading) {
       return (
         <div>
-          <OurChartVXContainer enableCurveStepAfter={enableCurveStepAfter} isChartLoading={isChartLoading} chartCurrency={chartCurrency} isConsideredMobile={isConsideredMobile} margin={margin} chartData={chartData} chartTitle={chartTitle} chartSubtitle={chartSubtitle}>
+          <OurChartVXContainer isEth2DepositContract={isEth2DepositContract} genesisProgress={genesisProgress} timebox={timebox} timeboxTimestamp={timeboxTimestamp} enableCurveStepAfter={enableCurveStepAfter} isChartLoading={isChartLoading} chartCurrency={chartCurrency} isConsideredMobile={isConsideredMobile} margin={margin} chartData={chartData} chartTitle={chartTitle} chartSubtitle={chartSubtitle}>
             {children}
           </OurChartVXContainer>
         </div>

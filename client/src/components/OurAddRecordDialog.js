@@ -35,13 +35,16 @@ export default function FormDialog({publicKey, refetchData, isLoading}) {
   const addManualRecord = async () => {
     let manualRecord = {...selectedCoin, tokenQuantity, timeseries: [{date: moment(selectedDate), price: tokenQuantity}]};
     let currentLocalStorageRecords = localStorage.getItem("manualAccountEntries") ? JSON.parse(localStorage.getItem("manualAccountEntries")) : {};
-    if(currentLocalStorageRecords[publicKey]){
-        currentLocalStorageRecords[publicKey][selectedCoin.id] = manualRecord;
-    }else{
-        currentLocalStorageRecords[publicKey] = {};
-        currentLocalStorageRecords[publicKey][selectedCoin.id] = manualRecord;
+    if(publicKey) {
+      let publicKeyLowerCase = publicKey.toLowerCase();
+      if(currentLocalStorageRecords[publicKeyLowerCase]){
+          currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id] = manualRecord;
+      }else{
+          currentLocalStorageRecords[publicKeyLowerCase] = {};
+          currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id] = manualRecord;
+      }
+      localStorage.setItem("manualAccountEntries", JSON.stringify(currentLocalStorageRecords));
     }
-    localStorage.setItem("manualAccountEntries", JSON.stringify(currentLocalStorageRecords));
     await refetchData(handleClose);
   }
 
@@ -75,7 +78,6 @@ export default function FormDialog({publicKey, refetchData, isLoading}) {
         let getCoinListURL = 'https://api.coingecko.com/api/v3/coins/list';
         let results = await axios.get(getCoinListURL);
         if(isMounted) {
-            console.log({results});
             setCoins(results.data);
         }
     }

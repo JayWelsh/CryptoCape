@@ -6,7 +6,7 @@ import { ParentSize } from "@vx/responsive";
 // import OurBrushChart from './OurBrushChart';
 import { LinearGradient } from '@vx/gradient';
 import OurChartVX from './OurChartVX';
-import { priceFormat } from '../utils';
+import { priceFormat, subtractNumbers, percToColor } from '../utils';
 import Loading from './Loading';
 import { withParentSize } from '@vx/responsive';
 
@@ -95,26 +95,51 @@ function Background({width, height}) {
     );
 }
 
-const OurChartVXContainer = ({ margin, enableFiatConversion, classes, chartTitle, chartSubtitle, isConsideredMobile, chartData = [], parentWidth, parentHeight, isChartLoading, chartCurrency, enableCurveStepAfter = false }) => {
+const OurChartVXContainer = ({ 
+    margin,
+    enableFiatConversion,
+    classes,
+    chartTitle,
+    chartSubtitle,
+    isConsideredMobile,
+    chartData = [],
+    parentWidth,
+    parentHeight,
+    isChartLoading,
+    chartCurrency,
+    enableCurveStepAfter = false,
+    timebox,
+    timeboxTimestamp,
+    genesisProgress,
+    isEth2DepositContract,
+}) => {
     const [prices, setPrices] = useState(chartData);
-    const [currentPrice, setCurrentPrice] = useState(0);
+    const [currentPrice, setCurrentPrice] = useState(false);
     const [diffPrice, setDiffPrice] = useState(0);
     const [hasIncreased, setHasIncreased] = useState(true);
     const [percentDiff, setPercentDiff] = useState(0);
+    const [useIsEth2DepositContract, setUseIsEth2DepositContract] = useState(isEth2DepositContract);
+    const [useHideTooltipTimestamp, setHideTooltipTimestamp] = useState(new Date().getTime());
 
     useEffect(() => {
         setPrices(chartData);
     }, [chartData])
 
     useEffect(() => {
+        setUseIsEth2DepositContract(isEth2DepositContract);
+    }, [isEth2DepositContract])
+
+    useEffect(() => {
         if (prices && prices.length  > 0) {
             let indexOfFirstNonZeroValue = prices.findIndex(priceObj=> priceObj.price > 0);
             if(indexOfFirstNonZeroValue > -1) {
-                let firstPrice = prices[indexOfFirstNonZeroValue].price;
-                setCurrentPrice(prices[prices.length - 1].price);
-                setPercentDiff(((currentPrice * 100) / firstPrice) - 100);
-                setDiffPrice(currentPrice - firstPrice);
-                setHasIncreased(diffPrice >= 0);
+                let firstPrice = prices[indexOfFirstNonZeroValue].price * 1;
+                let currentPriceLocal = prices[prices.length - 1].price * 1;
+                let diffPriceLocal = subtractNumbers(currentPriceLocal, firstPrice) * 1;
+                setCurrentPrice(currentPriceLocal);
+                setPercentDiff(((currentPriceLocal * 100) / firstPrice) - 100);
+                setDiffPrice(diffPriceLocal);
+                setHasIncreased(diffPriceLocal >= 0);
             }
         }
         setPrices(prices);
@@ -124,7 +149,7 @@ const OurChartVXContainer = ({ margin, enableFiatConversion, classes, chartTitle
         <div className={classes.outerContainer}>
             <Loading isLoading={isChartLoading} width={parentWidth} height={parentHeight}/>
             <div className={classes.center}>
-                <div className={classes.chart + " elevation-shadow-two"} style={{ width: '100%', height: '600px' }}>
+                <div className={classes.chart + " elevation-shadow-two"} style={{ width: '100%', height: isConsideredMobile ? '500px' : '500px'}}>
                     <div className={classes.titleBar}>
                         <div className={classes.leftTitles}>
                             <div>
@@ -146,18 +171,27 @@ const OurChartVXContainer = ({ margin, enableFiatConversion, classes, chartTitle
                                 </Typography>
                             </div>
                             <div>
-                                <Typography className={classes.vxChartTitle + " no-padding-top " + (hasIncreased ? classes.vxPriceIncrease : classes.vxPriceDecrease)} component="p">
-                                    {hasIncreased ? ("+ " + priceFormat(percentDiff, 2, "%", false)) : ("- " + priceFormat(percentDiff * -1, 2, "%", false))}
-                                </Typography>
+                                {useIsEth2DepositContract && 
+                                    <Typography className={classes.vxChartTitle + " no-padding-top"} style={{color: percToColor(genesisProgress * 1)}} component="p">
+                                        {`${priceFormat(genesisProgress, 2, "%", false)} of min genesis requirement`}
+                                    </Typography>
+                                }
+                                {!useIsEth2DepositContract &&
+                                    <Typography className={classes.vxChartTitle + " no-padding-top " + (hasIncreased ? classes.vxPriceIncrease : classes.vxPriceDecrease)} component="p">
+                                        {hasIncreased ? ("+ " + priceFormat(percentDiff, 2, "%", false)) : ("- " + priceFormat(percentDiff * -1, 2, "%", false))}
+                                    </Typography>
+                                }
                             </div>
                         </div>
                     </div>
                     <div className={classes.innerContainer}>
-                        <OurChartVX enableCurveStepAfter={enableCurveStepAfter} isConsideredMobile={isConsideredMobile} chartCurrency={chartCurrency} margin={margin} data={prices} />
+                        <OurChartVX hideTooltipTimestamp={useHideTooltipTimestamp} enableCurveStepAfter={enableCurveStepAfter} isConsideredMobile={isConsideredMobile} chartCurrency={chartCurrency} margin={margin} data={prices} />
                     </div>
-                    {/* <div className={classes.brushContainer}>
-                        {chartData.length > 0 && enableFiatConversion && <OurBrushChart enableCurveStepAfter={enableCurveStepAfter} setPrices={setPrices} height={100} enableCurveStepAfter={enableCurveStepAfter} isChartLoading={isChartLoading} isConsideredMobile={isConsideredMobile} chartData={chartData} chartCurrency={chartCurrency} />}
-                    </div> */}
+                    {/* {!isConsideredMobile && 
+                        <div className={classes.brushContainer}>
+                            {chartData.length > 0 && <OurBrushChart timeboxTimestamp={timeboxTimestamp} timebox={timebox} setHideTooltipTimestamp={setHideTooltipTimestamp} enableCurveStepAfter={enableCurveStepAfter} setPrices={setPrices} height={100} enableCurveStepAfter={enableCurveStepAfter} isChartLoading={isChartLoading} isConsideredMobile={isConsideredMobile} chartData={chartData} chartCurrency={chartCurrency} />}
+                        </div>
+                    } */}
                 </div>
             </div>
             {/*

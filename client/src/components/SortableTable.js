@@ -132,7 +132,7 @@ const toolbarStyles = theme => ({
 });
 
 let EnhancedTableToolbar = props => {
-  const { numSelected, classes, isConsideredMobile, publicKey, refetchData, isLoading } = props;
+  const { numSelected, classes, isConsideredMobile, publicKey, refetchData, isLoading, isEth2DepositContract } = props;
 
   return (
     <Toolbar
@@ -144,7 +144,7 @@ let EnhancedTableToolbar = props => {
         <Typography variant={isConsideredMobile ? "display1" : "display2"} id="tableTitle">
           Key Figures
         </Typography>
-        <OurAddRecordDialog refetchData={refetchData} publicKey={publicKey} isLoading={isLoading}/>
+        {!isEth2DepositContract && <OurAddRecordDialog refetchData={refetchData} publicKey={publicKey} isLoading={isLoading}/>}
       </div>
       <div className={classes.spacer} />
     </Toolbar>
@@ -186,16 +186,22 @@ class EnhancedTable extends React.Component {
             data: props.tableData || [],
             page: 0,
             rowsPerPage: 10,
+            isEth2DepositContract: props.isEth2DepositContract
         };
     }
 
     componentWillUpdate(nextProps, prevProps) {
-        let {data} = this.state;
+        let {data, isEth2DepositContract} = this.state;
         if((JSON.stringify(nextProps.tableData) !== JSON.stringify(data)) && (JSON.stringify(prevProps.tableData) !== JSON.stringify(nextProps.tableData))){
             this.setState({
                 data: nextProps.tableData || [],
                 rowsPerPage: nextProps.tableData.length || 10,
             })
+        }
+        if(nextProps.isEth2DepositContract !== isEth2DepositContract) {
+          this.setState({
+            isEth2DepositContract: nextProps.isEth2DepositContract
+          })
         }
     }
 
@@ -230,12 +236,12 @@ class EnhancedTable extends React.Component {
 
   render() {
     const { classes, publicKey, refetchData, isLoading } = this.props;
-    const { data, order, orderBy, selected, rowsPerPage, page } = this.state;
+    const { data, order, orderBy, selected, rowsPerPage, page, isEth2DepositContract } = this.state;
     const emptyRows = rowsPerPage - Math.min(rowsPerPage, data.length - page * rowsPerPage);
 
     return (
       <Paper className={classes.root}>
-        <EnhancedTableToolbar refetchData={refetchData} numSelected={selected.length} publicKey={publicKey} isLoading={isLoading} />
+        <EnhancedTableToolbar isEth2DepositContract={isEth2DepositContract} refetchData={refetchData} numSelected={selected.length} publicKey={publicKey} isLoading={isLoading} />
         <div className={classes.tableWrapper}>
           <Table className={classes.table} aria-labelledby="tableTitle">
             <EnhancedTableHead

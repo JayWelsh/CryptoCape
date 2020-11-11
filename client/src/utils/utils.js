@@ -94,6 +94,26 @@ export const addNumbers = (value1, value2) => BigNumber(value1).plus(BigNumber(v
 
 export const multiplyNumbers = (value1, value2) => BigNumber(value1).multipliedBy(BigNumber(value2)).toString();
 
+export const divideNumbers = (value1, value2) => BigNumber(value1).dividedBy(BigNumber(value2)).toString();
+
+// Credit for percToColour: https://gist.github.com/mlocati/7210513
+export const percToColor = (perc) => {
+	if(perc > 100){
+		perc = 100;
+	}
+	let r, g, b = 0;
+	if(perc < 50) {
+		r = 255;
+		g = Math.round(5.1 * perc);
+	}
+	else {
+		g = 255;
+		r = Math.round(510 - 5.10 * perc);
+	}
+	let h = r * 0x10000 + g * 0x100 + b * 0x1;
+	return '#' + ('000000' + h.toString(16)).slice(-6);
+}
+
 export const tokenValueFormat = (value, decimals = 2) => {
 	//Rounds down - I think it is better to under represent this value than to over represent it
 	return BigNumber(value).toFixed(decimals, 1).toString();
