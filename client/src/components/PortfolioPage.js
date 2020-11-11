@@ -1238,10 +1238,29 @@ class PortfolioPage extends React.Component {
             </Grid>
             <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
               <Paper className={classes.root} elevation={2}>
-                <Typography variant={isConsideredMobile ? "display3" : "display4"}>
+                <Typography
+                  variant={
+                    isConsideredMobile
+                      ? totalPortfolioValueUSD < 1000000 
+                        ? "display3"
+                        : "h4"
+                      : "display4"
+                  }
+                  color="textSecondary"
+                >
                   {displayTotalUSD}
                 </Typography>
-                <Typography variant={isConsideredMobile ? "display2" : "display3"} gutterBottom={true}>
+                <Typography
+                  variant={
+                  isConsideredMobile
+                    ? totalPortfolioValueUSD < 1000000 
+                      ? "display2"
+                      : "h5"
+                    : "display3"
+                  }
+                  color="textSecondary"
+                  gutterBottom={true}
+                >
                   {displayTotalETH}
                 </Typography>
               </Paper>
