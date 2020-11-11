@@ -966,12 +966,14 @@ class PortfolioPage extends React.Component {
       }
 
       let timeseriesData = [];
+      let timeseriesDataFull = [];
       if(coins &&  coins[historicalBaseCurrency] && coins[historicalBaseCurrency].timeseries) {
         //TODO: These buffers should run outside of the render, similarly to composite chart data
         timeseriesData =  enableCompositeGraph ? compositeTimeseriesUSD : this.bufferTimeseries(coins[historicalBaseCurrency].timeseries);
         if(enableFiatConversion && !enableCompositeGraph){
           timeseriesData = this.convertBaseBalances(this.bufferTimeseries(coins[historicalBaseCurrency].timeseries, 'daily'), false, false, coins[historicalBaseCurrency].balanceUSD);
         }
+        timeseriesDataFull = [...timeseriesData];
         if(timeseriesRange && (timeseriesData.length > 0)) {
           let rangeInHours = rangeToHours(timeseriesRange);
           if (rangeInHours) {
@@ -1189,19 +1191,19 @@ class PortfolioPage extends React.Component {
             <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
             </Grid>
             <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
-                  <Button disabled={isLoading || (!timeseriesData || !timeseriesData[0] || !timeseriesData[0].date) || moment().diff(moment(timeseriesData[0].date), 'weeks') < 1} className={classes.button} onClick={() => this.setTimeseriesRange("1W")} style={this.getSelectedTimeseriesRange("1W")}>
+                  <Button disabled={isLoading || (!timeseriesDataFull || !timeseriesDataFull[0] || !timeseriesDataFull[0].date) || moment().diff(moment(timeseriesDataFull[0].date), 'weeks') < 1} className={classes.button} onClick={() => this.setTimeseriesRange("1W")} style={this.getSelectedTimeseriesRange("1W")}>
                     1W
                   </Button>
-                  <Button disabled={isLoading || (!timeseriesData || !timeseriesData[0] || !timeseriesData[0].date) || moment().diff(moment(timeseriesData[0].date), 'months') < 1} className={classes.button} onClick={() => this.setTimeseriesRange("1M")} style={this.getSelectedTimeseriesRange("1M")}>
+                  <Button disabled={isLoading || (!timeseriesDataFull || !timeseriesDataFull[0] || !timeseriesDataFull[0].date) || moment().diff(moment(timeseriesDataFull[0].date), 'months') < 1} className={classes.button} onClick={() => this.setTimeseriesRange("1M")} style={this.getSelectedTimeseriesRange("1M")}>
                     1M
                   </Button>
-                  <Button disabled={isLoading || (!timeseriesData || !timeseriesData[0] || !timeseriesData[0].date) || moment().diff(moment(timeseriesData[0].date), 'months') < 3} className={classes.button} onClick={() => this.setTimeseriesRange("3M")} style={this.getSelectedTimeseriesRange("3M")}>
+                  <Button disabled={isLoading || (!timeseriesDataFull || !timeseriesDataFull[0] || !timeseriesDataFull[0].date) || moment().diff(moment(timeseriesDataFull[0].date), 'months') < 3} className={classes.button} onClick={() => this.setTimeseriesRange("3M")} style={this.getSelectedTimeseriesRange("3M")}>
                     3M
                   </Button>
-                  <Button disabled={isLoading || (!timeseriesData || !timeseriesData[0] || !timeseriesData[0].date) || moment().diff(moment(timeseriesData[0].date), 'months') < 6} className={classes.button} onClick={() => this.setTimeseriesRange("6M")} style={this.getSelectedTimeseriesRange("6M")}>
+                  <Button disabled={isLoading || (!timeseriesDataFull || !timeseriesDataFull[0] || !timeseriesDataFull[0].date) || moment().diff(moment(timeseriesDataFull[0].date), 'months') < 6} className={classes.button} onClick={() => this.setTimeseriesRange("6M")} style={this.getSelectedTimeseriesRange("6M")}>
                     6M
                   </Button>
-                  <Button disabled={isLoading || (!timeseriesData || !timeseriesData[0] || !timeseriesData[0].date) || moment().diff(moment(timeseriesData[0].date), 'months') < 12} className={classes.button} onClick={() => this.setTimeseriesRange("1Y")} style={this.getSelectedTimeseriesRange("1Y")}>
+                  <Button disabled={isLoading || (!timeseriesDataFull || !timeseriesDataFull[0] || !timeseriesDataFull[0].date) || moment().diff(moment(timeseriesDataFull[0].date), 'months') < 12} className={classes.button} onClick={() => this.setTimeseriesRange("1Y")} style={this.getSelectedTimeseriesRange("1Y")}>
                     1Y
                   </Button>
                   <Button disabled={isLoading} className={classes.button} onClick={() => this.setTimeseriesRange("ALL")} style={this.getSelectedTimeseriesRange("ALL")}>
