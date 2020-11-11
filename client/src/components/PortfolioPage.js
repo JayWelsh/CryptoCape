@@ -1183,21 +1183,23 @@ class PortfolioPage extends React.Component {
                       label="USD Value"
                     />
                   </Grid>
-                  <Grid item xs={6} sm={2} md={2} lg={2} className={isConsideredMobile ? classes.compositeSwitchBottomPadding : null}>
-                    <FormControlLabel
-                      className={classes.fiatSwitch}
-                      control={
-                        <Switch
-                          checked={enableCompositeGraph}
-                          onChange={this.toggleCompositeGraph}
-                          value="checkedB"
-                          color="primary"
-                          disabled={!isCompositeReady || isLoading}
-                        />
-                      }
-                      label="Composite Graph"
-                    />
-                  </Grid>
+                  {!isEth2DepositContract && 
+                    <Grid item xs={6} sm={2} md={2} lg={2} className={isConsideredMobile ? classes.compositeSwitchBottomPadding : null}>
+                      <FormControlLabel
+                        className={classes.fiatSwitch}
+                        control={
+                          <Switch
+                            checked={enableCompositeGraph}
+                            onChange={this.toggleCompositeGraph}
+                            value="checkedB"
+                            color="primary"
+                            disabled={!isCompositeReady || isLoading}
+                          />
+                        }
+                        label="Composite Graph"
+                      />
+                    </Grid>
+                  }
                 </Grid>
               </div>
             </Grid>
