@@ -551,6 +551,10 @@ class PortfolioPage extends React.Component {
 			"USDT": {
 				tokenAddress: "0xdac17f958d2ee523a2206206994597c13d831ec7",
 				decimals: 6,
+      },
+      "SEED": {
+				tokenAddress: "0x30cf203b48edaa42c3b4918e955fed26cd012a3f",
+				decimals: 18,
 			}
 		}
     axios.get(getETHUSD).then(res => {
@@ -568,7 +572,8 @@ class PortfolioPage extends React.Component {
         if(publicKeyLowerCase === eth2DepositContract) {
           genesisProgress = divideNumbers(multiplyNumbers(coinListLocal["ETH"].balance, 100), 524288);
         }
-				let coinCalculationsBlacklist = [];
+        let coinCalculationsBlacklist = [];
+        let tokenAddressBlacklist = ["0x47a7fe6e18a01c367a8ef32ee1943c923f3438e5"];
         if(res.data.tokens){
           res.data.tokens.forEach((item, index) => {
             if(item.tokenInfo.symbol){
@@ -580,7 +585,7 @@ class PortfolioPage extends React.Component {
                 let marketCapUSD = item.tokenInfo.price ? item.tokenInfo.price.marketCapUsd : 0;
                 let balanceUSD = balance * rateUSD;
                 let tokenAddress = item.tokenInfo.address;
-                if(["MNE", "KICK"].indexOf(symbol) === -1){ // Blacklist
+                if((["MNE", "KICK"].indexOf(symbol) === -1) && (tokenAddressBlacklist.indexOf(tokenAddress.toLowerCase()) === -1)){ // Blacklist
                   getAgainstETH.push(symbol);
                   coinListLocal[symbol] = { balance, balanceUSD, marketCapUSD, tokenAddress, decimals };
                   if (balanceUSD >= 0 && (item.tokenInfo.price !== false)) {
