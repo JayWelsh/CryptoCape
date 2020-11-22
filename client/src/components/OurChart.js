@@ -69,7 +69,7 @@ class OurChart extends React.Component {
 
     let margin = {
       top: 15,
-      bottom: 40,
+      bottom: 50,
       left: 0,
       right: 0
     }

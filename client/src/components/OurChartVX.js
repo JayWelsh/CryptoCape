@@ -90,7 +90,7 @@ const OurChartVX = ({
 
     if (data.length > 0) {
         
-        const xAxisTickFunction = (val, i) => ({ fontSize: 14, fill: 'white' })
+        const xAxisTickFunction = (val, i) => ({ fontSize: 14, fill: 'white', transform: `translate(-4, 0)rotate(-20 ${xScale(val)} 0)`, textAnchor: 'end'})
 
         const xAxisTickFormat = (val, i) => formatDateTimeTicker(val);
 
@@ -105,7 +105,7 @@ const OurChartVX = ({
 
         let formatDateTimeTooltip = timeFormat("%d %b %Y  |  %I:%M %p")
         
-        let formatDateTimeTicker = timeFormat("%b %Y")
+        let formatDateTimeTicker = timeFormat("%d %b %Y")
 
         const numTicks = isConsideredMobile ? 3 : 6
 
@@ -144,7 +144,7 @@ const OurChartVX = ({
 
         return (
             <div>
-                <svg ref={s => (this.svg = s)} width={width} height={height + 30}>
+                <svg ref={s => (this.svg = s)} width={width} height={height + 48}>
                     <AxisBottom
                         tickLabelProps={xAxisTickFunction}
                         tickFormat={xAxisTickFormat}
@@ -152,9 +152,8 @@ const OurChartVX = ({
                         data={data}
                         scale={xScale}
                         x={x}
-                        hideAxisLine
-                        hideTicks
                         numTicks={numTicks}
+                        tickStroke={"#1d3d64"}
                     />
                     <LinearGradient id='area-fill' from="#3f51b5" to="#3f51b5" fromOpacity={1} toOpacity={0} />
                     <PatternLines
@@ -282,15 +281,15 @@ const OurChartVX = ({
                     </g>}
                 </svg>
                 {tooltipData &&
-                        <div>
+                    <div>
                         <Tooltip top={setTooltipLabelTop} left={tooltipLeft + 12} style={{backgroundColor: '#2d0056', color: '#FFFFFF', pointerEvents: 'none', transform: tooltipPriceTranslate, transition: tooltipAnimation, whiteSpace: 'pre'}}>
                             <b>{priceFormat(y(tooltipData), 2, chartCurrency)}</b>
                         </Tooltip>
                         <Tooltip top={yScale(minPrice)} left={tooltipLeft} style={{backgroundColor: '#2d0056', color: '#FFFFFF', transform: tooltipDateTranslate, pointerEvents: 'none', display: 'table', transition: tooltipAnimation, whiteSpace: 'pre'}}>
                             <b>{formatDateTimeTooltip(x(tooltipData))}</b>
                         </Tooltip>
-                        </div>
-                    }
+                    </div>
+                }
             </div>
         );
     } else {
