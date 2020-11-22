@@ -743,6 +743,8 @@ class PortfolioPage extends React.Component {
         coins[symbol].coinGeckoLink = `https://www.coingecko.com/en/coins/${coins[symbol].coinGeckoId}`;
       }
     }
+    let tableDataWithChanges = this.buildTableData(coins, totalValueCountUSD);
+    thisPersist.setState({coins, tableData: tableDataWithChanges});
     await this.delayApiCalls(getCoinGeckoLinks).then(async data => {
       if(data) {
         for(let item of data) {
