@@ -190,9 +190,22 @@ class PortfolioPage extends React.Component {
       return axios.get(getTokenTransactionHistoryURL);
     }
 
-    getEtherTransactionHistory(publicKey) {
-      let getEthTransactionHistoryURL = 'https://api.etherscan.io/api?module=account&action=txlist&address=' + publicKey + '&startblock=0&endblock=99999999&sort=asc&apikey=4H7XW7VUYZD2A63GPIJ4YWEMIMTU6M9PGE';
-      return axios.get(getEthTransactionHistoryURL);
+    getEtherTransactionHistory = async (publicKey, cumulation = [], startBlock = 0) => {
+      let getEthTransactionHistoryURL = 'https://api.etherscan.io/api?module=account&action=txlist&address=' + publicKey + '&startblock=' + startBlock + '&endblock=99999999&sort=asc&apikey=4H7XW7VUYZD2A63GPIJ4YWEMIMTU6M9PGE';
+      let etherTransactionData = await axios.get(getEthTransactionHistoryURL);
+      let latestBlock = 0;
+      if(etherTransactionData.data && etherTransactionData.data.result && etherTransactionData.data.result.length > 0) {
+        latestBlock = (etherTransactionData.data.result[etherTransactionData.data.result.length - 1].blockNumber * 1);
+        let useCumulation = [...cumulation, ...etherTransactionData.data.result];
+        if(latestBlock > startBlock) {
+          useCumulation = useCumulation.filter(item => item.blockNumber < latestBlock);
+          return this.getEtherTransactionHistory(publicKey, useCumulation, latestBlock);
+        } else {
+          return useCumulation;
+        }
+      }else{
+        return cumulation;
+      }
     }
 
     getInternalEtherTransactionHistory(publicKey) {
@@ -330,14 +343,18 @@ class PortfolioPage extends React.Component {
       let historicalBaseCurrency = this.state.historicalBaseCurrency;
       await axios.all([this.getEtherTransactionHistory(publicKey), this.getTokenTransactionHistory(publicKey),this.getBaseCurrencyHistoricalUSD(historicalBaseCurrency), this.getInternalEtherTransactionHistory(publicKey)]).then(async (res) => {
         if (res && res[1].data && res[1].data.result && (res[1].data.result.constructor === Array)) {
-          let transactionDataEther = res[0].data.result.map((item) => {
-            item.tokenSymbol = "ETH";
-            if(item.isError === "0") {
-              return item;
-            } else {
-              return null;
-            }
-          }).filter(item => item !== null);
+          let transactionDataEther = [];
+
+          if(res[0] && res[0].length > 0) {
+            transactionDataEther = res[0].map((item) => {
+              item.tokenSymbol = "ETH";
+              if(item.isError === "0") {
+                return item;
+              } else {
+                return null;
+              }
+            }).filter(item => item !== null);
+          }
 
           let transactionDataEtherInternal = res[3].data.result.map((item) => {
             item.tokenSymbol = "ETH";
