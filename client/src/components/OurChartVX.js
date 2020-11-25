@@ -88,7 +88,7 @@ const OurChartVX = ({
     }
 
 
-    if (data.length > 0) {
+    if (data && data.length > 0) {
         
         const xAxisTickFunction = (val, i) => ({ fontSize: 14, fill: 'white', transform: `translate(-4, 0)rotate(-20 ${xScale(val)} 0)`, textAnchor: 'end'})
 

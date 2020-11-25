@@ -3,12 +3,14 @@ import PropTypes from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import { ParentSize } from "@vx/responsive";
-// import OurBrushChart from './OurBrushChart';
+import OurBrushChart from './OurBrushChart';
 import { LinearGradient } from '@vx/gradient';
 import OurChartVX from './OurChartVX';
 import { priceFormat, subtractNumbers, percToColor } from '../utils';
 import Loading from './Loading';
 import { withParentSize } from '@vx/responsive';
+import OurDatePicker from './OurDatePicker';
+import moment from "moment";
 
 const styles = theme => ({
     outerContainer: {
@@ -20,6 +22,10 @@ const styles = theme => ({
         flexDirection: 'column',
         width: '100%',
         overflow: 'hidden'
+    },
+    dateRangeContainer: {
+        marginTop: '7px',
+        marginBottom: '20px',
     },
     center: {
         flexDirection: 'column',
@@ -35,7 +41,12 @@ const styles = theme => ({
         display:'flex'
     },
     brushContainer: {
-        height: '100px'
+        height: '100px',
+    },
+    mobileBrushContainer: {
+        height: '1px',
+        opacity: 0,
+        pointerEvents: 'none',
     },
     chart: {
         flexDirection: 'column',
@@ -112,18 +123,42 @@ const OurChartVXContainer = ({
     timeboxTimestamp,
     genesisProgress,
     isEth2DepositContract,
+    handleFromDateChange,
+    handleToDateChange,
+    earliestDate,
+
 }) => {
-    const [prices, setPrices] = useState(chartData);
+    const [prices, setPrices] = useState();
     const [currentPrice, setCurrentPrice] = useState(false);
+    const [toDate, setToDate] = useState(moment().format('YYYY-MM-DD'));
+    const [inputFieldToDate, setInputFieldToDate] = useState(toDate);
+    const [previousInputFieldToDate, setPreviousInputFieldToDate] = useState(toDate);
+    const [fromDate, setFromDate] = useState(moment().format('YYYY-MM-DD'));
+    const [inputFieldFromDate, setInputFieldFromDate] = useState(fromDate);
+    const [previousInputFieldFromDate, setPreviousInputFieldFromDate] = useState(fromDate);
+    const [inputFieldDatesTimestamp, setInputFieldDatesTimestamp] = useState(new Date().getTime());
+    const [previousInputFieldDatesTimestamp, setPreviousInputFieldDatesTimestamp] = useState(new Date().getTime());
     const [diffPrice, setDiffPrice] = useState(0);
     const [hasIncreased, setHasIncreased] = useState(true);
     const [percentDiff, setPercentDiff] = useState(0);
     const [useIsEth2DepositContract, setUseIsEth2DepositContract] = useState(isEth2DepositContract);
     const [useHideTooltipTimestamp, setHideTooltipTimestamp] = useState(new Date().getTime());
+    const [useTimebox, setUseTimebox] = useState(timebox);
+    const [useTimeboxTimestamp, setUseTimeboxTimestamp] = useState(timeboxTimestamp);
 
     useEffect(() => {
-        setPrices(chartData);
-    }, [chartData])
+        // if(chartData && chartData[0] && moment(chartData[0].date).format('YYYY-MM-DD') !== fromDate) {
+        //     setFromDate(moment(chartData[0].date).format('YYYY-MM-DD'));
+        // }
+        let optimisedChartData = chartData.filter((item, index) => {
+            if(chartData.length < 2000 || ((index % 20 === 0) || (index === chartData.length - 1))) {
+            return item;
+          }
+          return false;
+        })
+        setPrices(optimisedChartData);
+        setInputFieldDatesTimestamp(new Date().getTime());
+    }, [JSON.stringify(chartData)])
 
     useEffect(() => {
         setUseIsEth2DepositContract(isEth2DepositContract);
@@ -145,11 +180,84 @@ const OurChartVXContainer = ({
         setPrices(prices);
     }, [prices])
 
+    useEffect(() => {
+        if(
+            inputFieldDatesTimestamp !== previousInputFieldDatesTimestamp && 
+            (previousInputFieldToDate !== inputFieldToDate || previousInputFieldFromDate !== inputFieldFromDate)
+        ) {
+            setUseTimebox(JSON.stringify({
+                fromDate: moment(inputFieldFromDate).startOf('day').format('YYYY-MM-DD'),
+                toDate: moment(inputFieldToDate).startOf('day').format('YYYY-MM-DD')
+            }));
+            setUseTimeboxTimestamp(new Date().getTime());
+            setFromDate(inputFieldFromDate);
+            setToDate(inputFieldToDate);
+            setPreviousInputFieldDatesTimestamp(inputFieldDatesTimestamp);
+        }
+    }, [inputFieldFromDate, inputFieldToDate, inputFieldDatesTimestamp])
+    
+    const setFromDateInputFieldValue = (value) => {
+        setInputFieldFromDate(moment(value).format('YYYY-MM-DD'));
+        setInputFieldDatesTimestamp(new Date().getTime());
+    }
+
+    const setToDateInputFieldValue = (value) => {
+        setInputFieldToDate(moment(value).format('YYYY-MM-DD'));
+        setInputFieldDatesTimestamp(new Date().getTime());
+    }
+
+    useEffect(() => {
+        if(timebox !== useTimebox) {
+            setUseTimebox(timebox);
+            let parsedTimebox = JSON.parse(timebox);
+            setFromDateInputFieldValue(parsedTimebox.fromDate);
+            setToDateInputFieldValue(parsedTimebox.toDate);
+        }
+        if(timeboxTimestamp !== useTimeboxTimestamp) {
+            setUseTimeboxTimestamp(timeboxTimestamp);
+        }
+    }, [timebox, timeboxTimestamp])
+
+    useEffect(() => {
+        if(useTimebox) {
+            let parsedUseTimebox = JSON.parse(useTimebox);
+            setInputFieldFromDate(parsedUseTimebox.fromDate);
+            setInputFieldToDate(parsedUseTimebox.toDate);
+        }
+    }, [useTimebox])
+
     return (
         <div className={classes.outerContainer}>
-            <Loading isLoading={isChartLoading} width={parentWidth} height={parentHeight}/>
+            <div className={classes.dateRangeContainer}>
+                <OurDatePicker
+                    disabled={isChartLoading}
+                    label="From Date"
+                    value={fromDate}
+                    format="yyyy-MM-dd"
+                    animateYearScrolling
+                    variant="outlined"
+                    onChange={setFromDateInputFieldValue}
+                    disableFuture={true}
+                    minDate={earliestDate}
+                    maxDate={!isChartLoading && moment(toDate).subtract(1, 'day').format("YYYY-MM-DD")}
+                    style={{width: '130px', marginLeft: '20px', marginRight: '19px'}}
+                />
+                <OurDatePicker
+                    disabled={isChartLoading}
+                    label="To Date"
+                    value={toDate}
+                    format="yyyy-MM-dd"
+                    animateYearScrolling
+                    variant="outlined"
+                    onChange={setToDateInputFieldValue}
+                    disableFuture={true}
+                    minDate={!isChartLoading && moment(fromDate).add(1, 'day').format("YYYY-MM-DD")}
+                    style={{width: '130px', marginLeft: '20px', marginRight: '20px'}}
+                />
+            </div>
             <div className={classes.center}>
-                <div className={classes.chart + " elevation-shadow-two"} style={{ width: '100%', height: isConsideredMobile ? '500px' : '500px'}}>
+                <Loading isLoading={isChartLoading} width={parentWidth} height={parentHeight + 56}/>
+                <div className={classes.chart + " elevation-shadow-two"} style={{ width: '100%', height: isConsideredMobile ? '500px' : '600px'}}>
                     <div className={classes.titleBar}>
                         <div className={classes.leftTitles}>
                             <div>
@@ -187,11 +295,9 @@ const OurChartVXContainer = ({
                     <div className={classes.innerContainer}>
                         <OurChartVX hideTooltipTimestamp={useHideTooltipTimestamp} enableCurveStepAfter={enableCurveStepAfter} isConsideredMobile={isConsideredMobile} chartCurrency={chartCurrency} margin={margin} data={prices} />
                     </div>
-                    {/* {!isConsideredMobile && 
-                        <div className={classes.brushContainer}>
-                            {chartData.length > 0 && <OurBrushChart timeboxTimestamp={timeboxTimestamp} timebox={timebox} setHideTooltipTimestamp={setHideTooltipTimestamp} enableCurveStepAfter={enableCurveStepAfter} setPrices={setPrices} height={100} enableCurveStepAfter={enableCurveStepAfter} isChartLoading={isChartLoading} isConsideredMobile={isConsideredMobile} chartData={chartData} chartCurrency={chartCurrency} />}
-                        </div>
-                    } */}
+                    <div className={isConsideredMobile ? classes.mobileBrushContainer : classes.brushContainer}>
+                        {chartData.length > 0 && <OurBrushChart isConsideredMobile={isConsideredMobile} setUseTimebox={setUseTimebox} setFromDateInputFieldValue={setFromDateInputFieldValue} setToDateInputFieldValue={setToDateInputFieldValue} setToDate={setToDate} setFromDate={setFromDate} handleFromDateChange={handleFromDateChange} handleToDateChange={handleToDateChange} timeboxTimestamp={useTimeboxTimestamp} timebox={useTimebox} setHideTooltipTimestamp={setHideTooltipTimestamp} enableCurveStepAfter={enableCurveStepAfter} setPrices={setPrices} height={100} enableCurveStepAfter={enableCurveStepAfter} isChartLoading={isChartLoading} isConsideredMobile={isConsideredMobile} chartData={chartData} chartCurrency={chartCurrency} />}
+                    </div>
                 </div>
             </div>
             {/*

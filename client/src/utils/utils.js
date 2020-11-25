@@ -1,6 +1,7 @@
 import numeral from 'numeral';
 import { createBrowserHistory, createHashHistory } from 'history';
 import BigNumber from 'bignumber.js';
+import moment from 'moment';
 
 BigNumber.config({ EXPONENTIAL_AT: 100 });
 
@@ -143,33 +144,42 @@ export const isPrefixWWW = () => {
   }
 }
 
-export function rangeToHours(range){
+export function rangeToTimebox(range, earliestDate){
+    let fromDate;
     switch(range){
-        case '1HR': {
-            return 1;
-        }
         case '24HR': {
-            return 2;
+            fromDate = moment().startOf('day').subtract(1, 'day').format('YYYY-MM-DD');
+            break;
         }
         case '1W': {
-            return 168
+            fromDate = moment().startOf('day').subtract(1, 'week').format('YYYY-MM-DD');
+            break;
         }
         case '1M': {
-            return 730
+            fromDate = moment().startOf('day').subtract(1, 'month').format('YYYY-MM-DD');
+            break;
         }
         case '3M': {
-            return 2190
+            fromDate = moment().startOf('day').subtract(3, 'month').format('YYYY-MM-DD');
+            break;
         }
         case '6M': {
-            return 4380
+            fromDate = moment().startOf('day').subtract(6, 'month').format('YYYY-MM-DD');
+            break;
         }
         case '1Y': {
-            return 8760
+            fromDate = moment().startOf('day').subtract(1, 'year').format('YYYY-MM-DD');
+            break;
         }
         default: {
-            return false
+            fromDate = moment(earliestDate).startOf('day').format('YYYY-MM-DD');
+            break;
         }
       }
+    return JSON.stringify({
+        fromDate,
+        toDate: moment().format('YYYY-MM-DD')
+    })
 }
 
 export function configureHistory() {
@@ -182,3 +192,46 @@ export const numberFormat = (number) => {
     let format = '0,0.00';
     return numeral(number).format(format);
 }
+
+export const debounce = (func, wait, immediate) => {
+    // 'private' variable for instance
+    // The returned function will be able to reference this due to closure.
+    // Each call to the returned function will share this common timer.
+    let timeout;
+  
+    // Calling debounce returns a new anonymous function
+    return function() {
+      // reference the context and args for the setTimeout function
+      let context = this,
+        args = arguments;
+  
+      // Should the function be called now? If immediate is true
+      //   and not already in a timeout then the answer is: Yes
+      let callNow = immediate && !timeout;
+  
+      // This is the basic debounce behaviour where you can call this 
+      //   function several times, but it will only execute once 
+      //   [before or after imposing a delay]. 
+      //   Each time the returned function is called, the timer starts over.
+      clearTimeout(timeout);
+  
+      // Set the new timeout
+      timeout = setTimeout(function() {
+  
+        // Inside the timeout function, clear the timeout variable
+        // which will let the next execution run when in 'immediate' mode
+        timeout = null;
+  
+        // Check if the function already ran with the immediate flag
+        if (!immediate) {
+          // Call the original function with apply
+          // apply lets you define the 'this' object as well as the arguments 
+          //    (both captured before setTimeout)
+          func.apply(context, args);
+        }
+      }, wait);
+  
+      // Immediate mode and no wait timer? Execute the function..
+      if (callNow) func.apply(context, args);
+    }
+  }

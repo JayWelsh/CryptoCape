@@ -1,5 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import axios from 'axios';
+import Grid from '@material-ui/core/Grid';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
@@ -8,18 +10,17 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Switch from '@material-ui/core/Switch';
 import Button from '@material-ui/core/Button';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
+import moment from 'moment';
+import { withRouter } from 'react-router-dom';
 import OurChart from './OurChart';
 import OurPieChart from './OurPieChart';
-import Grid from '@material-ui/core/Grid';
 import ChartMenuMiniCard from './ChartMenuMiniCard';
 import SortableTable from './SortableTable';
-import { withRouter } from 'react-router-dom';
-import axios from 'axios';
 import {
   priceFormat,
   numberFormat,
   isValidAddress,
-  rangeToHours,
+  rangeToTimebox,
   weiToEther,
   subtractNumbers,
   addNumbers,
@@ -27,9 +28,9 @@ import {
   divideNumbers,
   tokenBalanceFromDecimals,
 } from '../utils';
-import moment from 'moment';
 
 const eth2DepositContract = "0x00000000219ab540356cbb839cbe05303d7705fa";
+const timeseriesBufferPeriod = 7;
 
 function TabContainer({ children, dir }) {
   return (
@@ -119,7 +120,10 @@ class PortfolioPage extends React.Component {
           timeboxTimestamp: new Date().getTime(),
           includeInCompositePricingQueries: [],
           genesisProgress: 0,
-          isEth2DepositContract: this.props.publicKey && eth2DepositContract === this.props.publicKey.toLowerCase()
+          isEth2DepositContract: this.props.publicKey && eth2DepositContract === this.props.publicKey.toLowerCase(),
+          lastPriceFetchTime: new Date().getTime(),
+          fromDate: moment().format('YYYY-MM-DD'),
+          toDate: moment().format('YYYY-MM-DD'),
         };
     }
     
@@ -249,9 +253,7 @@ class PortfolioPage extends React.Component {
   }
 
   setTimeseriesRange(range) {
-    if(range !== this.state.timeseriesRange){
-      this.setState({timeseriesRange: range, timeboxTimestamp: new Date().getTime()});
-    }
+    this.setState({timeseriesRange: range, timeboxTimestamp: new Date().getTime()});
   }
 
   getSelectedTimeseriesRange(timeseriesRange) {
@@ -265,7 +267,7 @@ class PortfolioPage extends React.Component {
   }
 
   buildCompositeTimeseries = async (coins) => {
-    const {timeseriesRange} = this.state;
+    const {timeseriesRange, lastPriceFetchTime} = this.state;
     let timeseriesData = [];
     let fullHistoryLinks = [];
     let fullHistoricalCurrencies = [];
@@ -294,10 +296,9 @@ class PortfolioPage extends React.Component {
         index++;
       }
     });
-    let forceCurrentTime = moment();
     for(let historicalBaseCurrency of Object.keys(coins)){
       if(coins &&  coins[historicalBaseCurrency] && coins[historicalBaseCurrency].timeseries) {
-        let bufferTimeseries = this.bufferTimeseries(coins[historicalBaseCurrency].timeseries, 'daily', true, forceCurrentTime);
+        let bufferTimeseries = this.bufferTimeseries(coins[historicalBaseCurrency].timeseries, 'daily', true, lastPriceFetchTime);
         timeseriesData = this.convertBaseBalances(bufferTimeseries, fullHistoricalCurrencies[historicalBaseCurrency], true);
         // if(timeseriesRange && (timeseriesData.length > 0)) {
         //   let rangeInHours = rangeToHours(timeseriesRange);
@@ -337,6 +338,7 @@ class PortfolioPage extends React.Component {
 
     fetchAddressTransactionHistory = async () => {
       let thisPersist = this;
+      let { isEth2DepositContract } = this.state;
       let publicKey = this.state.publicKey;
       let restrictCoins = this.state.coins;
       let includeInCompositePricingQueries = this.state.includeInCompositePricingQueries || [];
@@ -356,115 +358,125 @@ class PortfolioPage extends React.Component {
             }).filter(item => item !== null);
           }
 
-          let transactionDataEtherInternal = res[3].data.result.map((item) => {
-            item.tokenSymbol = "ETH";
-            item.internalTransaction = true;
-            if(item.isError === "0") {
-              return item;
-            } else {
-              return null;
-            }
-          }).filter(item => item !== null);
-
-          let transactionDataTokens = res[1].data.result.filter((item) => {
-            return true;
-          })
-
-          let transactionData = transactionDataEther.concat(transactionDataEtherInternal).concat(transactionDataTokens).sort((a, b) => (a.blockNumber * 1) - (b.blockNumber * 1));
-
-          // restrictCoinsKeys.forEach((coin) => {
-            let coinTransactionGroup = transactionData;
-            let latestTimestamp;
-            let earliestTimestamp;
-            let tokenTimeseriesIndex = {};
-            coinTransactionGroup.forEach((transaction) => {
-              let coin = transaction.tokenSymbol.toUpperCase();
-              if(restrictCoins[coin] && restrictCoins[coin].decimals){
-                if(!tokenTimeseriesIndex[coin] && tokenTimeseriesIndex[coin] !== 0){
-                  tokenTimeseriesIndex[coin] = 0;
-                }else{
-                  tokenTimeseriesIndex[coin] = tokenTimeseriesIndex[coin] + 1;
-                }
-                if (tokenTimeseriesIndex[coin] === 0) {
-                  latestTimestamp = transaction.timeStamp;
-                  earliestTimestamp = transaction.timeStamp;
-                }
-                
-                if (transaction.timeStamp > latestTimestamp) {
-                  latestTimestamp = transaction.timeStamp;
-                } else if (transaction.timeStamp < earliestTimestamp){
-                  earliestTimestamp = transaction.timeStamp;
-                }
-
-                let balanceAfterPriorTransactions = 0;
-
-                if (restrictCoins[coin] && restrictCoins[coin].timeseries && restrictCoins[coin].timeseries && restrictCoins[coin].timeseries.length > 0 && tokenTimeseriesIndex[coin] > 0) {
-                  balanceAfterPriorTransactions = addNumbers(balanceAfterPriorTransactions, restrictCoins[coin].timeseries[tokenTimeseriesIndex[coin] - 1].price);
-                }
-
-                let setBalance;
-                let createGasTx;
-                let totalEtherUsedAsGasTx = weiToEther(multiplyNumbers(transaction.gasUsed, transaction.gasPrice));
-                if (transaction.to.toLowerCase() === publicKey.toLowerCase()) {
-                  let balance = tokenBalanceFromDecimals(transaction.value, restrictCoins[coin].decimals) * 1;
-                  setBalance = addNumbers(balanceAfterPriorTransactions, balance);
-                } else {
-                  if(coin === "ETH"){
-                    setBalance = subtractNumbers(balanceAfterPriorTransactions, weiToEther(addNumbers(transaction.value, totalEtherUsedAsGasTx)));
-                  } else {
-                    let ethBalanceAtTransaction = 0;
-                    if (restrictCoins["ETH"].timeseries && restrictCoins["ETH"].timeseries && restrictCoins["ETH"].timeseries.length > 0 && tokenTimeseriesIndex["ETH"]) {
-                      ethBalanceAtTransaction = restrictCoins["ETH"].timeseries[tokenTimeseriesIndex["ETH"] - 1].price;
-                    }
-                    // TODO handle gas transaction impacts on ETH balance
-                    // createGasTx = {
-                    //   date: moment.unix(transaction.timeStamp),
-                    //   price: subtractNumbers(ethBalanceAtTransaction, totalEtherUsedAsGasTx),
-                    //   totalEtherUsedAsGasTx,
-                    //   ethBalanceAtTransaction
-                    // }
-                    let balance = tokenBalanceFromDecimals(transaction.value, restrictCoins[coin].decimals) * 1;
-                    setBalance = subtractNumbers(balanceAfterPriorTransactions, balance);
-                  }
-                }
-
-                let transactionTimeseriesSingle = {
-                  date: moment.unix(transaction.timeStamp),
-                  price: setBalance
-                }
-                if (restrictCoins[coin] && restrictCoins[coin].timeseries) {
-                  restrictCoins[coin].timeseries.push(transactionTimeseriesSingle);
-                } else {
-                  if(!restrictCoins[coin]){
-                    restrictCoins[coin] = {};
-                  }
-                  restrictCoins[coin].timeseries = [];
-                  restrictCoins[coin].timeseries.push(transactionTimeseriesSingle);
-                }
-                if(createGasTx) {
-                  if (restrictCoins["ETH"].timeseries) {
-                    restrictCoins["ETH"].timeseries.push(createGasTx);
-                  } else {
-                    restrictCoins["ETH"].timeseries = [];
-                    restrictCoins["ETH"].timeseries.push(createGasTx);
-                  }
-                }
-                restrictCoins[coin].latestTimestamp = latestTimestamp;
-                restrictCoins[coin].earliestTimestamp = earliestTimestamp;
+          if(res[3].data.result) {
+            let transactionDataEtherInternal = res[3].data.result.map((item) => {
+              item.tokenSymbol = "ETH";
+              item.internalTransaction = true;
+              if(item.isError === "0") {
+                return item;
+              } else {
+                return null;
               }
-            });
-          // })
-          thisPersist.setState({ coins: restrictCoins, baseCurrencyToUSD: res[2] });
-          // Calculate composite value chart
-          let compositeCoins = Object.keys(restrictCoins)
-          .filter(key => includeInCompositePricingQueries.includes(key))
-          .reduce((obj, key) => {
-            obj[key] = restrictCoins[key];
-            return obj;
-          }, {});
-          let consolidatedTimeseries = await thisPersist.buildCompositeTimeseries(compositeCoins);
-          thisPersist.setState({ compositeTimeseriesUSD: consolidatedTimeseries, isCompositeReady: true, isChartLoading: false});
-          return Object.keys(restrictCoins);
+            }).filter(item => item !== null);
+         
+
+            let transactionDataTokens = res[1].data.result.filter((item) => {
+              return true;
+            })
+
+            let transactionData = transactionDataEther.concat(transactionDataEtherInternal).concat(transactionDataTokens).sort((a, b) => (a.blockNumber * 1) - (b.blockNumber * 1));
+
+            // restrictCoinsKeys.forEach((coin) => {
+              let coinTransactionGroup = transactionData;
+              let latestTimestamp;
+              let earliestTimestamp;
+              let earliestOverallTimestamp;
+              let tokenTimeseriesIndex = {};
+              coinTransactionGroup.forEach((transaction) => {
+                let coin = transaction.tokenSymbol.toUpperCase();
+                if(restrictCoins[coin] && restrictCoins[coin].decimals){
+                  if(!tokenTimeseriesIndex[coin] && tokenTimeseriesIndex[coin] !== 0){
+                    tokenTimeseriesIndex[coin] = 0;
+                  }else{
+                    tokenTimeseriesIndex[coin] = tokenTimeseriesIndex[coin] + 1;
+                  }
+                  if (tokenTimeseriesIndex[coin] === 0) {
+                    latestTimestamp = transaction.timeStamp;
+                    earliestTimestamp = transaction.timeStamp;
+                  }
+                  
+                  if (transaction.timeStamp > latestTimestamp) {
+                    latestTimestamp = transaction.timeStamp;
+                  } else if (transaction.timeStamp < earliestTimestamp){
+                    earliestTimestamp = transaction.timeStamp;
+                  }
+
+                  let balanceAfterPriorTransactions = 0;
+
+                  if (restrictCoins[coin] && restrictCoins[coin].timeseries && restrictCoins[coin].timeseries && restrictCoins[coin].timeseries.length > 0 && tokenTimeseriesIndex[coin] > 0) {
+                    balanceAfterPriorTransactions = addNumbers(balanceAfterPriorTransactions, restrictCoins[coin].timeseries[tokenTimeseriesIndex[coin] - 1].price);
+                  }
+
+                  let setBalance;
+                  let createGasTx;
+                  let totalEtherUsedAsGasTx = weiToEther(multiplyNumbers(transaction.gasUsed, transaction.gasPrice));
+                  if (transaction.to.toLowerCase() === publicKey.toLowerCase()) {
+                    let balance = tokenBalanceFromDecimals(transaction.value, restrictCoins[coin].decimals) * 1;
+                    setBalance = addNumbers(balanceAfterPriorTransactions, balance);
+                  } else {
+                    if(coin === "ETH"){
+                      setBalance = subtractNumbers(balanceAfterPriorTransactions, weiToEther(addNumbers(transaction.value, totalEtherUsedAsGasTx)));
+                    } else {
+                      let ethBalanceAtTransaction = 0;
+                      if (restrictCoins["ETH"].timeseries && restrictCoins["ETH"].timeseries && restrictCoins["ETH"].timeseries.length > 0 && tokenTimeseriesIndex["ETH"]) {
+                        ethBalanceAtTransaction = restrictCoins["ETH"].timeseries[tokenTimeseriesIndex["ETH"] - 1].price;
+                      }
+                      // TODO handle gas transaction impacts on ETH balance
+                      // createGasTx = {
+                      //   date: moment.unix(transaction.timeStamp),
+                      //   price: subtractNumbers(ethBalanceAtTransaction, totalEtherUsedAsGasTx),
+                      //   totalEtherUsedAsGasTx,
+                      //   ethBalanceAtTransaction
+                      // }
+                      let balance = tokenBalanceFromDecimals(transaction.value, restrictCoins[coin].decimals) * 1;
+                      setBalance = subtractNumbers(balanceAfterPriorTransactions, balance);
+                    }
+                  }
+
+                  let transactionTimeseriesSingle = {
+                    date: moment.unix(transaction.timeStamp),
+                    price: setBalance
+                  }
+                  if (restrictCoins[coin] && restrictCoins[coin].timeseries) {
+                    restrictCoins[coin].timeseries.push(transactionTimeseriesSingle);
+                  } else {
+                    if(!restrictCoins[coin]){
+                      restrictCoins[coin] = {};
+                    }
+                    restrictCoins[coin].timeseries = [];
+                    restrictCoins[coin].timeseries.push(transactionTimeseriesSingle);
+                  }
+                  if(createGasTx) {
+                    if (restrictCoins["ETH"].timeseries) {
+                      restrictCoins["ETH"].timeseries.push(createGasTx);
+                    } else {
+                      restrictCoins["ETH"].timeseries = [];
+                      restrictCoins["ETH"].timeseries.push(createGasTx);
+                    }
+                  }
+                  restrictCoins[coin].latestTimestamp = latestTimestamp;
+                  restrictCoins[coin].earliestTimestamp = earliestTimestamp;
+                  if(!earliestOverallTimestamp) {
+                    earliestOverallTimestamp = earliestTimestamp;
+                  }else if(earliestTimestamp < earliestOverallTimestamp) {
+                    earliestOverallTimestamp = earliestTimestamp;
+                  }
+                }
+              });
+            // })
+            let earliestOverallDate = moment.unix(earliestOverallTimestamp).subtract(timeseriesBufferPeriod, 'days').format('YYYY-MM-DD');
+            thisPersist.setState({ coins: restrictCoins, baseCurrencyToUSD: res[2], fromDate: earliestOverallDate, earliestDate: isEth2DepositContract ? "2020-11-03" : earliestOverallDate });
+            // Calculate composite value chart
+            let compositeCoins = Object.keys(restrictCoins)
+            .filter(key => includeInCompositePricingQueries.includes(key))
+            .reduce((obj, key) => {
+              obj[key] = restrictCoins[key];
+              return obj;
+            }, {});
+            let consolidatedTimeseries = await thisPersist.buildCompositeTimeseries(compositeCoins);
+            thisPersist.setState({ compositeTimeseriesUSD: consolidatedTimeseries, isCompositeReady: true, isChartLoading: false});
+            return Object.keys(restrictCoins);
+          }
         }
       });
     }
@@ -477,10 +489,9 @@ class PortfolioPage extends React.Component {
         timeseries.forEach((item, index) => {
           let thisDate = item.date;
           let thisPrice = item.price;
-          let bufferPeriod = 7;
           if (index === 0) {
-            for (let i = 0; i <= bufferPeriod; i++) {
-              returnArray.push({ date: moment(thisDate).startOf('day').subtract((bufferPeriod - i), 'days'), price: 0 });
+            for (let i = 0; i <= timeseriesBufferPeriod; i++) {
+              returnArray.push({ date: moment(thisDate).startOf('day').subtract((timeseriesBufferPeriod - i), 'days'), price: 0 });
             }
           }
           if (timeseries[index + 1]) {
@@ -509,7 +520,7 @@ class PortfolioPage extends React.Component {
               }
             }
             if(forceCurrentTime){
-              returnArray.push({ date: moment(forceCurrentTime), price: thisPrice });
+              returnArray.push({ date: moment.unix(forceCurrentTime / 1000), price: thisPrice });
             } else {
               returnArray.push({ date: moment(currentDate), price: thisPrice });
             }
@@ -552,6 +563,7 @@ class PortfolioPage extends React.Component {
     }
 
   fetchPriceValues = async () => {
+    this.setState({ lastPriceFetchTime: new Date().getTime() });
     let { setLoading } = this.props;
     setLoading(true);
     let { historicalBaseCurrency } = this.state;
@@ -738,7 +750,7 @@ class PortfolioPage extends React.Component {
               findNewSelectedHistoricalBaseCurrency &&
               newSelectedHistoricalBaseCurrency &&
               { historicalBaseCurrency: newSelectedHistoricalBaseCurrency }
-            )
+            ),
           });
           await this.fetchAddressTransactionHistory();
           setLoading(false);
@@ -951,6 +963,18 @@ class PortfolioPage extends React.Component {
     }
   }
 
+  handleFromDateChange = date => {
+    this.setState({
+      fromDate: moment(date).format('YYYY-MM-DD'),
+    });
+  }
+
+  handleToDateChange = date => {
+    this.setState({
+      toDate: moment(date).format('YYYY-MM-DD'),
+    });
+  }
+
   render() {
     const { classes, history, isConsideredMobile, isLoading } = this.props;
     const { 
@@ -970,6 +994,8 @@ class PortfolioPage extends React.Component {
       timeboxTimestamp,
       genesisProgress,
       isEth2DepositContract,
+      lastPriceFetchTime,
+      earliestDate,
     } = this.state;
     let displayTotalUSD = priceFormat(totalPortfolioValueUSD);
     let displayTotalETH = isEth2DepositContract && coins["ETH"] && coins["ETH"].balance ? numberFormat(coins["ETH"].balance) +  " ETH" : "~ " + numberFormat(totalPortfolioValueETH) +  " ETH"
@@ -981,6 +1007,7 @@ class PortfolioPage extends React.Component {
     if(baseCurrencyToUSD && (baseCurrencyToUSD.constructor === Array) && (baseCurrencyToUSD.length > 0)){
       allowFiatConversion = true;
     }
+    let timebox = rangeToTimebox(timeseriesRange, earliestDate);
 
     let pieChartDataUSD = [];
     let pieChartDataMarketCaps = [];
@@ -1008,20 +1035,11 @@ class PortfolioPage extends React.Component {
       let timeseriesDataFull = [];
       if(coins &&  coins[historicalBaseCurrency] && coins[historicalBaseCurrency].timeseries) {
         //TODO: These buffers should run outside of the render, similarly to composite chart data
-        timeseriesData =  enableCompositeGraph ? compositeTimeseriesUSD : this.bufferTimeseries(coins[historicalBaseCurrency].timeseries);
+        timeseriesData =  enableCompositeGraph ? compositeTimeseriesUSD : this.bufferTimeseries(coins[historicalBaseCurrency].timeseries, 'daily', false, lastPriceFetchTime);
         if(enableFiatConversion && !enableCompositeGraph){
-          timeseriesData = this.convertBaseBalances(this.bufferTimeseries(coins[historicalBaseCurrency].timeseries, 'daily'), false, false, coins[historicalBaseCurrency].balanceUSD);
+          timeseriesData = this.convertBaseBalances(this.bufferTimeseries(coins[historicalBaseCurrency].timeseries, 'daily', false, lastPriceFetchTime), false, false, coins[historicalBaseCurrency].balanceUSD);
         }
         timeseriesDataFull = [...timeseriesData];
-        if(timeseriesRange && (timeseriesData.length > 0)) {
-          let rangeInHours = rangeToHours(timeseriesRange);
-          if (rangeInHours) {
-            let startTime = moment().subtract(rangeInHours, 'hours');
-            timeseriesData = timeseriesData.filter((item) => {
-              return moment(item.date).isAfter(startTime);
-            });
-          }
-        }
       }
 
     let stockOptionsUSD = {
@@ -1256,7 +1274,7 @@ class PortfolioPage extends React.Component {
             <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
             </Grid>
             <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
-              <OurChart isEth2DepositContract={isEth2DepositContract} genesisProgress={genesisProgress} timebox={timeseriesRange} timeboxTimestamp={timeboxTimestamp} enableCurveStepAfter={enableFiatConversion ? false : true} isChartLoading={isChartLoading} isConsideredMobile={isConsideredMobile} chartTitle={chartData.name} chartSubtitle={chartData.abbreviation} chartData={timeseriesData} chartCurrency={chartCurrency} isLoading={isLoading} />
+              <OurChart earliestDate={earliestDate} handleFromDateChange={this.handleFromDateChange} handleToDateChange={this.handleToDateChange} isEth2DepositContract={isEth2DepositContract} genesisProgress={genesisProgress} timebox={timebox} timeboxTimestamp={timeboxTimestamp} enableCurveStepAfter={enableFiatConversion ? false : true} isChartLoading={isChartLoading} isConsideredMobile={isConsideredMobile} chartTitle={chartData.name} chartSubtitle={chartData.abbreviation} chartData={timeseriesData} chartCurrency={chartCurrency} isLoading={isLoading} />
             </Grid>
             <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
             </Grid>

@@ -65,11 +65,14 @@ class OurChart extends React.Component {
       genesisProgress,
       isEth2DepositContract,
       isLoading,
+      handleFromDateChange,
+      handleToDateChange,
+      earliestDate,
     } = this.props;
 
     let margin = {
       top: 15,
-      bottom: 50,
+      bottom: 55,
       left: 0,
       right: 0
     }
@@ -77,7 +80,7 @@ class OurChart extends React.Component {
     if (chartData && !isLoading) {
       return (
         <div>
-          <OurChartVXContainer isEth2DepositContract={isEth2DepositContract} genesisProgress={genesisProgress} timebox={timebox} timeboxTimestamp={timeboxTimestamp} enableCurveStepAfter={enableCurveStepAfter} isChartLoading={isChartLoading} chartCurrency={chartCurrency} isConsideredMobile={isConsideredMobile} margin={margin} chartData={chartData} chartTitle={chartTitle} chartSubtitle={chartSubtitle}>
+          <OurChartVXContainer earliestDate={earliestDate} handleFromDateChange={handleFromDateChange} handleToDateChange={handleToDateChange} isEth2DepositContract={isEth2DepositContract} genesisProgress={genesisProgress} timebox={timebox} timeboxTimestamp={timeboxTimestamp} enableCurveStepAfter={enableCurveStepAfter} isChartLoading={isChartLoading} chartCurrency={chartCurrency} isConsideredMobile={isConsideredMobile} margin={margin} chartData={chartData} chartTitle={chartTitle} chartSubtitle={chartSubtitle}>
             {children}
           </OurChartVXContainer>
         </div>

@@ -10,7 +10,7 @@ import axios from 'axios';
 import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import { DatePicker, MuiPickersUtilsProvider } from "material-ui-pickers";
+import OurDatePicker from './OurDatePicker';
 import DateFnsUtils from "@date-io/date-fns";
 import moment from 'moment';
 
@@ -131,16 +131,14 @@ export default function FormDialog({publicKey, refetchData, isLoading}) {
             onChange={handleTokenQuantityChange}
           />
             <div style={{marginTop: '10px'}}>
-            <MuiPickersUtilsProvider utils={DateFnsUtils}>
-                <DatePicker
-                    label="Date"
-                    value={selectedDate}
-                    onChange={handleDateChange}
-                    format="dd/MM/yyyy"
-                    animateYearScrolling
-                    fullWidth
-                />
-            </MuiPickersUtilsProvider>
+              <OurDatePicker
+                  label="Date"
+                  value={selectedDate}
+                  onChange={handleDateChange}
+                  format="dd/MM/yyyy"
+                  animateYearScrolling
+                  fullWidth
+              />
             </div>
         </DialogContent>
         <DialogActions>
