@@ -27,6 +27,7 @@ import {
   multiplyNumbers,
   divideNumbers,
   tokenBalanceFromDecimals,
+  tokenInflatedBalanceFromDecimals,
 } from '../utils';
 
 const eth2DepositContract = "0x00000000219ab540356cbb839cbe05303d7705fa";
@@ -374,7 +375,19 @@ class PortfolioPage extends React.Component {
               return true;
             })
 
-            let transactionData = transactionDataEther.concat(transactionDataEtherInternal).concat(transactionDataTokens).sort((a, b) => (a.blockNumber * 1) - (b.blockNumber * 1));
+            let manualTransactionData = [];
+            for(let coin of Object.keys(restrictCoins)) {
+              if(restrictCoins[coin].timeseries && restrictCoins[coin].timeseries.length > 0) {
+                for(let transaction of restrictCoins[coin].timeseries) {
+                  manualTransactionData.push({...transaction, value: tokenInflatedBalanceFromDecimals(transaction.price, restrictCoins[coin].decimals), tokenSymbol: coin, timeStamp: new Date(transaction.date).getTime() / 1000});
+                }
+              }
+              if(transactionDataTokens.filter(item => item.tokenSymbol === coin).length > 0) {
+                restrictCoins[coin].timeseries = [];
+              }
+            }
+
+            let transactionData = transactionDataEther.concat(transactionDataEtherInternal).concat(transactionDataTokens).concat(manualTransactionData).sort((a, b) => a.blockNumber && b.blockNumber ? (a.blockNumber * 1) - (b.blockNumber * 1) : 0).sort((a, b) => (a.timeStamp * 1) - (b.timeStamp * 1));
 
             // restrictCoinsKeys.forEach((coin) => {
               let coinTransactionGroup = transactionData;
@@ -409,8 +422,8 @@ class PortfolioPage extends React.Component {
 
                   let setBalance;
                   let createGasTx;
-                  let totalEtherUsedAsGasTx = weiToEther(multiplyNumbers(transaction.gasUsed, transaction.gasPrice));
-                  if (transaction.to.toLowerCase() === publicKey.toLowerCase()) {
+                  let totalEtherUsedAsGasTx = weiToEther(multiplyNumbers(transaction.gasUsed ? transaction.gasUsed : 0, transaction.gasPrice ? transaction.gasPrice : 0));
+                  if (!transaction.to || transaction.to.toLowerCase() === publicKey.toLowerCase()) {
                     let balance = tokenBalanceFromDecimals(transaction.value, restrictCoins[coin].decimals) * 1;
                     setBalance = addNumbers(balanceAfterPriorTransactions, balance);
                   } else {
@@ -634,7 +647,17 @@ class PortfolioPage extends React.Component {
             if(manualEntry.id && manualEntry.symbol) {
               let symbol = manualEntry.symbol.toUpperCase()
               getAgainstETH.push(symbol);
-              coinListLocal[symbol] = { balance: manualEntry.tokenQuantity * 1, balance: manualEntry.tokenQuantity * 1, isManualEntry: true, decimals: 2, coinGeckoId: manualEntry.id, timeseries: manualEntry.timeseries };
+              coinListLocal[symbol] = { 
+                balance: manualEntry.tokenQuantity * 1,
+                isManualEntry: true,
+                decimals: (
+                  coinListLocal[symbol] && coinListLocal[symbol].decimals
+                      ? coinListLocal[symbol].decimals
+                      : 2
+                ),
+                coinGeckoId: manualEntry.id,
+                timeseries: manualEntry.timeseries
+              };
             }
           }
         }
