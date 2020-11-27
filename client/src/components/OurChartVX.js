@@ -153,7 +153,7 @@ const OurChartVX = ({
                         scale={xScale}
                         x={x}
                         numTicks={numTicks}
-                        tickStroke={"#1d3d64"}
+                        tickStroke={"steelblue"}
                     />
                     <LinearGradient id='area-fill' from="#3f51b5" to="#3f51b5" fromOpacity={1} toOpacity={0} />
                     <PatternLines

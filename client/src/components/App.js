@@ -9,6 +9,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Divider from '@material-ui/core/Divider';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
+import Tooltip from '@material-ui/core/Tooltip';
 import CryptocapeLogo from '../img/Cryptocape9.png';
 import PageContainer from './PageContainer';
 import NavigationItemsMain from './NavigationItems';
@@ -16,6 +17,8 @@ import { Router, Link } from 'react-router-dom';
 import ApolloClient from 'apollo-boost';
 import { ApolloProvider } from "react-apollo";
 import {configureHistory, isPrefixWWW} from '../utils';
+import DiscordLogo from '../img/DiscordLogo.svg';
+import GitHubLogo from '../img/GitHubLogo.svg';
 
 let endpointGraphQL = "https://cryptocape.com/graphql";
 if(isPrefixWWW()){
@@ -73,6 +76,10 @@ const styles = theme => ({
   menuButton: {
     marginLeft: 12,
     marginRight: 20,
+  },
+  linkContainer: {
+    marginRight: 12,
+    marginLeft: 12,
   },
   hide: {
     display: 'none',
@@ -268,6 +275,26 @@ class App extends React.Component {
             <img className={"header-logo"} src={CryptocapeLogo} />
           </Link>
         </div>
+        <div style={{marginLeft: 'auto'}} className={classes.linkContainer}>
+          <Tooltip title={<span style={{fontSize: 14}}>Discord Chat</span>}>
+            <a style={{display: 'inline-block'}} href={"https://discord.gg/x6T427nAH7"} target="_blank" rel="noopener noreferrer">
+              <IconButton
+                  color="inherit"
+                >
+                  <img width={'30px'} src={DiscordLogo}/>
+              </IconButton>
+            </a>
+          </Tooltip>
+          <Tooltip title={<span style={{fontSize: 14}}>GitHub</span>}>
+            <a style={{display: 'inline-block'}} href={"https://github.com/JayWelsh/CryptoCape"} target="_blank" rel="noopener noreferrer">
+              <IconButton
+                color="inherit"
+              >
+                <img width={'30px'} src={GitHubLogo}/>
+              </IconButton>
+            </a>
+          </Tooltip>
+        </div>
       </Toolbar>
     );
 
@@ -278,15 +305,31 @@ class App extends React.Component {
             <img className={"header-logo"} src={CryptocapeLogo} />
           </Link>
         </a>
-        <IconButton
-          color="inherit"
-          aria-label="Open drawer"
-          onClick={this.handleDrawerToggle}
-          className={classNames(classes.menuButton) + " menu-button"}
-          style={{marginLeft: 'auto'}}
-        >
-          <MenuIcon />
-        </IconButton>
+        <div style={{marginLeft: 'auto'}}>
+          <div className={classes.linkContainer}>
+            <a style={{display: 'inline-block'}} href={"https://discord.gg/x6T427nAH7"} target="_blank" rel="noopener noreferrer">
+              <IconButton
+                color="inherit"
+              >
+                <img width={'20px'} src={DiscordLogo}/>
+              </IconButton>
+            </a>
+            <a style={{display: 'inline-block'}} href={"https://github.com/JayWelsh/CryptoCape"} target="_blank" rel="noopener noreferrer">
+              <IconButton
+                color="inherit"
+              >
+                <img width={'20px'} src={GitHubLogo}/>
+              </IconButton>
+            </a>
+            <IconButton
+              color="inherit"
+              aria-label="Open drawer"
+              onClick={this.handleDrawerToggle}
+            >
+              <MenuIcon />
+            </IconButton>
+          </div>
+        </div>
       </Toolbar>
     )
 
