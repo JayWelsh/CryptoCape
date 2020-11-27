@@ -314,13 +314,6 @@ class App extends React.Component {
                 <img width={'20px'} src={DiscordLogo}/>
               </IconButton>
             </a>
-            <a style={{display: 'inline-block'}} href={"https://github.com/JayWelsh/CryptoCape"} target="_blank" rel="noopener noreferrer">
-              <IconButton
-                color="inherit"
-              >
-                <img width={'20px'} src={GitHubLogo}/>
-              </IconButton>
-            </a>
             <IconButton
               color="inherit"
               aria-label="Open drawer"
