@@ -597,7 +597,11 @@ class PortfolioPage extends React.Component {
       "SEED": {
 				tokenAddress: "0x30cf203b48edaa42c3b4918e955fed26cd012a3f",
 				decimals: 18,
-			}
+      },
+      "R34P": {
+        tokenAddress: "0xcaeaf8381d4b20b43afa42061d6f80319a8881f6",
+        decimals: 8,
+      }
 		}
     axios.get(getETHUSD).then(res => {
       let etherToUSD = res.data.RAW.ETH.USD.PRICE;
@@ -700,7 +704,7 @@ class PortfolioPage extends React.Component {
           let dailyChangeLinks = [];
           let tableData = this.buildTableData(coinListLocal, totalValueCountUSD);
           thisPersist.setState({ coins: coinListLocal, tableData, totalPortfolioValueUSD: totalValueCountUSD, totalPortfolioValueETH: totalValueCountETH });
-          let {coins} = this.state;
+          let coins = coinListLocal;
           let index = 0;
           let includeInCompositePricingQueries = [];
           for(let symbol of getAgainstETH){
