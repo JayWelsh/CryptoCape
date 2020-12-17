@@ -605,6 +605,11 @@ class PortfolioPage extends React.Component {
       "UNL": {
         tokenAddress: "0x04ab43d32d0172c76f5287b6619f0aa50af89303",
         decimals: 18,
+      },
+      "GRT": {
+        tokenAddress: "0xc944e90c64b2c07662a292be6244bdf05cda44a7",
+        decimals: 18,
+      },
       }
 		}
     axios.get(getETHUSD).then(res => {
