@@ -48,10 +48,15 @@ TabContainer.propTypes = {
 
 const styles = theme => ({
   root: {
-    backgroundColor: theme.palette.background.paper,
     width: '100%',
     padding: '10px',
     paddingTop: '20px'
+  },
+  darkBackground: {
+    backgroundColor: '#00020e',
+  },
+  lightBackground: {
+    backgroundColor: theme.palette.background.paper,
   },
   pageMinHeight: {
     minHeight: 'calc(100vh - 64px)'
@@ -125,6 +130,7 @@ class PortfolioPage extends React.Component {
           lastPriceFetchTime: new Date().getTime(),
           fromDate: moment().format('YYYY-MM-DD'),
           toDate: moment().format('YYYY-MM-DD'),
+          isDarkMode: false,
         };
     }
     
@@ -609,8 +615,7 @@ class PortfolioPage extends React.Component {
       "GRT": {
         tokenAddress: "0xc944e90c64b2c07662a292be6244bdf05cda44a7",
         decimals: 18,
-      },
-		}
+      }
 		}
     axios.get(getETHUSD).then(res => {
       let etherToUSD = res.data.RAW.ETH.USD.PRICE;
@@ -1032,6 +1037,7 @@ class PortfolioPage extends React.Component {
       isEth2DepositContract,
       lastPriceFetchTime,
       earliestDate,
+      isDarkMode,
     } = this.state;
     let displayTotalUSD = priceFormat(totalPortfolioValueUSD);
     let displayTotalETH = isEth2DepositContract && coins["ETH"] && coins["ETH"].balance ? numberFormat(coins["ETH"].balance) +  " ETH" : "~ " + numberFormat(totalPortfolioValueETH) +  " ETH"
@@ -1140,7 +1146,7 @@ class PortfolioPage extends React.Component {
       validWallet = true;
     }
     return (
-      <div className={classes.root + " " + classes.pageMinHeight}>
+      <div className={[classes.root, classes.pageMinHeight, isDarkMode ? classes.darkBackground : classes.lightBackground].join(" ")}>
         <div>
         {!validWallet && 
           <Grid container spacing={24}>
