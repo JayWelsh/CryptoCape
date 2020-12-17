@@ -610,7 +610,7 @@ class PortfolioPage extends React.Component {
         tokenAddress: "0xc944e90c64b2c07662a292be6244bdf05cda44a7",
         decimals: 18,
       },
-      }
+		}
 		}
     axios.get(getETHUSD).then(res => {
       let etherToUSD = res.data.RAW.ETH.USD.PRICE;
