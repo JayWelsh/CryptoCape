@@ -224,6 +224,11 @@ class PortfolioPage extends React.Component {
       return axios.get(getInternalEthTransactionHistoryURL);
     }
 
+    getEtherscanBalanceData(publicKey) {
+      let getEtherscanBalanceDataURL = 'https://api.etherscan.io/api?module=account&action=balance&address=' + publicKey + '&apikey=4H7XW7VUYZD2A63GPIJ4YWEMIMTU6M9PGE';
+      return axios.get(getEtherscanBalanceDataURL);
+    }
+
     getBaseCurrencyHistoricalUSD = async (historicalBaseCurrency) => {
       let { coins } = this.state;
       // Use CoinGecko Fallback
@@ -343,14 +348,19 @@ class PortfolioPage extends React.Component {
     return compositeTimeseries;
   }
 
-    fetchAddressTransactionHistory = async () => {
+  fetchAddressTransactionHistory = async (restrictCoins) => {
       let thisPersist = this;
       let { isEth2DepositContract } = this.state;
       let publicKey = this.state.publicKey;
-      let restrictCoins = this.state.coins;
       let includeInCompositePricingQueries = this.state.includeInCompositePricingQueries || [];
       let historicalBaseCurrency = this.state.historicalBaseCurrency;
-      await axios.all([this.getEtherTransactionHistory(publicKey), this.getTokenTransactionHistory(publicKey),this.getBaseCurrencyHistoricalUSD(historicalBaseCurrency), this.getInternalEtherTransactionHistory(publicKey)]).then(async (res) => {
+      await axios.all([
+        this.getEtherTransactionHistory(publicKey),
+        this.getTokenTransactionHistory(publicKey),
+        this.getBaseCurrencyHistoricalUSD(historicalBaseCurrency),
+        this.getInternalEtherTransactionHistory(publicKey),
+        this.getEtherscanBalanceData(publicKey)
+      ]).then(async (res) => {
         if (res && res[1].data && res[1].data.result && (res[1].data.result.constructor === Array)) {
           let transactionDataEther = [];
 
@@ -363,6 +373,11 @@ class PortfolioPage extends React.Component {
                 return null;
               }
             }).filter(item => item !== null);
+          }
+
+          if(res[4] && res[4].data && res[4].data.result) {
+            // Override ETH balance with what is provided by Etherscan, as Ethplorer isn't always reliable
+            restrictCoins["ETH"].balance = weiToEther(res[4].data.result) * 1;
           }
 
           if(res[3].data.result) {
@@ -498,6 +513,7 @@ class PortfolioPage extends React.Component {
           }
         }
       });
+      return restrictCoins;
     }
 
     bufferTimeseries(timeseries, fillRange = false, isCompositeTimeseries = false, forceCurrentTime = false) {
@@ -733,6 +749,7 @@ class PortfolioPage extends React.Component {
               index++;
             }
           }
+          coins = await this.fetchAddressTransactionHistory(coins);
           let tableDataWithChanges = this.buildTableData(coins, totalValueCountUSD);
           thisPersist.setState({coins, tableData: tableDataWithChanges, includeInCompositePricingQueries});
           await this.delayApiCalls(dailyChangeLinks).then(async data => {
@@ -793,7 +810,6 @@ class PortfolioPage extends React.Component {
               { historicalBaseCurrency: newSelectedHistoricalBaseCurrency }
             ),
           });
-          await this.fetchAddressTransactionHistory();
           setLoading(false);
           await this.fetchCoinGeckoLinks(this.state.coins, totalValueCountUSD);
         })
