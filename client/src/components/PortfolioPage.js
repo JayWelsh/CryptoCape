@@ -1121,6 +1121,9 @@ class PortfolioPage extends React.Component {
                 fontSize: '14px'
               }
             }
+          },
+          pie: {
+            borderColor: isDarkMode ? '#1d1d1d' : '#FFFFFF',
           }
       },
       tooltip: {
