@@ -14,7 +14,7 @@ import OurDatePicker from './OurDatePicker';
 import DateFnsUtils from "@date-io/date-fns";
 import moment from 'moment';
 
-export default function FormDialog({publicKey, refetchData, isLoading}) {
+export default function FormDialog({publicKey, refetchData, isLoading, isDarkMode}) {
   const [open, setOpen] = useState(false);
   const [coins, setCoins] = useState([]);
   const [filteredCoins, setFilteredCoins] = useState([]);
@@ -33,15 +33,18 @@ export default function FormDialog({publicKey, refetchData, isLoading}) {
   }
 
   const addManualRecord = async () => {
-    let manualRecord = {...selectedCoin, tokenQuantity, timeseries: [{date: moment(selectedDate), price: tokenQuantity}]};
+    let manualRecord = {...selectedCoin};
     let currentLocalStorageRecords = localStorage.getItem("manualAccountEntries") ? JSON.parse(localStorage.getItem("manualAccountEntries")) : {};
     if(publicKey) {
       let publicKeyLowerCase = publicKey.toLowerCase();
       if(currentLocalStorageRecords[publicKeyLowerCase]){
-          currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id] = manualRecord;
+          if(currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id].tokenQuantity) {
+            currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id].tokenQuantity = currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id].tokenQuantity + tokenQuantity;
+          }
+          currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id] = {...manualRecord, timeseries: [...currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id].timeseries, {date: moment(selectedDate), price: tokenQuantity}]};
       }else{
           currentLocalStorageRecords[publicKeyLowerCase] = {};
-          currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id] = manualRecord;
+          currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id] = {...manualRecord, timeseries: [{date: moment(selectedDate), price: tokenQuantity}]};
       }
       localStorage.setItem("manualAccountEntries", JSON.stringify(currentLocalStorageRecords));
     }
@@ -138,6 +141,7 @@ export default function FormDialog({publicKey, refetchData, isLoading}) {
                   format="dd/MM/yyyy"
                   animateYearScrolling
                   fullWidth
+                  isDarkMode={isDarkMode}
               />
             </div>
         </DialogContent>

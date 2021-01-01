@@ -62,7 +62,7 @@ class EnhancedTableHead extends React.Component {
   };
 
   render() {
-    const { onSelectAllClick, order, orderBy, numSelected, rowCount } = this.props;
+    const { onSelectAllClick, order, orderBy, numSelected, rowCount, isDarkMode } = this.props;
     return (
       <TableHead>
         <TableRow>
@@ -83,6 +83,7 @@ class EnhancedTableHead extends React.Component {
                     active={orderBy === row.id}
                     direction={order}
                     onClick={this.createSortHandler(row.id)}
+                    style={isDarkMode ? { color: 'white' } : {}}
                   >
                     {row.label}
                   </TableSortLabel>
@@ -129,10 +130,13 @@ const toolbarStyles = theme => ({
     marginTop: theme.spacing.unit * 3,
     marginBottom: theme.spacing.unit * 3,
   },
+  darkModeText: {
+    color: 'white'
+  }
 });
 
 let EnhancedTableToolbar = props => {
-  const { numSelected, classes, isConsideredMobile, publicKey, refetchData, isLoading, isEth2DepositContract } = props;
+  const { numSelected, classes, isConsideredMobile, publicKey, refetchData, isLoading, isEth2DepositContract, isDarkMode } = props;
 
   return (
     <Toolbar
@@ -141,10 +145,10 @@ let EnhancedTableToolbar = props => {
       })}
     >
       <div className={[classes.title, "flex-space-between"].join(" ")}>
-        <Typography variant={isConsideredMobile ? "display1" : "display2"} id="tableTitle">
+        <Typography className={isDarkMode ? classes.darkModeText : null} variant={isConsideredMobile ? "display1" : "display2"} id="tableTitle">
           Key Figures
         </Typography>
-        {!isEth2DepositContract && <OurAddRecordDialog refetchData={refetchData} publicKey={publicKey} isLoading={isLoading}/>}
+        {!isEth2DepositContract && <OurAddRecordDialog isDarkMode={isDarkMode} refetchData={refetchData} publicKey={publicKey} isLoading={isLoading}/>}
       </div>
       <div className={classes.spacer} />
     </Toolbar>
@@ -186,7 +190,8 @@ class EnhancedTable extends React.Component {
             data: props.tableData || [],
             page: 0,
             rowsPerPage: 10,
-            isEth2DepositContract: props.isEth2DepositContract
+            isEth2DepositContract: props.isEth2DepositContract,
+            isDarkMode: props.isDarkMode,
         };
     }
 
@@ -201,6 +206,11 @@ class EnhancedTable extends React.Component {
         if(nextProps.isEth2DepositContract !== isEth2DepositContract) {
           this.setState({
             isEth2DepositContract: nextProps.isEth2DepositContract
+          })
+        }
+        if(nextProps.isDarkMode !== prevProps.isDarkMode) {
+          this.setState({
+            isDarkMode: nextProps.isDarkMode
           })
         }
     }
@@ -236,12 +246,12 @@ class EnhancedTable extends React.Component {
 
   render() {
     const { classes, publicKey, refetchData, isLoading } = this.props;
-    const { data, order, orderBy, selected, rowsPerPage, page, isEth2DepositContract } = this.state;
+    const { data, order, orderBy, selected, rowsPerPage, page, isEth2DepositContract, isDarkMode } = this.state;
     const emptyRows = rowsPerPage - Math.min(rowsPerPage, data.length - page * rowsPerPage);
 
     return (
       <Paper className={classes.root}>
-        <EnhancedTableToolbar isEth2DepositContract={isEth2DepositContract} refetchData={refetchData} numSelected={selected.length} publicKey={publicKey} isLoading={isLoading} />
+        <EnhancedTableToolbar isDarkMode={isDarkMode} isEth2DepositContract={isEth2DepositContract} refetchData={refetchData} numSelected={selected.length} publicKey={publicKey} isLoading={isLoading} />
         <div className={classes.tableWrapper}>
           <Table className={classes.table} aria-labelledby="tableTitle">
             <EnhancedTableHead
@@ -252,6 +262,7 @@ class EnhancedTable extends React.Component {
               onRequestSort={this.handleRequestSort}
               rowCount={data.length}
               classes={classes}
+              isDarkMode={isDarkMode}
             />
             <TableBody>
               {stableSort(data, getSorting(order, orderBy))

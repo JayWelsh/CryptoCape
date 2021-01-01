@@ -1,10 +1,23 @@
 import React from 'react';
 import { createMuiTheme, MuiThemeProvider } from "@material-ui/core";
 import deepPurple from "@material-ui/core/colors/deepPurple";
+import purple from '@material-ui/core/colors/purple';
+import pink from '@material-ui/core/colors/pink';
 import { DatePicker, MuiPickersUtilsProvider } from "material-ui-pickers";
 import DateFnsUtils from "@date-io/date-fns";
 
-const materialTheme = createMuiTheme({
+const OurDatePicker = props => {
+  const materialTheme = createMuiTheme({
+    palette:{
+      ...(props.isDarkMode && {
+        type: 'dark',
+        primary: {
+          light: purple[100],
+          main: purple[300],
+          dark: purple[500],
+        }
+      }),
+    },
     overrides: {
       MuiPickersToolbar: {
         toolbar: {
@@ -19,7 +32,7 @@ const materialTheme = createMuiTheme({
       },
       MuiPickersDay: {
         day: {
-          color: deepPurple.A700,
+          color: props.isDarkMode ? purple[300] : deepPurple.A700,
         },
         daySelected: {
           backgroundColor: deepPurple["400"],
@@ -28,18 +41,17 @@ const materialTheme = createMuiTheme({
           color: deepPurple["100"],
         },
         current: {
-          color: deepPurple["900"],
+          color: props.isDarkMode ? pink[500] : deepPurple["900"],
         },
       },
       MuiPickersModal: {
         dialogAction: {
-          color: deepPurple["400"],
+          color: props.isDarkMode ? purple[100] : deepPurple["400"],
         },
       },
     },
   });
-
-const OurDatePicker = props => (
+  return (
     <MuiThemeProvider theme={materialTheme}>
         <MuiPickersUtilsProvider utils={DateFnsUtils}>
             <DatePicker
@@ -47,6 +59,7 @@ const OurDatePicker = props => (
             />
         </MuiPickersUtilsProvider>
     </MuiThemeProvider>
-)
+  )
+}
 
 export default OurDatePicker;

@@ -6,6 +6,14 @@ body {
   overflow: -moz-scrollbars-vertical; 
 }
 
+.dark a {
+  color: #6788ff;
+}
+
+.dark a:visited {
+  color: #ba68c8;
+}
+
 .react-swipeable-view-container > div {
   overflow-x: hidden!important;
 }

@@ -7,6 +7,8 @@ import LinearProgress from '@material-ui/core/LinearProgress';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Divider from '@material-ui/core/Divider';
+import DarkModeIcon from '@material-ui/icons/NightsStay';
+import LightModeIcon from '@material-ui/icons/WbSunny';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import Tooltip from '@material-ui/core/Tooltip';
@@ -207,7 +209,7 @@ class App extends React.Component {
   }
 
   render() {
-    const { classes, theme } = this.props;
+    const { classes, theme, setDarkMode, isDarkMode } = this.props;
     const { anchor, open, isLoading } = this.state;
     let isConsideredMobile = false;
     const documentBodyClientWidth = document.body.clientWidth;
@@ -246,7 +248,7 @@ class App extends React.Component {
           <div className={classes.drawerHeader}>
           </div>
           <Divider />
-          <NavigationItemsMain isConsideredMobile={isConsideredMobile}/>
+          <NavigationItemsMain setDarkMode={setDarkMode} isDarkMode={isDarkMode} isConsideredMobile={isConsideredMobile}/>
         </Drawer>
       </div>
     );
@@ -294,6 +296,14 @@ class App extends React.Component {
               </IconButton>
             </a>
           </Tooltip>
+          <Tooltip title={<span style={{fontSize: 14}}>{isDarkMode ? "Light Mode" : "Dark Mode"}</span>}>
+              <IconButton
+                    color="inherit"
+                    onClick={() => setDarkMode(!isDarkMode)}
+                  >
+                {isDarkMode ? <LightModeIcon/> : <DarkModeIcon/>}
+              </IconButton>
+          </Tooltip>
         </div>
       </Toolbar>
     );
@@ -307,13 +317,6 @@ class App extends React.Component {
         </a>
         <div style={{marginLeft: 'auto'}}>
           <div className={classes.linkContainer}>
-            <a style={{display: 'inline-block'}} href={"https://discord.gg/x6T427nAH7"} target="_blank" rel="noopener noreferrer">
-              <IconButton
-                color="inherit"
-              >
-                <img width={'20px'} src={DiscordLogo}/>
-              </IconButton>
-            </a>
             <IconButton
               color="inherit"
               aria-label="Open drawer"
@@ -353,7 +356,7 @@ class App extends React.Component {
               >
                 <div className={classes.drawerHeader} />
                 <div ref={this.pageContainer} className={classNames({ [classes.pageWidth]: open }) + " " + classes.transitionWidth} style={widthOverride}>
-                  <PageContainer setLoading={this.setLoading} isLoading={isLoading} isConsideredMobile={isConsideredMobile} />
+                  <PageContainer isDarkMode={isDarkMode} setLoading={this.setLoading} isLoading={isLoading} isConsideredMobile={isConsideredMobile} />
                 </div>
               </main>
               {after}

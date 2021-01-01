@@ -17,7 +17,7 @@ import {Link, withRouter} from 'react-router-dom';
 
 const styles = theme => ({
   root: {
-    backgroundColor: theme.palette.background.paper,
+    backgroundColor: theme.palette.background.default,
     width: '100%'
   },
   pageMinHeight: {
@@ -39,7 +39,7 @@ class HomePage extends React.Component {
   };
 
   render() {
-    const { classes, theme, history } = this.props;
+    const { classes, theme, history, isDarkMode } = this.props;
     return (
       <div className={classes.root + " " + classes.pageMinHeight}>
         <Grid container spacing={24} style={{paddingTop: '15px'}}>

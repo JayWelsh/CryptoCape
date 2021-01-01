@@ -56,7 +56,7 @@ const styles = theme => ({
     backgroundColor: '#00020e',
   },
   lightBackground: {
-    backgroundColor: theme.palette.background.paper,
+    backgroundColor: theme.palette.background.default,
   },
   pageMinHeight: {
     minHeight: 'calc(100vh - 64px)'
@@ -130,7 +130,7 @@ class PortfolioPage extends React.Component {
           lastPriceFetchTime: new Date().getTime(),
           fromDate: moment().format('YYYY-MM-DD'),
           toDate: moment().format('YYYY-MM-DD'),
-          isDarkMode: false,
+          isDarkMode: this.props.isDarkMode,
         };
     }
     
@@ -269,11 +269,12 @@ class PortfolioPage extends React.Component {
   }
 
   getSelectedTimeseriesRange(timeseriesRange) {
+    const {isDarkMode} = this.state;
     if(this.state.timeseriesRange === timeseriesRange) {
       return {
         "fontWeight": "bold",
         "color": "white",
-        "backgroundColor": "#000628"
+        "backgroundColor": isDarkMode ? "#273783" : "#000628"
       }
     }
   }
@@ -876,11 +877,14 @@ class PortfolioPage extends React.Component {
         enableFiatConversion: false,
         enableCompositeGraph: false,
         isCompositeReady: false,
+        isDarkMode: nextProps.isDarkMode
       });
       if ((nextProps.publicKey.length > 0) && isValidAddress(nextProps.publicKey)) {
         this.setPublicKeyStorage(nextProps.publicKey);
         await this.fetchPriceValues();
       }
+    } else if(nextProps.isDarkMode !== this.props.isDarkMode) {
+      this.setState({isDarkMode: nextProps.isDarkMode});
     }
   }
 
@@ -1100,9 +1104,58 @@ class PortfolioPage extends React.Component {
         timeseriesDataFull = [...timeseriesData];
       }
 
+    let themeOptions = {
+      plotOptions: {
+          series: {
+            animation: false,
+            dataLabels: {
+              enabled: true,
+              color: isDarkMode ? '#FFFFFF' : '#000000de',
+              style: {
+                fontSize: '14px'
+              }
+            }
+          }
+      },
+      tooltip: {
+          animation: false,
+          pointFormat: '<span style="color:{point.color}">\u25CF</span><b> ${point.y:,.2f}</b><br/>',
+          shared: true,
+          useHTML: true,
+          headerFormat: '<span style="font-size: 14px;font-weight: bold">{point.key}</span><br/>',
+          style: {
+            color: '#FFFFFF',
+            fontSize: '14px',
+          }
+      },
+      labels: {
+        style: {
+          color: isDarkMode ? '#FFFFFF' : '#000000de',
+          fontSize: '14px',
+        }
+      },
+      chart: {
+        backgroundColor: isDarkMode ? '#1d1d1d' : '#FFFFFF',
+        style: {
+          fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif;'
+        }
+      },
+      navigation: {
+        buttonOptions: {
+            symbolStroke: isDarkMode ? '#DDDDDD' : '#0000008a',
+            theme: {
+                fill: isDarkMode ? '#1d1d1d' : "#FFFFFF"
+            }
+        }
+      },
+    }
+
     let stockOptionsUSD = {
         title: {
-            text: 'Value Distribution (USD)'
+            text: 'Value Distribution (USD)',
+            style: {
+              color: isDarkMode ? '#FFFFFF' : '#000000de',
+            }
         },
         lang: {
           thousandsSep: ','
@@ -1114,21 +1167,15 @@ class PortfolioPage extends React.Component {
             data: pieChartDataUSD,
             showInLegend: false
         }],
-        plotOptions: {
-            series: {
-              animation: false
-            }
-        },
-        tooltip: {
-            animation: false,
-            pointFormat: '<span style="color:{point.color}">\u25CF</span><b> ${point.y:,.2f}</b><br/>',
-            shared: true
-        }
+        ...themeOptions
       }
 
       let stockOptionsETH = {
         title: {
-          text: 'Market Cap Distribution (USD)'
+          text: 'Market Cap Distribution (USD)',
+          style: {
+            color: isDarkMode ? '#FFFFFF' : '#000000de',
+          }
         },
         lang: {
           thousandsSep: ','
@@ -1140,16 +1187,7 @@ class PortfolioPage extends React.Component {
           data: pieChartDataMarketCaps,
           showInLegend: false
         }],
-        plotOptions: {
-          series: {
-            animation: false
-          }
-        },
-        tooltip: {
-          animation: false,
-          pointFormat: '<span style="color:{point.color}">\u25CF</span><b> ${point.y:,.2f}</b><br/>',
-          shared: true
-        }
+        ...themeOptions
       }
 
     let chartData = [];
@@ -1332,7 +1370,7 @@ class PortfolioPage extends React.Component {
             <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
             </Grid>
             <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
-              <OurChart earliestDate={earliestDate} handleFromDateChange={this.handleFromDateChange} handleToDateChange={this.handleToDateChange} isEth2DepositContract={isEth2DepositContract} genesisProgress={genesisProgress} timebox={timebox} timeboxTimestamp={timeboxTimestamp} enableCurveStepAfter={enableFiatConversion ? false : true} isChartLoading={isChartLoading} isConsideredMobile={isConsideredMobile} chartTitle={chartData.name} chartSubtitle={chartData.abbreviation} chartData={timeseriesData} chartCurrency={chartCurrency} isLoading={isLoading} />
+              <OurChart isDarkMode={isDarkMode} earliestDate={earliestDate} handleFromDateChange={this.handleFromDateChange} handleToDateChange={this.handleToDateChange} isEth2DepositContract={isEth2DepositContract} genesisProgress={genesisProgress} timebox={timebox} timeboxTimestamp={timeboxTimestamp} enableCurveStepAfter={enableFiatConversion ? false : true} isChartLoading={isChartLoading} isConsideredMobile={isConsideredMobile} chartTitle={chartData.name} chartSubtitle={chartData.abbreviation} chartData={timeseriesData} chartCurrency={chartCurrency} isLoading={isLoading} />
             </Grid>
             <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
             </Grid>
@@ -1349,6 +1387,7 @@ class PortfolioPage extends React.Component {
                       : "display4"
                   }
                   color="textSecondary"
+                  style={isDarkMode ? { color: 'white' } : {}}
                 >
                   {displayTotalUSD}
                 </Typography>
@@ -1362,6 +1401,7 @@ class PortfolioPage extends React.Component {
                   }
                   color="textSecondary"
                   gutterBottom={true}
+                  style={isDarkMode ? { color: 'white' } : {}}
                 >
                   {displayTotalETH}
                 </Typography>
@@ -1386,7 +1426,7 @@ class PortfolioPage extends React.Component {
             <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
             </Grid>
             <Grid item style={{ "textAlign": "center" }} xs={12} sm={10} md={10} lg={10}>
-                <SortableTable isEth2DepositContract={isEth2DepositContract} isLoading={isLoading} refetchData={this.refetchData} publicKey={publicKey} isConsideredMobile={isConsideredMobile} tableData={tableData} />
+                <SortableTable isDarkMode={isDarkMode} isEth2DepositContract={isEth2DepositContract} isLoading={isLoading} refetchData={this.refetchData} publicKey={publicKey} isConsideredMobile={isConsideredMobile} tableData={tableData} />
             </Grid>
             <Grid item xs={12} sm={1} md={1} lg={1} className={"disable-padding"}>
             </Grid>

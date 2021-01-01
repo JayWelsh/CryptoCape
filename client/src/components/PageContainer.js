@@ -51,36 +51,36 @@ class PageContainer extends React.Component {
 
   render() {
     //TODO Props
-    const { classes, theme, history, isConsideredMobile, setLoading, isLoading } = this.props;
+    const { classes, theme, history, isConsideredMobile, setLoading, isLoading, isDarkMode } = this.props;
     return (
       <div className={classes.pageContainer}>
-          <Route exact={true} path="/" render={(props) => HomePageRoute(props, isConsideredMobile)}/>
-          <Route exact={true} path="/charts/:chartLink" render={(props) => ChartsPageRoute(props, isConsideredMobile)}/>
-          <Route exact={true} path="/charts" render={(props) => ChartsPageRoute(props, isConsideredMobile)}/>
-          <Route exact={true} path="/portfolio" render={(props) => PortfolioPageRoute(props, isConsideredMobile)}/>
-          <Route exact={true} path="/portfolio/:publicKey" render={(props) => PortfolioPageRoute(props, isConsideredMobile, setLoading, isLoading)}/>
+          <Route exact={true} path="/" render={(props) => HomePageRoute(props, isConsideredMobile, isDarkMode)}/>
+          <Route exact={true} path="/charts/:chartLink" render={(props) => ChartsPageRoute(props, isConsideredMobile, isDarkMode)}/>
+          <Route exact={true} path="/charts" render={(props) => ChartsPageRoute(props, isConsideredMobile, isDarkMode)}/>
+          <Route exact={true} path="/portfolio" render={(props) => PortfolioPageRoute(props, isConsideredMobile, isDarkMode)}/>
+          <Route exact={true} path="/portfolio/:publicKey" render={(props) => PortfolioPageRoute(props, isConsideredMobile, setLoading, isLoading, isDarkMode)}/>
       </div>
     );
   }
 }
 
-const HomePageRoute = ({ match, history }, isConsideredMobile) => {
-  return <HomePage/>
+const HomePageRoute = ({ match, history }, isConsideredMobile, isDarkMode) => {
+  return <HomePage isDarkMode={isDarkMode}/>
 }
 
-const ChartsPageRoute = ({ match }, isConsideredMobile) => {
+const ChartsPageRoute = ({ match }, isConsideredMobile, isDarkMode) => {
   if(match.params && match.params.chartLink){
-    return <ChartsPage isConsideredMobile={isConsideredMobile} renderChart={match.params.chartLink}/>
+    return <ChartsPage isConsideredMobile={isConsideredMobile} renderChart={match.params.chartLink} isDarkMode={isDarkMode}/>
   }else{
-    return <ChartsPage isConsideredMobile={isConsideredMobile}/>
+    return <ChartsPage isConsideredMobile={isConsideredMobile} isDarkMode={isDarkMode}/>
   }
 }
 
-const PortfolioPageRoute = ({ match }, isConsideredMobile, setLoading, isLoading) => {
+const PortfolioPageRoute = ({ match }, isConsideredMobile, setLoading, isLoading, isDarkMode) => {
   if(match.params && match.params.publicKey){
-    return <PortfolioPage isConsideredMobile={isConsideredMobile} publicKey={match.params.publicKey} setLoading={setLoading} isLoading={isLoading}/>
+    return <PortfolioPage isConsideredMobile={isConsideredMobile} publicKey={match.params.publicKey} setLoading={setLoading} isLoading={isLoading} isDarkMode={isDarkMode}/>
   }else{
-    return <PortfolioPage isConsideredMobile={isConsideredMobile}/>
+    return <PortfolioPage isConsideredMobile={isConsideredMobile} isDarkMode={isDarkMode}/>
   }
 }
 

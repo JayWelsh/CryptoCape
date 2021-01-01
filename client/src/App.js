@@ -16,12 +16,12 @@ class Index extends React.Component {
   };
 
   render() {
-    const { classes } = this.props;
+    const { classes, setDarkMode, isDarkMode } = this.props;
     const { open } = this.state;
 
     return (
-      <div className={classes.root}>
-        <App className={styles.navigationMain}/>
+      <div className={[classes.root, isDarkMode && "dark"].join(" ")}>
+        <App setDarkMode={setDarkMode} isDarkMode={isDarkMode} className={styles.navigationMain}/>
       </div>
     );
   }

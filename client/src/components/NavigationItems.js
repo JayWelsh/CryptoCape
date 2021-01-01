@@ -11,7 +11,13 @@ import Home from '@material-ui/icons/Home';
 import Settings from '@material-ui/icons/Settings';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import NotificationsActive from '@material-ui/icons/NotificationsActive';
+import DarkModeIcon from '@material-ui/icons/NightsStay';
+import LightModeIcon from '@material-ui/icons/WbSunny';
 import PortfolioDonut from '@material-ui/icons/DonutSmall';
+import GitHubLogo from '../img/GitHubLogo.svg';
+import GitHubLogoDark from '../img/GitHubLogoDark.svg';
+import DiscordLogo from '../img/DiscordLogo.svg';
+import DiscordLogoDark from '../img/DiscordLogoDark.svg';
 import {Link} from 'react-router-dom';
 
 const styles = theme => ({
@@ -26,7 +32,7 @@ function emitMenuToggleDisable() {
 }
 
 function NavigationItemsMain(props) {
-  const { classes, theme, isConsideredMobile } = props;
+  const { classes, theme, isConsideredMobile, isDarkMode, setDarkMode } = props;
   let emitMenuToggleFunction = emitMenuToggleDisable;
   if(isConsideredMobile){
     emitMenuToggleFunction = emitMenuToggleEnable;
@@ -50,6 +56,30 @@ function NavigationItemsMain(props) {
             <ListItemText primary="Portfolio" />
           </ListItem>
         </Link>
+        <a href={"https://github.com/JayWelsh/CryptoCape"} style={{ textDecoration: 'none' }} target="_blank" rel="noopener noreferrer">
+          <ListItem onClick={emitMenuToggleFunction} button>
+            <ListItemIcon>
+              {isDarkMode ? <img style={{padding: 1}} width={'24px'} src={GitHubLogo}/> : <img style={{padding: 1}} width={'24px'} src={GitHubLogoDark}/>}
+            </ListItemIcon>
+            <ListItemText primary="GitHub" />
+          </ListItem>
+        </a>
+        <a href={"https://discord.gg/x6T427nAH7"} style={{ textDecoration: 'none' }} target="_blank" rel="noopener noreferrer">
+          <ListItem onClick={emitMenuToggleFunction} button>
+            <ListItemIcon>
+              {isDarkMode ? <img style={{padding: 1}} width={'24px'} src={DiscordLogo}/> : <img style={{padding: 1}} width={'24px'} src={DiscordLogoDark}/>}
+            </ListItemIcon>
+            <ListItemText primary="Discord" />
+          </ListItem>
+        </a>
+        <ListItem onClick={() => {
+          setDarkMode(!isDarkMode);
+        }} button>
+            <ListItemIcon>
+              {isDarkMode ? <LightModeIcon /> : <DarkModeIcon/>}
+            </ListItemIcon>
+            <ListItemText primary={isDarkMode ? "Light Mode" : "Dark Mode"} />
+        </ListItem>
         {/* <Link to={'/alerts'} style={{ textDecoration: 'none' }}>
           <ListItem onClick={emitMenuToggleFunction} button>
             <ListItemIcon>

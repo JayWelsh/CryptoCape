@@ -126,7 +126,8 @@ const OurChartVXContainer = ({
     handleFromDateChange,
     handleToDateChange,
     earliestDate,
-
+    isDarkMode,
+    isLoading,
 }) => {
     const [prices, setPrices] = useState();
     const [currentPrice, setCurrentPrice] = useState(false);
@@ -230,7 +231,7 @@ const OurChartVXContainer = ({
         <div className={classes.outerContainer}>
             <div className={classes.dateRangeContainer}>
                 <OurDatePicker
-                    disabled={isChartLoading}
+                    disabled={isChartLoading || isLoading}
                     label="From Date"
                     value={fromDate}
                     format="yyyy-MM-dd"
@@ -239,11 +240,12 @@ const OurChartVXContainer = ({
                     onChange={setFromDateInputFieldValue}
                     disableFuture={true}
                     minDate={earliestDate}
-                    maxDate={!isChartLoading && moment(toDate).subtract(1, 'day').format("YYYY-MM-DD")}
+                    maxDate={!isChartLoading && !isLoading && moment(toDate).subtract(1, 'day').format("YYYY-MM-DD")}
                     style={{width: '130px', marginLeft: '20px', marginRight: '19px'}}
+                    isDarkMode={isDarkMode}
                 />
                 <OurDatePicker
-                    disabled={isChartLoading}
+                    disabled={isChartLoading || isLoading}
                     label="To Date"
                     value={toDate}
                     format="yyyy-MM-dd"
@@ -251,8 +253,9 @@ const OurChartVXContainer = ({
                     variant="outlined"
                     onChange={setToDateInputFieldValue}
                     disableFuture={true}
-                    minDate={!isChartLoading && moment(fromDate).add(1, 'day').format("YYYY-MM-DD")}
+                    minDate={!isChartLoading && !isLoading && moment(fromDate).add(1, 'day').format("YYYY-MM-DD")}
                     style={{width: '130px', marginLeft: '20px', marginRight: '20px'}}
+                    isDarkMode={isDarkMode}
                 />
             </div>
             <div className={classes.center}>

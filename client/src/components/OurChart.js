@@ -68,6 +68,7 @@ class OurChart extends React.Component {
       handleFromDateChange,
       handleToDateChange,
       earliestDate,
+      isDarkMode,
     } = this.props;
 
     let margin = {
@@ -80,14 +81,14 @@ class OurChart extends React.Component {
     if (chartData && !isLoading) {
       return (
         <div>
-          <OurChartVXContainer earliestDate={earliestDate} handleFromDateChange={handleFromDateChange} handleToDateChange={handleToDateChange} isEth2DepositContract={isEth2DepositContract} genesisProgress={genesisProgress} timebox={timebox} timeboxTimestamp={timeboxTimestamp} enableCurveStepAfter={enableCurveStepAfter} isChartLoading={isChartLoading} chartCurrency={chartCurrency} isConsideredMobile={isConsideredMobile} margin={margin} chartData={chartData} chartTitle={chartTitle} chartSubtitle={chartSubtitle}>
+          <OurChartVXContainer isLoading={isLoading} isDarkMode={isDarkMode} earliestDate={earliestDate} handleFromDateChange={handleFromDateChange} handleToDateChange={handleToDateChange} isEth2DepositContract={isEth2DepositContract} genesisProgress={genesisProgress} timebox={timebox} timeboxTimestamp={timeboxTimestamp} enableCurveStepAfter={enableCurveStepAfter} isChartLoading={isChartLoading} chartCurrency={chartCurrency} isConsideredMobile={isConsideredMobile} margin={margin} chartData={chartData} chartTitle={chartTitle} chartSubtitle={chartSubtitle}>
             {children}
           </OurChartVXContainer>
         </div>
       );
     }else{
       return <div>
-        <OurChartVXContainer enableCurveStepAfter={enableCurveStepAfter} isChartLoading={isChartLoading} chartCurrency={chartCurrency} isConsideredMobile={isConsideredMobile} margin={margin}>
+        <OurChartVXContainer isLoading={isLoading} isDarkMode={isDarkMode} enableCurveStepAfter={enableCurveStepAfter} isChartLoading={isChartLoading} chartCurrency={chartCurrency} isConsideredMobile={isConsideredMobile} margin={margin}>
           {children}
         </OurChartVXContainer>
       </div>

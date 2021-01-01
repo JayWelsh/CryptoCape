@@ -10,6 +10,7 @@ import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
+import HighchartsTheme from 'highcharts/themes/dark-unica';
 import { Query } from "react-apollo";
 import gql from "graphql-tag";
 
@@ -19,6 +20,7 @@ require('highcharts/indicators/pivot-points')(Highcharts)
 require('highcharts/indicators/macd')(Highcharts)
 require('highcharts/modules/exporting')(Highcharts)
 require('highcharts/modules/map')(Highcharts)
+HighchartsTheme(Highcharts)
 
 const styles = {
   cardPositioning: {
