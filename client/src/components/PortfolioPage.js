@@ -349,6 +349,17 @@ class PortfolioPage extends React.Component {
     return compositeTimeseries;
   }
 
+  fetchAddressEtherBalance = async (coins) => {
+    let publicKey = this.state.publicKey;
+    await axios.all([this.getEtherscanBalanceData(publicKey)]).then(async(res) => {
+      if(res[0] && res[0].data && res[0].data.result) {
+        // Override ETH balance with what is provided by Etherscan, as Ethplorer isn't always reliable
+        coins["ETH"].balance = weiToEther(res[0].data.result) * 1;
+      }
+    })
+    return coins;
+  }
+
   fetchAddressTransactionHistory = async (restrictCoins) => {
       let thisPersist = this;
       let { isEth2DepositContract } = this.state;
@@ -360,7 +371,6 @@ class PortfolioPage extends React.Component {
         this.getTokenTransactionHistory(publicKey),
         this.getBaseCurrencyHistoricalUSD(historicalBaseCurrency),
         this.getInternalEtherTransactionHistory(publicKey),
-        this.getEtherscanBalanceData(publicKey)
       ]).then(async (res) => {
         if (res && res[1].data && res[1].data.result && (res[1].data.result.constructor === Array)) {
           let transactionDataEther = [];
@@ -374,11 +384,6 @@ class PortfolioPage extends React.Component {
                 return null;
               }
             }).filter(item => item !== null);
-          }
-
-          if(res[4] && res[4].data && res[4].data.result) {
-            // Override ETH balance with what is provided by Etherscan, as Ethplorer isn't always reliable
-            restrictCoins["ETH"].balance = weiToEther(res[4].data.result) * 1;
           }
 
           if(res[3].data.result) {
@@ -750,7 +755,7 @@ class PortfolioPage extends React.Component {
               index++;
             }
           }
-          coins = await this.fetchAddressTransactionHistory(coins);
+          coins = await this.fetchAddressEtherBalance(coins);
           let tableDataWithChanges = this.buildTableData(coins, totalValueCountUSD);
           thisPersist.setState({coins, tableData: tableDataWithChanges, includeInCompositePricingQueries});
           await this.delayApiCalls(dailyChangeLinks).then(async data => {
@@ -811,8 +816,9 @@ class PortfolioPage extends React.Component {
               { historicalBaseCurrency: newSelectedHistoricalBaseCurrency }
             ),
           });
+          coins = await this.fetchAddressTransactionHistory(coins);
           setLoading(false);
-          await this.fetchCoinGeckoLinks(this.state.coins, totalValueCountUSD);
+          await this.fetchCoinGeckoLinks(coins, totalValueCountUSD);
         })
       })
     });

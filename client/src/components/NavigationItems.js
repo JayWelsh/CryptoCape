@@ -11,8 +11,8 @@ import Home from '@material-ui/icons/Home';
 import Settings from '@material-ui/icons/Settings';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import NotificationsActive from '@material-ui/icons/NotificationsActive';
-import DarkModeIcon from '@material-ui/icons/NightsStay';
-import LightModeIcon from '@material-ui/icons/WbSunny';
+import DarkModeIcon from '../img/NightsStayDark.svg';
+import LightModeIcon from '../img/LightMode.svg';
 import PortfolioDonut from '@material-ui/icons/DonutSmall';
 import GitHubLogo from '../img/GitHubLogo.svg';
 import GitHubLogoDark from '../img/GitHubLogoDark.svg';
@@ -76,7 +76,7 @@ function NavigationItemsMain(props) {
           setDarkMode(!isDarkMode);
         }} button>
             <ListItemIcon>
-              {isDarkMode ? <LightModeIcon /> : <DarkModeIcon/>}
+              {isDarkMode ? <img style={{padding: 1}} width={'24px'} src={LightModeIcon}/> : <img style={{padding: 1}} width={'24px'} src={DarkModeIcon}/>}
             </ListItemIcon>
             <ListItemText primary={isDarkMode ? "Light Mode" : "Dark Mode"} />
         </ListItem>

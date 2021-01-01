@@ -7,8 +7,8 @@ import LinearProgress from '@material-ui/core/LinearProgress';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Divider from '@material-ui/core/Divider';
-import DarkModeIcon from '@material-ui/icons/NightsStay';
-import LightModeIcon from '@material-ui/icons/WbSunny';
+import DarkModeIcon from '../img/NightsStay.svg';
+import LightModeIcon from '../img/LightMode.svg';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import Tooltip from '@material-ui/core/Tooltip';
@@ -301,7 +301,7 @@ class App extends React.Component {
                     color="inherit"
                     onClick={() => setDarkMode(!isDarkMode)}
                   >
-                {isDarkMode ? <LightModeIcon/> : <DarkModeIcon/>}
+                {isDarkMode ? <img width={'30px'} src={LightModeIcon}/> : <img width={'30px'} src={DarkModeIcon}/>}
               </IconButton>
           </Tooltip>
         </div>
