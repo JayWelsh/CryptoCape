@@ -56,11 +56,26 @@ const styles = theme => ({
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen,
     }),
+  },
+  appBarLightMode: {
     background: '#3f51b5',
     background: '-webkit-linear-gradient(-90deg, #3f51b5, #2d0056)',
     background: '-o-linear-gradient(-90deg, #3f51b5, #2d0056)',
     background: '-moz-linear-gradient(-90deg, #3f51b5, #2d0056)',
     background: 'linear-gradient(-90deg, #3f51b5, #2d0056)',
+  },
+  appBarDarkMode: {
+    background: '#17204e',
+    background: '-webkit-linear-gradient(-90deg, #17204e, #140027)',
+    background: '-o-linear-gradient(-90deg, #17204e, #140027)',
+    background: '-moz-linear-gradient(-90deg, #17204e, #140027)',
+    background: 'linear-gradient(-90deg, #17204e, #140027)',
+  },
+  linearColorPrimaryDarkMode: {
+    backgroundColor: '#1d1d1d',
+  },
+  linearBarColorPrimaryDarkMode: {
+    backgroundColor: '#ae57bd',
   },
   appBarShift: {
     // width: `calc(100% - ${drawerWidth}px)`,
@@ -176,17 +191,19 @@ class App extends React.Component {
 
   handlePageResize = (event) => {
     let thisPersist = this;
-    let pageWidth = thisPersist.main.current.offsetWidth;
-    let documentWidth = window.width;
-    if ((pageWidth !== this.state.lastPageWidth) || documentWidth !== thisPersist.state.lastDocumentWidth) {
-      if (event.propertyName === "width" || event.type === "resize") {
-        if (pageResizePreventDoubleFire) {
-          clearTimeout(pageResizePreventDoubleFire);
+    if(thisPersist.main.current){
+      let pageWidth = thisPersist.main.current.offsetWidth;
+      let documentWidth = window.width;
+      if ((pageWidth !== this.state.lastPageWidth) || documentWidth !== thisPersist.state.lastDocumentWidth) {
+        if (event.propertyName === "width" || event.type === "resize") {
+          if (pageResizePreventDoubleFire) {
+            clearTimeout(pageResizePreventDoubleFire);
+          }
+          pageResizePreventDoubleFire = setTimeout(function () {
+            window.dispatchEvent(new Event('reRenderCharts'));
+            thisPersist.setState({ open: thisPersist.state.open, lastPageWidth: pageWidth, lastDocumentWidth: documentWidth});
+          }, 100);
         }
-        pageResizePreventDoubleFire = setTimeout(function () {
-          window.dispatchEvent(new Event('reRenderCharts'));
-          thisPersist.setState({ open: thisPersist.state.open, lastPageWidth: pageWidth, lastDocumentWidth: documentWidth});
-        }, 100);
       }
     }
   }
@@ -337,13 +354,22 @@ class App extends React.Component {
           <div className={classes.root}>
             <div className={classes.appFrame}>
               <AppBar
-                className={classNames(classes.appBar, {
-                  [classes.appBarShift]: open,
-                  [classes[`appBarShift-${anchor}`]]: open,
-                })}
+                className={classNames(
+                  classes.appBar,
+                  isDarkMode ? classes.appBarDarkMode : classes.appBarLightMode,
+                  {
+                    [classes.appBarShift]: open,
+                    [classes[`appBarShift-${anchor}`]]: open,
+                  }
+                )}
               >
                 {toolbar}
-                {isLoading && <LinearProgress/>}
+                {isLoading && 
+                  <LinearProgress classes={{
+                    colorPrimary: isDarkMode && classes.linearColorPrimaryDarkMode,
+                    barColorPrimary: isDarkMode && classes.linearBarColorPrimaryDarkMode,
+                  }} />
+                }
               </AppBar>
               {before}
               <main
