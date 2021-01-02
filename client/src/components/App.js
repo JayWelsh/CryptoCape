@@ -75,7 +75,7 @@ const styles = theme => ({
     backgroundColor: '#1d1d1d',
   },
   linearBarColorPrimaryDarkMode: {
-    backgroundColor: '#ae57bd',
+    backgroundColor: '#87009e',
   },
   appBarShift: {
     // width: `calc(100% - ${drawerWidth}px)`,
