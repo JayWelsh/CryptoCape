@@ -637,7 +637,19 @@ class PortfolioPage extends React.Component {
       "GRT": {
         tokenAddress: "0xc944e90c64b2c07662a292be6244bdf05cda44a7",
         decimals: 18,
-      }
+      },
+      "PROS": {
+        tokenAddress: "0x8642A849D0dcb7a15a974794668ADcfbe4794B56",
+        decimals: 18,
+      },
+      "ARTH": {
+        tokenAddress: "0x0e3cc2c4fb9252d17d07c67135e48536071735d9",
+        decimals: 18,
+      },
+      "MASQ": {
+        tokenAddress: "0x06f3c323f0238c72bf35011071f2b5b7f43a054c",
+        decimals: 18,
+      },
 		}
     axios.get(getETHUSD).then(res => {
       let etherToUSD = res.data.RAW.ETH.USD.PRICE;
