@@ -20,6 +20,7 @@ import ApolloClient from 'apollo-boost';
 import { ApolloProvider } from "react-apollo";
 import {configureHistory, isPrefixWWW} from '../utils';
 import DiscordLogo from '../img/DiscordLogo.svg';
+import TelegramLogo from '../img/TelegramLogo.svg';
 import GitHubLogo from '../img/GitHubLogo.svg';
 
 let endpointGraphQL = "https://cryptocape.com/graphql";
@@ -66,10 +67,10 @@ const styles = theme => ({
   },
   appBarDarkMode: {
     background: '#17204e',
-    background: '-webkit-linear-gradient(-90deg, #17204e, #140027)',
-    background: '-o-linear-gradient(-90deg, #17204e, #140027)',
-    background: '-moz-linear-gradient(-90deg, #17204e, #140027)',
-    background: 'linear-gradient(-90deg, #17204e, #140027)',
+    background: '-webkit-linear-gradient(-90deg, #17204e, #20003f)',
+    background: '-o-linear-gradient(-90deg, #17204e, #20003f)',
+    background: '-moz-linear-gradient(-90deg, #17204e, #20003f)',
+    background: 'linear-gradient(-90deg, #17204e, #20003f)',
   },
   linearColorPrimaryDarkMode: {
     backgroundColor: '#1d1d1d',
@@ -170,6 +171,7 @@ class App extends React.Component {
     lastPageWidth: 0,
     lastDocumentWidth: 0,
     isLoading: false,
+    loadingProgress: 0,
   };
 
   
@@ -221,13 +223,13 @@ class App extends React.Component {
   setLoading = (useLoadingState) => {
     let { isLoading } = this.state;
     if(useLoadingState !== isLoading) {
-      this.setState({isLoading: useLoadingState});
+      this.setState({isLoading: Boolean(useLoadingState), loadingProgress: useLoadingState});
     }
   }
 
   render() {
     const { classes, theme, setDarkMode, isDarkMode } = this.props;
-    const { anchor, open, isLoading } = this.state;
+    const { anchor, open, isLoading, loadingProgress } = this.state;
     let isConsideredMobile = false;
     const documentBodyClientWidth = document.body.clientWidth;
 
@@ -295,6 +297,19 @@ class App extends React.Component {
           </Link>
         </div>
         <div style={{marginLeft: 'auto'}} className={classes.linkContainer}>
+          <Tooltip title={<span style={{fontSize: 14}}>Telegram Chat</span>}>
+            <a style={{display: 'inline-block'}} href={"https://t.me/joinchat/GeDYFkq_0ih60gmc"} target="_blank" rel="noopener noreferrer">
+              <IconButton
+                  color="inherit"
+                >
+                  <img style={{
+                    width: '30px',
+                    height: '30px',
+                    paddingRight: '2px'
+                  }} src={TelegramLogo}/>
+              </IconButton>
+            </a>
+          </Tooltip>
           <Tooltip title={<span style={{fontSize: 14}}>Discord Chat</span>}>
             <a style={{display: 'inline-block'}} href={"https://discord.gg/x6T427nAH7"} target="_blank" rel="noopener noreferrer">
               <IconButton
@@ -365,10 +380,14 @@ class App extends React.Component {
               >
                 {toolbar}
                 {isLoading && 
-                  <LinearProgress classes={{
-                    colorPrimary: isDarkMode && classes.linearColorPrimaryDarkMode,
-                    barColorPrimary: isDarkMode && classes.linearBarColorPrimaryDarkMode,
-                  }} />
+                  <LinearProgress
+                    variant={loadingProgress > 0 ? "determinate" : "indeterminate"}
+                    value={loadingProgress ? loadingProgress : null}
+                    classes={{
+                      colorPrimary: isDarkMode && classes.linearColorPrimaryDarkMode,
+                      barColorPrimary: isDarkMode && classes.linearBarColorPrimaryDarkMode,
+                    }}
+                  />
                 }
               </AppBar>
               {before}

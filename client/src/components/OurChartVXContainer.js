@@ -208,13 +208,13 @@ const OurChartVXContainer = ({
     }
 
     useEffect(() => {
-        if(timebox !== useTimebox) {
+        if(timebox && (timebox !== useTimebox)) {
             setUseTimebox(timebox);
             let parsedTimebox = JSON.parse(timebox);
             setFromDateInputFieldValue(parsedTimebox.fromDate);
             setToDateInputFieldValue(parsedTimebox.toDate);
         }
-        if(timeboxTimestamp !== useTimeboxTimestamp) {
+        if(timeboxTimestamp && (timeboxTimestamp !== useTimeboxTimestamp)) {
             setUseTimeboxTimestamp(timeboxTimestamp);
         }
     }, [timebox, timeboxTimestamp])

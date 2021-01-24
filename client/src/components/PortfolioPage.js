@@ -131,6 +131,7 @@ class PortfolioPage extends React.Component {
           fromDate: moment().format('YYYY-MM-DD'),
           toDate: moment().format('YYYY-MM-DD'),
           isDarkMode: this.props.isDarkMode,
+          loadingProgress: 0,
         };
     }
     
@@ -279,12 +280,17 @@ class PortfolioPage extends React.Component {
     }
   }
 
-  buildCompositeTimeseries = async (coins) => {
+  buildCompositeTimeseries = async (coins, progressAcrossFetchAddressTransactionHistory = false, currentProgress = false) => {
     const {timeseriesRange, lastPriceFetchTime} = this.state;
+    const { setLoading = false } = this.props;
     let timeseriesData = [];
     let fullHistoryLinks = [];
     let fullHistoricalCurrencies = [];
     let consolidatedTimeseries = {};
+    let progressPerFetch;
+    if(progressAcrossFetchAddressTransactionHistory && currentProgress && setLoading) {
+      progressPerFetch = Object.keys(coins) && Object.keys(coins).length > 0 ? progressAcrossFetchAddressTransactionHistory / Object.keys(coins).length : progressAcrossFetchAddressTransactionHistory;
+    }
     for(let historicalBaseCurrency of Object.keys(coins)){
         if(coins[historicalBaseCurrency].tokenAddress && historicalBaseCurrency.toLowerCase() !== "eth") {
           fullHistoryLinks[historicalBaseCurrency] = `https://api.coingecko.com/api/v3/coins/ethereum/contract/${coins[historicalBaseCurrency].tokenAddress}/market_chart?vs_currency=usd&days=max`;
@@ -294,16 +300,19 @@ class PortfolioPage extends React.Component {
           fullHistoryLinks[historicalBaseCurrency] = `https://api.coingecko.com/api/v3/coins/${coins[historicalBaseCurrency].coinGeckoId}/market_chart?vs_currency=usd&days=max`;
         }
     }
-    await this.delayApiCalls(fullHistoryLinks).then(data => {
+    await this.delayApiCalls(fullHistoryLinks, setLoading, currentProgress, progressPerFetch).then(data => {
       let index = 0;
       for(let symbol of Object.keys(fullHistoryLinks)){
+        let useDataAtIndex = data[index];
         let fallbackLinkTimeseries = [];
-        for(let timeseriesEntry of data[index].data.prices) {
-          fallbackLinkTimeseries.push({
-            time: Math.floor(timeseriesEntry[0] / 1000),
-            close: timeseriesEntry[1],
-            open: timeseriesEntry[1]
-          })
+        if(useDataAtIndex && useDataAtIndex.data) {
+          for(let timeseriesEntry of useDataAtIndex.data.prices) {
+            fallbackLinkTimeseries.push({
+              time: Math.floor(timeseriesEntry[0] / 1000),
+              close: timeseriesEntry[1],
+              open: timeseriesEntry[1]
+            })
+          }
         }
         fullHistoricalCurrencies[symbol] = fallbackLinkTimeseries;
         index++;
@@ -339,7 +348,10 @@ class PortfolioPage extends React.Component {
         }
         timeseriesIndex++;
       }
-		}
+    }
+    if(progressAcrossFetchAddressTransactionHistory && currentProgress && setLoading) {
+      setLoading(100);
+    }
     let compositeTimeseries = [];
     for(let [index, item] of Object.entries(consolidatedTimeseries)){
       if(!moment.unix(index * 1).isSame(moment().startOf('day'))){
@@ -360,18 +372,25 @@ class PortfolioPage extends React.Component {
     return coins;
   }
 
-  fetchAddressTransactionHistory = async (restrictCoins) => {
+  fetchAddressTransactionHistory = async (restrictCoins, progressBeforeFetchAddressTransactionHistory) => {
       let thisPersist = this;
       let { isEth2DepositContract } = this.state;
+      let { setLoading } = this.props;
       let publicKey = this.state.publicKey;
       let includeInCompositePricingQueries = this.state.includeInCompositePricingQueries || [];
       let historicalBaseCurrency = this.state.historicalBaseCurrency;
+      let progressAcrossFetchAddressTransactionHistory = 45;
+      let progressAcrossInitialFetches = 5;
       await axios.all([
         this.getEtherTransactionHistory(publicKey),
         this.getTokenTransactionHistory(publicKey),
         this.getBaseCurrencyHistoricalUSD(historicalBaseCurrency),
         this.getInternalEtherTransactionHistory(publicKey),
       ]).then(async (res) => {
+        let currentProgress = progressBeforeFetchAddressTransactionHistory + progressAcrossInitialFetches;
+        if(setLoading) {
+          setLoading(currentProgress);
+        }
         if (res && res[1].data && res[1].data.result && (res[1].data.result.constructor === Array)) {
           let transactionDataEther = [];
 
@@ -408,6 +427,7 @@ class PortfolioPage extends React.Component {
                 for(let transaction of restrictCoins[coin].timeseries) {
                   manualTransactionData.push({...transaction, value: tokenInflatedBalanceFromDecimals(transaction.price, restrictCoins[coin].decimals), tokenSymbol: coin, timeStamp: new Date(transaction.date).getTime() / 1000});
                 }
+                restrictCoins[coin].timeseries = [];
               }
               if(transactionDataTokens.filter(item => item.tokenSymbol === coin).length > 0) {
                 restrictCoins[coin].timeseries = [];
@@ -513,7 +533,7 @@ class PortfolioPage extends React.Component {
               obj[key] = restrictCoins[key];
               return obj;
             }, {});
-            let consolidatedTimeseries = await thisPersist.buildCompositeTimeseries(compositeCoins);
+            let consolidatedTimeseries = await thisPersist.buildCompositeTimeseries(compositeCoins, progressAcrossFetchAddressTransactionHistory, currentProgress);
             thisPersist.setState({ compositeTimeseriesUSD: consolidatedTimeseries, isCompositeReady: true, isChartLoading: false});
             return Object.keys(restrictCoins);
           }
@@ -574,14 +594,17 @@ class PortfolioPage extends React.Component {
       return returnArray;
     }
 
-    delayApiCalls = async (config) => {
+    delayApiCalls = async (config, setLoading = false, currentProgress = false, progressPerRequest = false) => {
         let configEntries = Object.entries(config);
         let delayInMilliseconds = 150;
-        let callCollection = this.delayedApiCall(configEntries, 0, delayInMilliseconds);
+        let callCollection = await this.delayedApiCall(configEntries, 0, delayInMilliseconds, [], setLoading, currentProgress, progressPerRequest);
+        if(setLoading && currentProgress && progressPerRequest){
+          setLoading(currentProgress + (configEntries.length * progressPerRequest));
+        }
         return callCollection;
     }
 
-    delayedApiCall = async (links = [], index = 0, delayInMilliseconds, values = []) => {
+    delayedApiCall = async (links = [], index = 0, delayInMilliseconds, values = [], setLoading, currentProgress, progressPerRequest) => {
       if(links && links[index] && links[index][1]){
         let axiosResponse;
         try {
@@ -590,13 +613,16 @@ class PortfolioPage extends React.Component {
           console.log({error});
         } finally {
           return new Promise(resolve => {
+            if(setLoading) {
+              setLoading(currentProgress + progressPerRequest);
+            }
             setTimeout(() => {
               let finalIndex = links.length - 1;
-                if(index === finalIndex){
-                  resolve([...values, axiosResponse]);
-                } else {
-                  resolve(this.delayedApiCall(links, index + 1, delayInMilliseconds, [...values, axiosResponse]));
-                }
+              if(index === finalIndex){
+                resolve([...values, axiosResponse]);
+              } else {
+                resolve(this.delayedApiCall(links, index + 1, delayInMilliseconds, [...values, axiosResponse], setLoading, currentProgress + progressPerRequest, progressPerRequest));
+              }
             }, delayInMilliseconds);
           })
         }
@@ -606,7 +632,9 @@ class PortfolioPage extends React.Component {
   fetchPriceValues = async () => {
     this.setState({ lastPriceFetchTime: new Date().getTime() });
     let { setLoading } = this.props;
-    setLoading(true);
+    if(setLoading) {
+      setLoading(0);
+    }
     let { historicalBaseCurrency } = this.state;
     let thisPersist = this;
     let currency = "$";
@@ -650,13 +678,27 @@ class PortfolioPage extends React.Component {
         tokenAddress: "0x06f3c323f0238c72bf35011071f2b5b7f43a054c",
         decimals: 18,
       },
+      "CVR": {
+        tokenAddress: "0x3c03b4ec9477809072ff9cc9292c9b25d4a8e6c6",
+        decimals: 18,
+      },
+      "PBR": {
+        tokenAddress: "0x0d6ae2a429df13e44a07cd2969e085e4833f64a0",
+        decimals: 18,
+      },
 		}
     axios.get(getETHUSD).then(res => {
+      if(setLoading) {
+        setLoading(1);
+      }
       let etherToUSD = res.data.RAW.ETH.USD.PRICE;
       let etherMarketCap = res.data.RAW.ETH.USD.MKTCAP;
       this.setState({ ethPriceUSD: etherToUSD, etherMarketCap: etherMarketCap });
       let getTokenBalances = 'https://api.ethplorer.io/getAddressInfo/' + thisPersist.state.publicKey + '?apiKey=freekey';
       axios.get(getTokenBalances).then(res => {
+        if(setLoading) {
+          setLoading(2);
+        }
         let genesisProgress = thisPersist.state.genesisProgress;
         let publicKeyLowerCase = thisPersist.state.publicKey.toLowerCase();
         let balanceOfETH = res.data.ETH.balance;
@@ -708,7 +750,8 @@ class PortfolioPage extends React.Component {
                       : 2
                 ),
                 coinGeckoId: manualEntry.id,
-                timeseries: manualEntry.timeseries
+                timeseries: manualEntry.timeseries,
+                manualRecordCount: manualEntry.timeseries.length
               };
             }
           }
@@ -718,12 +761,18 @@ class PortfolioPage extends React.Component {
 						coinListLocal[shim] = { balance: 0, balanceUSD: 0, tokenAddress: shimTokens[shim].tokenAddress, decimals: shimTokens[shim].decimals };
 						getAgainstETH.push(shim);
 					}
-				}
+        }
+        if(setLoading) {
+          setLoading(3);
+        }
         thisPersist.setState({ coins: coinListLocal, coinCalculationsBlacklist, genesisProgress });
         let getTokenPrices = 'https://min-api.cryptocompare.com/data/pricemultifull?fsyms=' + getAgainstETH.join(',') + '&tsyms=ETH&api_key=2f4e46520951f25ee11bc69becb7e5b4a86df0261bb08e95e51815ceaca8ac5b';
         axios.get(getTokenPrices).then(async (res) => {
           let totalValueCountUSD = 0;
           let totalValueCountETH = 0;
+          if(setLoading) {
+            setLoading(4);
+          }
           Object.keys(coinListLocal).forEach((item, index) => {
             if (item === "ETH") {
               coinListLocal[item].value_usd = coinListLocal[item].balance * etherToUSD;
@@ -748,6 +797,9 @@ class PortfolioPage extends React.Component {
               }
             }
           });
+          if(setLoading) {
+            setLoading(5);
+          }
           totalValueCountETH = totalValueCountUSD / etherToUSD;
           let dailyChangeLinks = [];
           let tableData = this.buildTableData(coinListLocal, totalValueCountUSD);
@@ -770,7 +822,10 @@ class PortfolioPage extends React.Component {
           coins = await this.fetchAddressEtherBalance(coins);
           let tableDataWithChanges = this.buildTableData(coins, totalValueCountUSD);
           thisPersist.setState({coins, tableData: tableDataWithChanges, includeInCompositePricingQueries});
-          await this.delayApiCalls(dailyChangeLinks).then(async data => {
+          let progressBeforeDailyChangeLinks = 5;
+          let progressAcrossDailyChangeLinks = 45;
+          let progressPerDailyChangeLink = progressAcrossDailyChangeLinks / Object.entries(dailyChangeLinks).length;
+          await this.delayApiCalls(dailyChangeLinks, setLoading, progressBeforeDailyChangeLinks, progressPerDailyChangeLink).then(async data => {
             let {coins, includeInCompositePricingQueries} = this.state;
             let index = 0;
             for(let [symbol] of Object.entries(dailyChangeLinks)) {
@@ -802,6 +857,9 @@ class PortfolioPage extends React.Component {
             let tableDataWithChanges = this.buildTableData(coins, totalValueCountUSD);
             thisPersist.setState({coins, tableData: tableDataWithChanges, includeInCompositePricingQueries});
           });
+          if(setLoading) {
+            setLoading(progressBeforeDailyChangeLinks + progressAcrossDailyChangeLinks);
+          }
           let findNewSelectedHistoricalBaseCurrency = false;
           let newSelectedHistoricalBaseCurrency = false;
           if(!coinListLocal[historicalBaseCurrency] || coinListLocal[historicalBaseCurrency].balance <= 0) {
@@ -828,8 +886,12 @@ class PortfolioPage extends React.Component {
               { historicalBaseCurrency: newSelectedHistoricalBaseCurrency }
             ),
           });
-          coins = await this.fetchAddressTransactionHistory(coins);
-          setLoading(false);
+          let progressBeforeFetchAddressTransactionHistory = progressBeforeDailyChangeLinks + progressAcrossDailyChangeLinks;
+          coins = await this.fetchAddressTransactionHistory(coins, progressBeforeFetchAddressTransactionHistory);
+          if(setLoading) {
+            setLoading(100);
+            setLoading(0);
+          }
           await this.fetchCoinGeckoLinks(coins, totalValueCountUSD);
         })
       })
@@ -839,8 +901,9 @@ class PortfolioPage extends React.Component {
   fetchCoinGeckoLinks = async (coins, totalValueCountUSD) => {
     let thisPersist = this;
     let getCoinGeckoLinks = [];
+    let coinGeckoLinkCache = localStorage.getItem("coinGeckoLinkCache") ? JSON.parse(localStorage.getItem("coinGeckoLinkCache")) : {};
     for(let symbol of Object.keys(coins)) {
-      if(coins[symbol].tokenAddress){
+      if(coins[symbol].tokenAddress && !coinGeckoLinkCache[coins[symbol].tokenAddress]){
         getCoinGeckoLinks[symbol] = `https://api.coingecko.com/api/v3/coins/ethereum/contract/${coins[symbol].tokenAddress}`
       }else if(symbol.toLowerCase() === "eth"){
         coins[symbol].coinGeckoLink = "https://www.coingecko.com/en/coins/ethereum";
@@ -853,8 +916,14 @@ class PortfolioPage extends React.Component {
     await this.delayApiCalls(getCoinGeckoLinks).then(async data => {
       if(data) {
         for(let item of data) {
-          if(item){
-            coins[item.data.symbol.toUpperCase()].coinGeckoLink = `https://www.coingecko.com/en/coins/${item.data.id}`;
+          if(item && item.data){
+            let useSymbol = item.data.symbol.toUpperCase();
+            if(useSymbol === "GNY") {
+              useSymbol = "GNYERC20";
+            }
+            if(item && coins[useSymbol]){
+              coins[useSymbol].coinGeckoLink = `https://www.coingecko.com/en/coins/${item.data.id}`;
+            }
           }
         }
         let tableDataWithChanges = this.buildTableData(coins, totalValueCountUSD);
@@ -932,6 +1001,7 @@ class PortfolioPage extends React.Component {
     let changeTodayTotal = 0;
     let relativePortfolioImpactTotal = 0;
     let marketCapTotal = 0;
+    let totalManualRecordCount = 0;
     let coinGeckoLinkCache = localStorage.getItem("coinGeckoLinkCache") ? JSON.parse(localStorage.getItem("coinGeckoLinkCache")) : {};
     for(let [key, data] of sortedByPortfolioPortion){
       let portfolioPortion = (data.value_usd * 100 / totalValue) * 1;
@@ -964,17 +1034,20 @@ class PortfolioPage extends React.Component {
         if(coinGeckoLinkCache[key] || coinGeckoLinkCache[data.tokenAddress]) {
           useCoinGeckoLink = data.tokenAddress && coinGeckoLinkCache[data.tokenAddress] ? coinGeckoLinkCache[data.tokenAddress] : coinGeckoLinkCache[key];
         }
+        totalManualRecordCount = data.manualRecordCount ? data.manualRecordCount : 0;
         tableData.push({
           id: tableData.length + 1,
           symbol: key,
           balance: balance,
           value_usd: usdValue,
+          manual_record_count: totalManualRecordCount,
+          coingecko_id: data.coinGeckoId ? data.coinGeckoId : false,
           market_cap: marketCapUSD,
           portfolio_portion: portfolioPortion,
           change_today: changePercent,
           relative_portfolio_impact_today: relativeImpact,
           token_value_usd: close,
-          coin_gecko_link: useCoinGeckoLink
+          coingecko_link: useCoinGeckoLink
         })
       }
     }
@@ -1001,6 +1074,7 @@ class PortfolioPage extends React.Component {
       market_cap: isNaN(marketCapTotal) ? marketCapTotal : marketCapTotal * 1,
       token_value_usd: isNaN(usdTokenValueTotal) ? usdTokenValueTotal : usdTokenValueTotal * 1,
       value_usd: isNaN(usdValueTotal) ? usdValueTotal : usdValueTotal * 1,
+      manual_record_count: totalManualRecordCount,
       portfolio_portion: 100,
       change_today: isNaN(changeTodayTotal) ? changeTodayTotal : changeTodayTotal * 1,
       relative_portfolio_impact_today: isNaN(relativePortfolioImpactTotal) ? relativePortfolioImpactTotal : relativePortfolioImpactTotal * 1,

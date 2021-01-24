@@ -18,6 +18,8 @@ import GitHubLogo from '../img/GitHubLogo.svg';
 import GitHubLogoDark from '../img/GitHubLogoDark.svg';
 import DiscordLogo from '../img/DiscordLogo.svg';
 import DiscordLogoDark from '../img/DiscordLogoDark.svg';
+import TelegramLogo from '../img/TelegramLogo.svg';
+import TelegramLogoDark from '../img/TelegramLogoDark.svg';
 import {Link} from 'react-router-dom';
 
 const styles = theme => ({
@@ -56,12 +58,12 @@ function NavigationItemsMain(props) {
             <ListItemText primary="Portfolio" />
           </ListItem>
         </Link>
-        <a href={"https://github.com/JayWelsh/CryptoCape"} style={{ textDecoration: 'none' }} target="_blank" rel="noopener noreferrer">
+        <a href={"https://t.me/joinchat/GeDYFkq_0ih60gmc"} style={{ textDecoration: 'none' }} target="_blank" rel="noopener noreferrer">
           <ListItem onClick={emitMenuToggleFunction} button>
             <ListItemIcon>
-              {isDarkMode ? <img style={{padding: 1}} width={'24px'} src={GitHubLogo}/> : <img style={{padding: 1}} width={'24px'} src={GitHubLogoDark}/>}
+              {isDarkMode ? <img style={{padding: 1}} width={'24px'} src={TelegramLogo}/> : <img style={{padding: 1}} width={'24px'} src={TelegramLogoDark}/>}
             </ListItemIcon>
-            <ListItemText primary="GitHub" />
+            <ListItemText primary="Telegram" />
           </ListItem>
         </a>
         <a href={"https://discord.gg/x6T427nAH7"} style={{ textDecoration: 'none' }} target="_blank" rel="noopener noreferrer">
@@ -70,6 +72,14 @@ function NavigationItemsMain(props) {
               {isDarkMode ? <img style={{padding: 1}} width={'24px'} src={DiscordLogo}/> : <img style={{padding: 1}} width={'24px'} src={DiscordLogoDark}/>}
             </ListItemIcon>
             <ListItemText primary="Discord" />
+          </ListItem>
+        </a>
+        <a href={"https://github.com/JayWelsh/CryptoCape"} style={{ textDecoration: 'none' }} target="_blank" rel="noopener noreferrer">
+          <ListItem onClick={emitMenuToggleFunction} button>
+            <ListItemIcon>
+              {isDarkMode ? <img style={{padding: 1}} width={'24px'} src={GitHubLogo}/> : <img style={{padding: 1}} width={'24px'} src={GitHubLogoDark}/>}
+            </ListItemIcon>
+            <ListItemText primary="GitHub" />
           </ListItem>
         </a>
         <ListItem onClick={() => {

@@ -19,6 +19,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import FilterListIcon from '@material-ui/icons/FilterList';
 import { lighten } from '@material-ui/core/styles/colorManipulator';
 import OurAddRecordDialog from './OurAddRecordDialog';
+import OurManageManualRecordsDialog from './OurManageManualRecordsDialog';
 import { priceFormat } from '../utils';
 
 function desc(a, b, orderBy) {
@@ -49,6 +50,7 @@ const rows = [
   { id: 'symbol', numeric: false, disablePadding: false, label: 'Symbol' },
   { id: 'token_value_usd', numeric: false, disablePadding: false, label: 'Token Value'},
   { id: 'value_usd', numeric: true, disablePadding: false, label: 'Portfolio Value' },
+  { id: 'manual_record_count', numeric: true, disablePadding: false, label: 'Manual Entries' },
   { id: 'market_cap', numeric: true, disablePadding: false, label: 'Market Cap' },
   { id: 'balance', numeric: true, disablePadding: false, label: 'Tokens' },
   { id: 'portfolio_portion', numeric: true, disablePadding: false, label: 'Portfolio Portion'},
@@ -192,7 +194,25 @@ class EnhancedTable extends React.Component {
             rowsPerPage: 10,
             isEth2DepositContract: props.isEth2DepositContract,
             isDarkMode: props.isDarkMode,
+            showManualRecordManager: false,
+            manualRecordManagerTokenId: false,
         };
+    }
+
+    launchManualRecordManager = (coinId) => {
+      const { manualRecordManagerTokenId, showManualRecordManager } = this.state;
+      if(coinId && (manualRecordManagerTokenId !== coinId || !showManualRecordManager)) {
+        this.setState({
+          showManualRecordManager: true,
+          manualRecordManagerTokenId: coinId
+        })
+      }
+    }
+
+    closeManualRecordManager = () => {
+      this.setState({
+        showManualRecordManager: false,
+      })
     }
 
     componentWillUpdate(nextProps, prevProps) {
@@ -246,7 +266,7 @@ class EnhancedTable extends React.Component {
 
   render() {
     const { classes, publicKey, refetchData, isLoading } = this.props;
-    const { data, order, orderBy, selected, rowsPerPage, page, isEth2DepositContract, isDarkMode } = this.state;
+    const { data, order, orderBy, selected, rowsPerPage, page, isEth2DepositContract, isDarkMode, showManualRecordManager, manualRecordManagerTokenId } = this.state;
     const emptyRows = rowsPerPage - Math.min(rowsPerPage, data.length - page * rowsPerPage);
 
     return (
@@ -301,11 +321,12 @@ class EnhancedTable extends React.Component {
                     >
                         <TableCell component="th" scope="row">
                         {
-                          n.coin_gecko_link ? <a href={n.coin_gecko_link} target="_blank" rel="noopener noreferrer">{n.symbol}</a> : n.symbol
+                          n.coingecko_link ? <a href={n.coingecko_link} target="_blank" rel="noopener noreferrer">{n.symbol}</a> : n.symbol
                         }
                         </TableCell>
                         <TableCell align="right">{isNaN(n.token_value_usd) ? n.token_value_usd : priceFormat(n.token_value_usd, 2, "$", true)}</TableCell>
                         <TableCell align="right">{isNaN(n.value_usd) ? n.value_usd : priceFormat(n.value_usd, 2, "$", true)}</TableCell>
+                        <TableCell align="right"><a className={n.manual_record_count < 1 || n.symbol === "Total" || isLoading ? "disable-pointer-events medium-opacity" : ""} href="javascript:;" onClick={() => this.launchManualRecordManager(n.coingecko_id)}>{n.manual_record_count}</a></TableCell>
                         <TableCell align="right">{isNaN(n.market_cap) ? n.market_cap : priceFormat(n.market_cap, 2, "$", true)}</TableCell>
                         <TableCell align="right">{isNaN(n.balance) ? n.balance : priceFormat(n.balance, 2, n.symbol, false)}</TableCell>
                         <TableCell align="right">{isNaN(n.portfolio_portion) ? n.portfolio_portion : priceFormat(n.portfolio_portion, 2, "%", false)}</TableCell>
@@ -337,6 +358,7 @@ class EnhancedTable extends React.Component {
           onChangePage={this.handleChangePage}
           onChangeRowsPerPage={this.handleChangeRowsPerPage}
         />
+        <OurManageManualRecordsDialog overrideOpen={showManualRecordManager} closeManualRecordManager={this.closeManualRecordManager} tokenId={manualRecordManagerTokenId} isDarkMode={isDarkMode} refetchData={refetchData} publicKey={publicKey} isLoading={isLoading}/>
       </Paper>
     );
   }

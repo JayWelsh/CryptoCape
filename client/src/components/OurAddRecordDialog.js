@@ -1,4 +1,6 @@
 import React, {useEffect, useState} from 'react';
+import { withStyles } from '@material-ui/core/styles';
+import purple from '@material-ui/core/colors/purple';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import Dialog from '@material-ui/core/Dialog';
@@ -14,7 +16,27 @@ import OurDatePicker from './OurDatePicker';
 import DateFnsUtils from "@date-io/date-fns";
 import moment from 'moment';
 
-export default function FormDialog({publicKey, refetchData, isLoading, isDarkMode}) {
+const styles = {
+  rootDark: {
+    color: purple[300],
+    '&$checked': {
+      color: purple[300],
+    },
+    paddingTop: '5px!important',
+    paddingBottom: '5px!important'
+  },
+  rootLight: {
+    color: purple[500],
+    '&$checked': {
+      color: purple[500],
+    },
+    paddingTop: '5px!important',
+    paddingBottom: '5px!important'
+  },
+  checked: {},
+};
+
+const FormDialog = ({publicKey, refetchData, isLoading, isDarkMode, classes}) => {
   const [open, setOpen] = useState(false);
   const [coins, setCoins] = useState([]);
   const [filteredCoins, setFilteredCoins] = useState([]);
@@ -35,20 +57,28 @@ export default function FormDialog({publicKey, refetchData, isLoading, isDarkMod
   const addManualRecord = async () => {
     let manualRecord = {...selectedCoin};
     let currentLocalStorageRecords = localStorage.getItem("manualAccountEntries") ? JSON.parse(localStorage.getItem("manualAccountEntries")) : {};
+    let type = 'buy';
     if(publicKey) {
       let publicKeyLowerCase = publicKey.toLowerCase();
       if(currentLocalStorageRecords[publicKeyLowerCase]){
-          if(currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id].tokenQuantity) {
-            currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id].tokenQuantity = currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id].tokenQuantity + tokenQuantity;
-          }
-          currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id] = {...manualRecord, timeseries: [...currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id].timeseries, {date: moment(selectedDate), price: tokenQuantity}]};
+        if(!currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id]){
+          currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id] = {
+            timeseries: []
+          };
+        }
+        let useTokenQuantity = tokenQuantity;
+        if(currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id] && currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id].tokenQuantity) {
+          useTokenQuantity = currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id].tokenQuantity + tokenQuantity;
+        }
+        currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id] = {...manualRecord, timeseries: [...currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id].timeseries, {date: moment(selectedDate), price: tokenQuantity, type}], tokenQuantity: useTokenQuantity};
       }else{
           currentLocalStorageRecords[publicKeyLowerCase] = {};
-          currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id] = {...manualRecord, timeseries: [{date: moment(selectedDate), price: tokenQuantity}]};
+          currentLocalStorageRecords[publicKeyLowerCase][selectedCoin.id] = {...manualRecord, timeseries: [{date: moment(selectedDate), price: tokenQuantity, type}], tokenQuantity: tokenQuantity};
       }
       localStorage.setItem("manualAccountEntries", JSON.stringify(currentLocalStorageRecords));
     }
-    await refetchData(handleClose);
+    handleClose();
+    await refetchData();
   }
 
     const tokenSearch = (event) => {
@@ -121,7 +151,7 @@ export default function FormDialog({publicKey, refetchData, isLoading, isDarkMod
             <div style={{maxHeight: '150px', overflowY: 'scroll'}}>
                 <RadioGroup aria-label="tokenSearch" name="tokenSearchResults" onChange={selectCoin}>
                     {filteredCoins && filteredCoins.map(coin => (
-                        <FormControlLabel value={coin.isNoResultsRecord ? "N/A" : coin.id} control={<Radio checked={selectedCoin && selectedCoin.id === coin.id} disableRipple={true} size="small" classes={{root: 'radio-button-dense'}} disabled={coin.isNoResultsRecord ? true : false} />} label={coin.isNoResultsRecord ? "No Results Found" : coin.name + " (" +  coin.symbol.toUpperCase() + ")"} />
+                        <FormControlLabel value={coin.isNoResultsRecord ? "N/A" : coin.id} control={<Radio classes={isDarkMode ? {root: classes.rootDark, checked: classes.checked } : { root: classes.rootLight, checked: classes.checked }} checked={selectedCoin && selectedCoin.id === coin.id} disableRipple={true} size="small" disabled={coin.isNoResultsRecord ? true : false} />} label={coin.isNoResultsRecord ? "No Results Found" : coin.name + " (" +  coin.symbol.toUpperCase() + ")"} />
                     ))}
                 </RadioGroup>
             </div>
@@ -157,3 +187,5 @@ export default function FormDialog({publicKey, refetchData, isLoading, isDarkMod
     </div>
   );
 }
+
+export default withStyles(styles)(FormDialog);
