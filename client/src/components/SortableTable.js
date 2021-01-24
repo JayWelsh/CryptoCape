@@ -326,12 +326,12 @@ class EnhancedTable extends React.Component {
                         </TableCell>
                         <TableCell align="right">{isNaN(n.token_value_usd) ? n.token_value_usd : priceFormat(n.token_value_usd, 2, "$", true)}</TableCell>
                         <TableCell align="right">{isNaN(n.value_usd) ? n.value_usd : priceFormat(n.value_usd, 2, "$", true)}</TableCell>
-                        <TableCell align="right"><a className={n.manual_record_count < 1 || n.symbol === "Total" || isLoading ? "disable-pointer-events medium-opacity" : ""} href="javascript:;" onClick={() => this.launchManualRecordManager(n.coingecko_id)}>{n.manual_record_count}</a></TableCell>
                         <TableCell align="right">{isNaN(n.market_cap) ? n.market_cap : priceFormat(n.market_cap, 2, "$", true)}</TableCell>
                         <TableCell align="right">{isNaN(n.balance) ? n.balance : priceFormat(n.balance, 2, n.symbol, false)}</TableCell>
                         <TableCell align="right">{isNaN(n.portfolio_portion) ? n.portfolio_portion : priceFormat(n.portfolio_portion, 2, "%", false)}</TableCell>
                         <TableCell align="right">{changeToday}</TableCell>
                         <TableCell align="right">{portfolioImpact}</TableCell>
+                        <TableCell align="right"><a className={n.manual_record_count < 1 || n.symbol === "Total" || isLoading ? "disable-pointer-events medium-opacity" : ""} href="javascript:;" onClick={() => this.launchManualRecordManager(n.coingecko_id)}>{n.manual_record_count}</a></TableCell>
                     </TableRow>
                   );
                 })}
