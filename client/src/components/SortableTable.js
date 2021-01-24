@@ -50,12 +50,12 @@ const rows = [
   { id: 'symbol', numeric: false, disablePadding: false, label: 'Symbol' },
   { id: 'token_value_usd', numeric: false, disablePadding: false, label: 'Token Value'},
   { id: 'value_usd', numeric: true, disablePadding: false, label: 'Portfolio Value' },
-  { id: 'manual_record_count', numeric: true, disablePadding: false, label: 'Manual Entries' },
   { id: 'market_cap', numeric: true, disablePadding: false, label: 'Market Cap' },
   { id: 'balance', numeric: true, disablePadding: false, label: 'Tokens' },
   { id: 'portfolio_portion', numeric: true, disablePadding: false, label: 'Portfolio Portion'},
   { id: 'change_today', numeric: true, disablePadding: false, label: 'Token Value Change (Today)' },
-  { id: 'relative_portfolio_impact_today', numeric: true, disablePadding: false, label: 'Relative Portfolio Impact (Today)'}
+  { id: 'relative_portfolio_impact_today', numeric: true, disablePadding: false, label: 'Relative Portfolio Impact (Today)'},
+  { id: 'manual_record_count', numeric: true, disablePadding: false, label: 'Manual Entries' },
 ];
 
 class EnhancedTableHead extends React.Component {
