@@ -686,6 +686,10 @@ class PortfolioPage extends React.Component {
         tokenAddress: "0x0d6ae2a429df13e44a07cd2969e085e4833f64a0",
         decimals: 18,
       },
+      "ALCX": {
+        tokenAddress: "0xdbdb4d16eda451d0503b854cf79d55697f90c8df",
+        decimals: 18,
+      },
 		}
     axios.get(getETHUSD).then(res => {
       if(setLoading) {
