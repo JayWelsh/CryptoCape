@@ -142,17 +142,23 @@ const toolbarStyles = theme => ({
 let EnhancedTableToolbar = props => {
   const { numSelected, classes, selected, tokenId, publicKey, refetchData, handleClose } = props;
 
-  const deleteSelected = async (forDeletion) => {
-    let currentManualData = localStorage.getItem("manualAccountEntries") ? JSON.parse(localStorage.getItem("manualAccountEntries")) : false;
-    if(currentManualData[publicKey] && currentManualData[publicKey][tokenId]){
-      if(currentManualData[publicKey][tokenId].timeseries && currentManualData[publicKey][tokenId].timeseries.length > 1) {
-        currentManualData[publicKey][tokenId].timeseries = currentManualData[publicKey][tokenId].timeseries.filter((item, index) => forDeletion.indexOf(index) === -1)
-      }else{
-        delete currentManualData[publicKey][tokenId];
-        if(Object.entries(currentManualData[publicKey]).length < 2) {
-          delete currentManualData[publicKey];
-        }
+  const deleteSelected = (forDeletion) => {
+    const publicKeyLower = publicKey.toLowerCase();
+    const currentManualData = localStorage.getItem("manualAccountEntries")
+      ? JSON.parse(localStorage.getItem("manualAccountEntries"))
+      : false;
+
+    if (currentManualData[publicKeyLower] && currentManualData[publicKeyLower][tokenId]){
+      if (currentManualData[publicKeyLower][tokenId].timeseries && currentManualData[publicKeyLower][tokenId].timeseries.length > 1)
+        currentManualData[publicKeyLower][tokenId].timeseries =
+          currentManualData[publicKeyLower][tokenId].timeseries
+            .filter((_, index) => forDeletion.indexOf(index) === -1)
+      else {
+        delete currentManualData[publicKeyLower][tokenId];
+        if(Object.entries(currentManualData[publicKeyLower]).length < 2)
+          delete currentManualData[publicKeyLower];
       }
+
       localStorage.setItem("manualAccountEntries", JSON.stringify(currentManualData));
       refetchData();
       handleClose();
