@@ -725,7 +725,7 @@ class PortfolioPage extends React.Component {
                 let marketCapUSD = item.tokenInfo.price ? item.tokenInfo.price.marketCapUsd : 0;
                 let balanceUSD = balance * rateUSD;
                 let tokenAddress = item.tokenInfo.address;
-                if((["MNE", "KICK"].indexOf(symbol) === -1) && (tokenAddressBlacklist.indexOf(tokenAddress.toLowerCase()) === -1)){ // Blacklist
+                if((["MNE", "KICK", "UNO"].indexOf(symbol) === -1) && (tokenAddressBlacklist.indexOf(tokenAddress.toLowerCase()) === -1)){ // Blacklist
                   getAgainstETH.push(symbol);
                   coinListLocal[symbol] = { balance, balanceUSD, marketCapUSD, tokenAddress, decimals };
                   if (balanceUSD >= 0 && (item.tokenInfo.price !== false)) {
