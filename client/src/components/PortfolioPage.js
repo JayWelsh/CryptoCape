@@ -694,6 +694,34 @@ class PortfolioPage extends React.Component {
         tokenAddress: "0x0829d2d5cc09d3d341e813c821b0cfae272d9fb2",
         decimals: 18
       },
+      "FF": {
+        tokenAddress: "0x7e9d8f07a64e363e97a648904a89fb4cd5fb94cd",
+        decimals: 18,
+      }
+      // "ZRX": {
+      //   tokenAddress: "0xe41d2489571d322189246dafa5ebde1f4699f498",
+      //   decimals: 18,
+      // },
+      // "ZRX": {
+      //   tokenAddress: "0xe41d2489571d322189246dafa5ebde1f4699f498",
+      //   decimals: 18,
+      // },
+      // "ANT": {
+      //   tokenAddress: "0xa117000000f279d81a1d3cc75430faa017fa5a2e",
+      //   decimals: 18,
+      // },
+      // "BAT": {
+      //   tokenAddress: "0x0d8775f648430679a709e98d2b0cb6250d2887ef",
+      //   decimals: 18,
+      // },
+      // "DNT": {
+      //   tokenAddress: "0x0abdace70d3790235af448c88547603b945604ea",
+      //   decimals: 18
+      // },
+      // "OMG": {
+      //   tokenAddress: "0xd26114cd6ee289accf82350c8d8487fedb8a0c07",
+      //   decimals: 18
+      // }
 		}
     axios.get(getETHUSD).then(res => {
       if(setLoading) {
