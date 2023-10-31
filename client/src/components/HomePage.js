@@ -55,7 +55,7 @@ class HomePage extends React.Component {
               <Grid item xs={12} sm={4} md={4} lg={4}>
                 <Card>
                   <CardActionArea className={'hoverOpacity'} onClick={() => { history.push(`/portfolio`) }} style={{width: '100%'}}>
-                      <PortfolioDonut style={{ fontSize: 150 }} />
+                      <PortfolioDonut style={{ fontSize: 150, ...(isDarkMode && { color: 'white' }) }} />
                       <br/>
                       <Typography variant="headline" component="h2" gutterBottom>
                       My Portfolio
